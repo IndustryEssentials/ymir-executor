@@ -1,0 +1,5 @@
+bike
+car
+face
+license
+person

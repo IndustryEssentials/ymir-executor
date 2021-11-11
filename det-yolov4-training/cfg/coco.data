@@ -1,0 +1,6 @@
+classes= 1
+train  = /in/train.txt
+valid  = /in/test.txt
+names = /out/coco.names
+backup = /out/models
+

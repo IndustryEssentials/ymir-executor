@@ -1,0 +1,14 @@
+*.png
+*.jpg
+*.json
+*.tsv
+*.img
+*.params
+
+__pycache__
+train_data_path
+aldd_heatmap
+result
+*result
+temp
+*.pyc
