@@ -32,12 +32,19 @@ if __name__ == '__main__':
     log_collector.monitor_collect(0.00, "pending", per_seconds=0)
     log_collector.summary_collect("config: {}".format(config))
 
-    if 'write_result' not in config or not config["write_result"]:
+    run_infer = int(config['run_infer'])
+    run_mining = int(config['run_mining'])
+
+    if not run_infer and not run_mining:
+        raise ValueError('both run_infer and run_mining set to 0, abort')
+
+    if run_mining:
         # mining
         api = DockerALAPI(candidate_path="/in/candidate/index.tsv", result_path="/out/result.tsv", **config)
         api.run()
-    else:
-        # infer (currently without mining)
+
+    if run_infer:
+        # infer
         gpu_id = config.get('gpu_id', '')
         confidence_thresh = float(config["confidence_thresh"])
         nms_thresh = float(config["nms_thresh"])
