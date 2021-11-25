@@ -14,4 +14,4 @@ find /in/val -type f \( -iname \*.jpeg -o -iname \*.png \) > /in/test.txt
 find /in/val -iname *.jpg  >> /in/test.txt
 
 python3 config_and_train.py
-echo -e "$(sed '2!d' /out/tmp.txt)\t$(date +%s)000\t"1.0"\t"done"\t" > /out/monitor.txt
+echo -e "$(sed '2!d' /out/tmp.txt)\t$(date +%s)000\t"1.0"\t"running"\t" > /out/monitor.txt
