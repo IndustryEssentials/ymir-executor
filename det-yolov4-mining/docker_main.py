@@ -40,11 +40,12 @@ if __name__ == '__main__':
 
     if run_mining:
         # mining
+        print('>>> RUN MINING <<<')
         api = DockerALAPI(candidate_path="/in/candidate/index.tsv", result_path="/out/result.tsv", **config)
         api.run()
-
     if run_infer:
         # infer
+        print('>>> RUN INFER <<<')
         gpu_id = config.get('gpu_id', '')
         confidence_thresh = float(config["confidence_thresh"])
         nms_thresh = float(config["nms_thresh"])
