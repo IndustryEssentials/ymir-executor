@@ -379,7 +379,7 @@ class darknet_mxnet():
                 else:
                     boxes = np.concatenate([boxes, result], axis=0)
             else:
-                logging.warning('No detection were made!')
+                logging.debug('No detection were made!')
 
             batch_end = time.time()
             cost = (batch_end - batch_start) / len(batch)
