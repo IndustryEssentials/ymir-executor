@@ -66,7 +66,7 @@ class DockerALAPI:
 
     @property
     def progress(self):
-        return self.progress_count
+        return min(self.progress_count, 1)
 
     @property
     def is_completed(self):
@@ -115,7 +115,7 @@ class DockerALAPI:
         os.system("mv {} {}".format(tmp_result_filename, self.result_path))
 
         self.is_done = True
-        log_collector.monitor_collect(self.progress, "done", force=True)
+        log_collector.monitor_collect(self.progress, "running", force=True)
 
     def run(self):
         try:

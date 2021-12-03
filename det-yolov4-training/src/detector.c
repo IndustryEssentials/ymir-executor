@@ -1284,6 +1284,9 @@ float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, floa
 
     double mean_average_precision = 0;
 
+    FILE *file_handle = fopen("/out/models/result.yaml", "w");
+    fprintf(file_handle, "class-map:\n");
+
     for (i = 0; i < classes; ++i) {
         double avg_precision = 0;
 
@@ -1338,6 +1341,7 @@ float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, floa
 
         printf("class_id = %d, name = %s, ap = %2.2f%%   \t (TP = %d, FP = %d) \n",
             i, names[i], avg_precision * 100, tp_for_thresh_per_class[i], fp_for_thresh_per_class[i]);
+        fprintf(file_handle, "- %s: '%0.6f (TP = %d, FP = %d) '\n", names[i], avg_precision, tp_for_thresh_per_class[i], fp_for_thresh_per_class[i]);
 
         float class_precision = (float)tp_for_thresh_per_class[i] / ((float)tp_for_thresh_per_class[i] + (float)fp_for_thresh_per_class[i]);
         float class_recall = (float)tp_for_thresh_per_class[i] / ((float)tp_for_thresh_per_class[i] + (float)(truth_classes_count[i] - tp_for_thresh_per_class[i]));
@@ -1360,12 +1364,15 @@ float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, floa
     if (map_points) printf("used %d Recall-points \n", map_points);
     else printf("used Area-Under-Curve for each unique Recall \n");
 
-    printf(" mean average precision (mAP@%0.2f) = %f, or %2.2f %% \n", iou_thresh, mean_average_precision, mean_average_precision * 100);
-    FILE *file_handle = fopen("/out/models/result.yaml", "w");
-    fprintf(file_handle, "map: '%0.2f'\n", mean_average_precision);
+    printf(" mean average precision (mAP@%0.6f) = %f, or %2.2f %% \n", iou_thresh, mean_average_precision, mean_average_precision * 100);
+    fprintf(file_handle, "map: '%0.6f'\n", mean_average_precision);
     fprintf(file_handle, "model:\n");
     fprintf(file_handle, "- model-symbol.json\n");
-    fprintf(file_handle, "- model-0000.params");
+    fprintf(file_handle, "- model-0000.params\n");
+    fprintf(file_handle, "extra-info: ");
+    fprintf(file_handle, "'for conf_thresh = %1.2f, precision = %1.2f, recall = %1.2f, F1-score = %1.2f, TP = %d, FP = %d, FN = %d, average IoU = %0.6f, IoU threshold = %0.6f'",
+        thresh_calc_avg_iou, cur_precision, cur_recall, f1_score, tp_for_thresh, fp_for_thresh, unique_truth_count - tp_for_thresh, avg_iou, iou_thresh);
+    
     fclose(file_handle);
 
     for (i = 0; i < classes; ++i) {
