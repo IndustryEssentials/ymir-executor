@@ -1,7 +1,8 @@
 import yaml
 import os
-import mxnet
 import time
+
+import train_watcher
 
 config_file = "/in/config.yaml"
 
@@ -33,7 +34,7 @@ if class_names is not None:
         f.write(each_name)
         f.write("\n")
     f.close()
-    
+
 if classnum != 1:
     num_filter = (5 + classnum) * 3
     os.system("sed -i 's/classes=1/classes={}/g' /out/models/yolov4.cfg".format(classnum))
@@ -62,6 +63,14 @@ max_batches = max_batches // len(gpus.split(","))
 if max_batches < warmup_iterations:
     max_batches = warmup_iterations
 
+# start watcher
+watcher = train_watcher.TrainWatcher(model_dir='/out/models/',
+                                     width=image_width,
+                                     height=image_height,
+                                     class_num=classnum)
+watcher.start()
+
+# run training
 if pretrained_model_params is None or not os.path.isfile(pretrained_model_params):
     # if pretrained model params doesn't exist, train model from image net pretrain model
     os.system("sed -i 's/max_batches=20000/max_batches={}/g' /out/models/yolov4.cfg".format(warmup_iterations))
@@ -75,8 +84,11 @@ else:
     os.system("sed -i 's/max_batches=20000/max_batches={}/g' /out/models/yolov4.cfg".format(max_batches))
     train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg {} -map -gpus {} -task_id {} -max_batches {} -dont_show".format(pretrained_model_params, gpus, task_id, max_batches)
 
-# run training
 os.system(train_script_str)
+
+print('>>> training done <<<')  # for test
+
+watcher.stop()
 
 best_param_name = "/out/models/yolov4_best.weights"
 if not os.path.isfile(best_param_name):
