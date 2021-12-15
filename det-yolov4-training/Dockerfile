@@ -13,6 +13,7 @@ RUN python3 get-pip.py
 RUN pip3 install mxnet-cu101==1.5.1 pyyaml numpy opencv-python watchdog
 RUN apt-get install -y libopencv-dev
 COPY . /darknet
+RUN mkdir /img-man && cp /darknet/training-template.yaml /img-man/training-template.yaml
 RUN make
 CMD bash make_train_test_darknet.sh
 

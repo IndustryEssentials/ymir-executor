@@ -9,7 +9,7 @@ COPY . /app
 WORKDIR /app
 RUN cp ./start.sh /usr/bin/start.sh && \
     mkdir -p /img-man && \
-    cp ./mining-template.yaml /img-man/mining-config-template.yaml && \
-    cp ./infer-template.yaml /img-man/infer-config-template.yaml && \
+    cp ./mining-template.yaml /img-man/mining-template.yaml && \
+    cp ./infer-template.yaml /img-man/infer-template.yaml && \
     cp ./README.md /img-man/readme.md
 CMD sh /usr/bin/start.sh
