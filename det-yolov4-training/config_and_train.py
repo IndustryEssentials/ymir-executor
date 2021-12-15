@@ -4,6 +4,8 @@ import time
 
 import train_watcher
 
+print('starting config_and_train')  # for test
+
 config_file = "/in/config.yaml"
 
 with open(config_file, 'r', encoding="utf8") as f:
@@ -64,6 +66,7 @@ if max_batches < warmup_iterations:
     max_batches = warmup_iterations
 
 # start watcher
+print('starting watcher')  # for test
 watcher = train_watcher.TrainWatcher(model_dir='/out/models/',
                                      width=image_width,
                                      height=image_height,
