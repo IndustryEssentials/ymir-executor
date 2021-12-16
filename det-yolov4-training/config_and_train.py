@@ -72,18 +72,19 @@ watcher.start()
 
 pretrained_model_params = None
 if pretrained_model_params_conf and isinstance(pretrained_model_params_conf, list):
+    # list
     for model_path in pretrained_model_params_conf:
         if os.path.splitext(model_path)[1] == '.weights':
             pretrained_model_params = model_path
+            break
 
     if not pretrained_model_params:
         raise ValueError("can not find proper pretrained model in config: {}".format(pretrained_model_params_conf))
-elif pretrained_model_params_conf and isinstance(pretrained_model_params_conf, str):
-    pretrained_model_params = pretrained_model_params_conf
 elif pretrained_model_params_conf:
+    # other types: not supported
     raise ValueError("unsupported pretrained_model_params_list: {}".format(type(pretrained_model_params_conf)))
 else:
-    # pretrained_model_params_list is None, so pretrained_model_params is None
+    # pretrained_model_params_conf is None or empty, so pretrained_model_params is None
     pass
 
 # run training
