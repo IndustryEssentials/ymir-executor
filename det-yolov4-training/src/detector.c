@@ -9,6 +9,7 @@
 #include <time.h>
 #include "demo.h"
 #include "option_list.h"
+#include <unistd.h>
 
 #ifndef __COMPAR_FN_T
 #define __COMPAR_FN_T
@@ -1369,11 +1370,15 @@ float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, floa
     fprintf(file_handle, "model:\n");
     fprintf(file_handle, "- model-symbol.json\n");
     fprintf(file_handle, "- model-0000.params\n");
-    fprintf(file_handle, "- yolov4_best.weights\n");
+    if (file_exists('/out/models/yolov4_best.weights')) {
+        fprintf(file_handle, "- yolov4_best.weights\n");
+    } else if (file_exists('/out/models/yolov4_final.weights')) {
+        fprintf(file_handle, "- yolov4_final.weights\n");
+    }
     fprintf(file_handle, "extra-info: ");
     fprintf(file_handle, "'for conf_thresh = %1.2f, precision = %1.2f, recall = %1.2f, F1-score = %1.2f, TP = %d, FP = %d, FN = %d, average IoU = %0.6f, IoU threshold = %0.6f'",
         thresh_calc_avg_iou, cur_precision, cur_recall, f1_score, tp_for_thresh, fp_for_thresh, unique_truth_count - tp_for_thresh, avg_iou, iou_thresh);
-    
+
     fclose(file_handle);
 
     for (i = 0; i < classes; ++i) {
@@ -2066,4 +2071,11 @@ void run_detector(int argc, char **argv)
     else printf(" There isn't such command: %s", argv[2]);
 
     if (gpus && gpu_list && ngpus > 1) free(gpus);
+}
+
+int file_exists(const char *file_path) {
+    if (file_path && access(file_path, F_OK) == 0) {
+        return 1;  // file exists
+    }
+    return 0;  // file not exists
 }

@@ -4,8 +4,6 @@ import time
 
 import train_watcher
 
-print('starting config_and_train')  # for test
-
 config_file = "/in/config.yaml"
 
 with open(config_file, 'r', encoding="utf8") as f:
@@ -20,7 +18,7 @@ image_height = config["image_height"]
 image_width = config["image_width"]
 learning_rate = config["learning_rate"]
 max_batches = config["max_batches"]
-pretrained_model_params = config["pretrained_model_params"]
+pretrained_model_params_conf = config["pretrained_model_params"]
 batch = config["batch"]
 subdivisions = config["subdivisions"]
 warmup_iterations = config["warmup_iterations"]
@@ -66,12 +64,27 @@ if max_batches < warmup_iterations:
     max_batches = warmup_iterations
 
 # start watcher
-print('starting watcher')  # for test
 watcher = train_watcher.TrainWatcher(model_dir='/out/models/',
                                      width=image_width,
                                      height=image_height,
                                      class_num=classnum)
 watcher.start()
+
+pretrained_model_params = None
+if pretrained_model_params_conf and isinstance(pretrained_model_params_conf, list):
+    for model_path in pretrained_model_params_conf:
+        if os.path.splitext(model_path)[1] == '.weights':
+            pretrained_model_params = model_path
+
+    if not pretrained_model_params:
+        raise ValueError("can not find proper pretrained model in config: {}".format(pretrained_model_params_conf))
+elif pretrained_model_params_conf and isinstance(pretrained_model_params_conf, str):
+    pretrained_model_params = pretrained_model_params_conf
+elif pretrained_model_params_conf:
+    raise ValueError("unsupported pretrained_model_params_list: {}".format(type(pretrained_model_params_conf)))
+else:
+    # pretrained_model_params_list is None, so pretrained_model_params is None
+    pass
 
 # run training
 if pretrained_model_params is None or not os.path.isfile(pretrained_model_params):
@@ -83,13 +96,11 @@ if pretrained_model_params is None or not os.path.isfile(pretrained_model_params
     os.system("sed -i 's/max_batches={}/max_batches={}/g' /out/models/yolov4.cfg".format(warmup_iterations, max_batches))
     train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg /out/models/yolov4_last.weights -map -gpus {} -task_id {} -max_batches {} -dont_show".format(gpus, task_id, max_batches)
 else:
-    # if pretrained model params does exist, train model from last best weights
+    # if pretrained model params does exist, train model from last best weights, clear previous trained count
     os.system("sed -i 's/max_batches=20000/max_batches={}/g' /out/models/yolov4.cfg".format(max_batches))
-    train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg {} -map -gpus {} -task_id {} -max_batches {} -dont_show".format(pretrained_model_params, gpus, task_id, max_batches)
+    train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg {} -map -gpus {} -task_id {} -max_batches {} -dont_show -clear".format(pretrained_model_params, gpus, task_id, max_batches)
 
 os.system(train_script_str)
-
-print('>>> training done <<<')  # for test
 
 watcher.stop()
 
