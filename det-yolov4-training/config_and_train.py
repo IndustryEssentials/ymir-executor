@@ -18,7 +18,7 @@ image_height = config["image_height"]
 image_width = config["image_width"]
 learning_rate = config["learning_rate"]
 max_batches = config["max_batches"]
-pretrained_model_params_conf = config["pretrained_model_params"]
+pretrained_model_params_conf = config.get("pretrained_model_params", None)
 batch = config["batch"]
 subdivisions = config["subdivisions"]
 warmup_iterations = config["warmup_iterations"]
@@ -101,8 +101,6 @@ else:
 
 os.system(train_script_str)
 
-watcher.stop()
-
 best_param_name = "/out/models/yolov4_best.weights"
 if not os.path.isfile(best_param_name):
     best_param_name = "/out/models/yolov4_last.weights"
@@ -117,3 +115,5 @@ os.system(darknet2mxnet_script_str)
 # run map and output log
 run_map_script_str = "./darknet detector map /out/coco.data /out/models/yolov4.cfg {}".format(best_param_name)
 os.system(run_map_script_str)
+
+watcher.stop()

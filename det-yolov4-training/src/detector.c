@@ -422,9 +422,17 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
 #ifdef GPU
     if (ngpus != 1) sync_nets(nets, ngpus, 0);
 #endif
+
+    // save final
     char buff[256];
     sprintf(buff, "%s/%s_final.weights", backup_directory, base);
     save_weights(net, buff);
+
+    // save best if not exists
+    sprintf(buff, "%s/%s_best.weights", backup_directory, base);
+    if (!file_exists(buff)) {
+        save_weights(net, buff);
+    }
     printf("If you want to train from the beginning, then use flag in the end of training command: -clear \n");
 
 #ifdef OPENCV
@@ -937,6 +945,7 @@ int detections_comparator(const void *pa, const void *pb)
 
 float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, float thresh_calc_avg_iou, const float iou_thresh, const int map_points, int letter_box, network *existing_net)
 {
+    printf("start validate_detector_map\n");
     int j;
     list *options = read_data_cfg(datacfg);
     char *valid_images = option_find_str(options, "valid", "data/train.txt");
@@ -1367,14 +1376,12 @@ float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, floa
 
     printf(" mean average precision (mAP@%0.6f) = %f, or %2.2f %% \n", iou_thresh, mean_average_precision, mean_average_precision * 100);
     fprintf(file_handle, "map: '%0.6f'\n", mean_average_precision);
+
     fprintf(file_handle, "model:\n");
     fprintf(file_handle, "- model-symbol.json\n");
     fprintf(file_handle, "- model-0000.params\n");
-    if (file_exists('/out/models/yolov4_best.weights')) {
-        fprintf(file_handle, "- yolov4_best.weights\n");
-    } else if (file_exists('/out/models/yolov4_final.weights')) {
-        fprintf(file_handle, "- yolov4_final.weights\n");
-    }
+    fprintf(file_handle, "- yolov4_best.weights\n");
+
     fprintf(file_handle, "extra-info: ");
     fprintf(file_handle, "'for conf_thresh = %1.2f, precision = %1.2f, recall = %1.2f, F1-score = %1.2f, TP = %d, FP = %d, FN = %d, average IoU = %0.6f, IoU threshold = %0.6f'",
         thresh_calc_avg_iou, cur_precision, cur_recall, f1_score, tp_for_thresh, fp_for_thresh, unique_truth_count - tp_for_thresh, avg_iou, iou_thresh);

@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 import yaml
 
@@ -11,14 +12,21 @@ def _load_config() -> dict:
     with open("/in/config.yaml", "r", encoding='utf8') as f:
         config = yaml.safe_load(f)
 
-    model_params_path = config["model_params_path"]
-    base_dir = os.path.dirname(model_params_path)
-    model_params_path = model_params_path if os.path.isabs(model_params_path) else os.path.join(
-        base_dir, model_params_path)
-    config["model_params_path"] = model_params_path
-
     if "task_id" not in config:
         config["task_id"] = "0"
+
+    model_params_path_conf: List[str] = config['model_params_path']
+    model_params_path = ''
+    for p in model_params_path_conf:
+        if os.path.splitext(p)[1] == '.params':
+            model_params_path = p
+            break
+
+    if not model_params_path:
+        raise ValueError(f"can not find mxnet params model in model_params_path: {model_params_path_conf}")
+
+    config['model_params_path'] = model_params_path
+
     return config
 
 
@@ -41,11 +49,13 @@ if __name__ == '__main__':
     if run_mining:
         # mining
         print('>>> RUN MINING <<<')
+        print(f"with model: {config['model_params_path']}")
         api = DockerALAPI(candidate_path="/in/candidate/index.tsv", result_path="/out/result.tsv", **config)
         api.run()
     if run_infer:
         # infer
         print('>>> RUN INFER <<<')
+        print(f"with model: {config['model_params_path']}")
         gpu_id = config.get('gpu_id', '')
         confidence_thresh = float(config["confidence_thresh"])
         nms_thresh = float(config["nms_thresh"])
