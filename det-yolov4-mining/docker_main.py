@@ -12,9 +12,11 @@ def _load_config() -> dict:
     with open("/in/config.yaml", "r", encoding='utf8') as f:
         config = yaml.safe_load(f)
 
+    # set default task id
     if "task_id" not in config:
         config["task_id"] = "0"
 
+    # select mxnet model for mining and infer
     model_params_path_conf: List[str] = config['model_params_path']
     model_params_path = ''
     for p in model_params_path_conf:
