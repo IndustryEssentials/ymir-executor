@@ -437,7 +437,7 @@ def run(num_of_classes: int, input_h: int, input_w: int, load_param_name: str, e
     net.load_weights(load_param_name)
     net.hybridize()
     Y = net(X)
-    net.export(export_dir, 0)
+    net.export(os.path.join(export_dir, 'model'), 0)
 
 
 if __name__ == "__main__":
@@ -447,4 +447,4 @@ if __name__ == "__main__":
         input_h=args.input_h,
         input_w=args.input_w,
         load_param_name=args.load_param_name,
-        export_dir="/out/models/model")
+        export_dir="/out/models")

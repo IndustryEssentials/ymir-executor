@@ -21,33 +21,22 @@ class _DarknetToMxnetHandler(FileSystemEventHandler):
         self._best_base_name = None
 
     def on_modified(self, event: FileSystemEvent) -> None:
-        if event.is_directory:
+        if not os.path.isfile(event.src_path):
             return
         src_path: str = event.src_path
         src_basename = os.path.basename(src_path)
-        src_main, src_ext = os.path.splitext(src_basename)
-        is_best = ('best' in src_main)
-
-        if src_ext != '.weights':
-            return
-        if not os.path.isfile(src_path):
-            return
-        if (not is_best) and self._best_base_name:
-            # if already have best converted, we should convert the best modifications
+        if 'best.weights' not in src_basename:
             return
 
-        # if file *.weights modified, convert it to mxnet params
+        # if file *best.weights modified, convert it to mxnet params
         convert_model_darknet2mxnet_yolov4.run(num_of_classes=self._class_numbers,
                                                input_h=self._image_height,
                                                input_w=self._image_width,
                                                load_param_name=src_path,
-                                               export_dir='/out/models/model')
-
-        if is_best:
-            self._best_base_name = src_basename
+                                               export_dir='/out/models')
 
         self._write_result_yaml(result_yaml_path='/out/models/result.yaml',
-                                weights_base_name=(self._best_base_name or src_basename))
+                                weights_base_name=src_basename)
 
     def _write_result_yaml(self, result_yaml_path: str, weights_base_name: str) -> None:
         if os.path.isfile(result_yaml_path):
