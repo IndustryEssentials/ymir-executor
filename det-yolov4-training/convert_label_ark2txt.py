@@ -37,7 +37,7 @@ if __name__ == "__main__":
             bbox_w = xmax - xmin
             bbox_h = ymax - ymin
             if bbox_w < 10 or bbox_h < 10:
-                print("bbox too small {} {} \n {}".format(bbox_w, bbox_h, each_imgpath))
+                # print("bbox too small {} {} \n     {}".format(bbox_w, bbox_h, each_imgpath))
                 continue
             xcenter /= img_w
             ycenter /= img_h

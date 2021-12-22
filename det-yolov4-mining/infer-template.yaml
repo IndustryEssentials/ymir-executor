@@ -16,7 +16,7 @@ nms_thresh: 0.45
 max_boxes: 50
 # shm_size: '16G'
 # gpu_id: ''
-# model_params_path: /in/model/model-0000.params
+# model_params_path: []
 # class_names:
 # - expose_rubbish
 # task_id: '0'

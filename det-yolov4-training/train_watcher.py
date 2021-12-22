@@ -1,0 +1,79 @@
+import logging
+import os
+
+import yaml
+
+from watchdog.events import FileSystemEvent, FileSystemEventHandler
+from watchdog.observers import Observer
+
+import convert_model_darknet2mxnet_yolov4
+
+
+class _DarknetToMxnetHandler(FileSystemEventHandler):
+    def __init__(self, width: int, height: int, class_num: int) -> None:
+        super().__init__()
+        self._image_width = width
+        self._image_height = height
+        self._class_numbers = class_num
+
+        # None means have no best yet
+        # if already have best, only handles best.weights
+        self._best_base_name = None
+
+    def on_modified(self, event: FileSystemEvent) -> None:
+        if not os.path.isfile(event.src_path):
+            return
+        src_path: str = event.src_path
+        src_basename = os.path.basename(src_path)
+        if 'best.weights' not in src_basename:
+            return
+
+        # if file *best.weights modified, convert it to mxnet params
+        convert_model_darknet2mxnet_yolov4.run(num_of_classes=self._class_numbers,
+                                               input_h=self._image_height,
+                                               input_w=self._image_width,
+                                               load_param_name=src_path,
+                                               export_dir='/out/models')
+
+        self._write_result_yaml(result_yaml_path='/out/models/result.yaml',
+                                weights_base_name=src_basename)
+
+    def _write_result_yaml(self, result_yaml_path: str, weights_base_name: str) -> None:
+        if os.path.isfile(result_yaml_path):
+            with open(result_yaml_path, 'r') as f:
+                results = yaml.safe_load(f.read())
+        else:
+            results = {}
+
+        results['model'] = ['model-symbol.json', 'model-0000.params', weights_base_name]
+
+        with open(result_yaml_path, 'w') as f:
+            yaml.dump(results, f)
+
+
+class TrainWatcher:
+    def __init__(self, model_dir: str, width: int, height: int, class_num: int) -> None:
+        super().__init__()
+        self._model_dir = model_dir
+        self._observer = None
+        self._image_width = width
+        self._image_height = height
+        self._class_numbers = class_num
+
+    def start(self) -> None:
+        if self._observer:
+            logging.warning('watcher is already running')
+            return
+
+        self._observer = Observer()
+        event_handler = _DarknetToMxnetHandler(width=self._image_width,
+                                               height=self._image_height,
+                                               class_num=self._class_numbers)
+        self._observer.schedule(event_handler=event_handler, path=self._model_dir)
+
+        self._observer.start()
+
+    def stop(self) -> None:
+        if not self._observer:
+            return
+        self._observer.stop()
