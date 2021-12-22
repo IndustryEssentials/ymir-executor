@@ -26,27 +26,15 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
             ('^.*train-log.yaml$', _DarknetTrainingHandler._on_train_log_yaml_modified)
         ]
 
-    # public hericated
+    # public: interit from FileSystemEventHandler
     def on_modified(self, event: FileSystemEvent) -> None:
         if not os.path.isfile(event.src_path):
             return
         src_path: str = event.src_path
         src_basename = os.path.basename(src_path)
         for pattern, handler in self._pattern_and_handlers:
-            # for test
-            with open('/out/ymir-tmp.txt', 'a') as f:
-                f.write(f"modified: {src_path}, {src_basename}\n")
-            # for test ends
             if re.match(pattern=pattern, string=src_basename):
-                # for test
-                with open('/out/ymir-tmp.txt', 'a') as f:
-                    f.write(f"matched: {src_path} -> {handler}\n")
-                # for test ends
                 handler(self, src_path)
-                # for test
-                with open('/out/ymir-tmp.txt', 'a') as f:
-                    f.write(f"matched: {src_path} done\n")
-                # for test ends
 
     # protected: pattern handlers
     def _on_best_weights_modified(self, src_path: str) -> None:
@@ -61,35 +49,19 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
                                 weights_base_name=os.path.basename(src_path))
 
     def _on_train_log_yaml_modified(self, src_path: str) -> None:
-        # for test
-        with open('/out/ymir-tmp.txt', 'a') as f:
-            f.write(f"_on_train_log_yaml_modified: {src_path}\n")
-        # for test ends
-
         # if file result.yaml changed, write tensorboard
-        try:
-            with open(src_path, 'r') as f:
-                train_log_dict = yaml.safe_load(f.read())
+        with open(src_path, 'r') as f:
+            train_log_dict = yaml.safe_load(f.read())
 
-            iteration = int(train_log_dict['iteration'])
-            loss = float(train_log_dict['loss'])
-            avg_loss = float(train_log_dict['avg_loss'])
-            rate = float(train_log_dict['rate'])
+        iteration = int(train_log_dict['iteration'])
+        loss = float(train_log_dict['loss'])
+        avg_loss = float(train_log_dict['avg_loss'])
+        rate = float(train_log_dict['rate'])
 
-            self._tensorboard_writer.add_scalar(tag="loss", scalar_value=loss, global_step=iteration)
-            self._tensorboard_writer.add_scalar(tag="avg_loss", scalar_value=avg_loss, global_step=iteration)
-            self._tensorboard_writer.add_scalar(tag="rate", scalar_value=rate, global_step=iteration)
-            self._tensorboard_writer.flush()
-        except Exception as e:
-            # for test
-            with open('/out/ymir-tmp.txt', 'a') as f:
-                f.write(f"yaml exception: {e}" + '\n')
-            # for test ends
-
-        # for test
-        with open('/out/ymir-tmp.txt', 'a') as f:
-            f.write(f"yaml read done: {train_log_dict}" + '\n')
-        # for test ends
+        self._tensorboard_writer.add_scalar(tag="loss", scalar_value=loss, global_step=iteration)
+        self._tensorboard_writer.add_scalar(tag="avg_loss", scalar_value=avg_loss, global_step=iteration)
+        self._tensorboard_writer.add_scalar(tag="rate", scalar_value=rate, global_step=iteration)
+        self._tensorboard_writer.flush()
 
     # protected: general
     def _write_result_yaml(self, result_yaml_path: str, weights_base_name: str) -> None:
