@@ -321,8 +321,17 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
             else fprintf(stderr, "\n Tensor Cores are used.\n");
             fflush(stderr);
         }
-        printf("\n %d: %f, %f avg loss, %f rate, %lf seconds, %d images, %f hours left\n", iteration, loss, avg_loss, get_current_rate(net), (what_time_is_it_now() - time), iteration*imgs, avg_time);
+        float current_rate = get_current_rate(net);
+        printf("\n %d: %f, %f avg loss, %f rate, %lf seconds, %d images, %f hours left\n", iteration, loss, avg_loss, current_rate, (what_time_is_it_now() - time), iteration*imgs, avg_time);
         fflush(stdout);
+
+        // write iteration, loss, avg loss, rate to train log yaml
+        FILE *file_ptr = fopen("/out/models/train-log.yaml", "w");
+        if (file_ptr != NULL) {
+            fprintf(file_ptr, "iteration: %d\nloss: %f\navg_loss: %f\nrate: %f\n", iteration, loss, avg_loss, current_rate);
+            fclose(file_ptr);
+        } // don't write if file open failed
+        // write train log yaml ends
 
         int draw_precision = 0;
         if (calc_map && (iteration >= next_map_calc || iteration == net.max_batches)) {
