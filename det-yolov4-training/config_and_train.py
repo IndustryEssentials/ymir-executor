@@ -1,8 +1,20 @@
+from itertools import count
 import yaml
 import os
 import time
 
+import numpy as np
+from mxnet import nd
+
 import train_watcher
+
+
+def get_model_seen(model_path):
+    with open(model_path, 'rb') as mf:
+        header = nd.array(np.fromfile(mf, dtype=np.int32, count=5))
+        seen_images_array = header[3]
+        return int(seen_images_array.asscalar())
+
 
 config_file = "/in/config.yaml"
 
@@ -19,7 +31,9 @@ image_width = config["image_width"]
 learning_rate = config["learning_rate"]
 max_batches = config["max_batches"]
 pretrained_model_params_conf = config.get("pretrained_model_params", None)
-batch = config["batch"]
+batch = int(config["batch"])
+if batch <= 0:
+    raise ValueError('invalid batch size')
 subdivisions = config["subdivisions"]
 warmup_iterations = config["warmup_iterations"]
 
@@ -96,8 +110,13 @@ if pretrained_model_params is None or not os.path.isfile(pretrained_model_params
     train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg /out/models/yolov4_last.weights -map -gpus {} -task_id {} -max_batches {} -dont_show".format(gpus, task_id, max_batches)
 else:
     # if pretrained model params does exist, train model from last best weights, clear previous trained count
+    model_seen = get_model_seen(pretrained_model_params)
+    model_trained_batches = model_seen // batch
+    print(f"model already seen: {model_seen}, {model_trained_batches}")
+    max_batches += model_trained_batches
+    print(f"max_batches reset to {max_batches}")
     os.system("sed -i 's/max_batches=20000/max_batches={}/g' /out/models/yolov4.cfg".format(max_batches))
-    train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg {} -map -gpus {} -task_id {} -max_batches {} -dont_show -clear".format(pretrained_model_params, gpus, task_id, max_batches)
+    train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg {} -map -gpus {} -task_id {} -max_batches {} -dont_show".format(pretrained_model_params, gpus, task_id, max_batches)
 
 os.system(train_script_str)
 
