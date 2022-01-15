@@ -40,9 +40,12 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         src_path: str = event.src_path
         src_basename = os.path.basename(src_path)
         logging.info(f"found modified: {src_path}")  # for test
-        for pattern, handler in self._pattern_and_handlers:
-            if re.match(pattern=pattern, string=src_basename):
-                handler(self, src_path)
+        try:
+            for pattern, handler in self._pattern_and_handlers:
+                if re.match(pattern=pattern, string=src_basename):
+                    handler(self, src_path)
+        except BaseException:
+            logging.exception(f"on_modified: {src_path}")
 
     # protected: pattern handlers
     def _on_best_weights_modified(self, src_path: str) -> None:
@@ -81,6 +84,7 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
             self._tensorboard_writer.flush()
         except BaseException as e:
             logging.exception(msg=f'tensorboard write error in step: {iteration}')
+            raise e
 
     # protected: general
     def _write_result_yaml(self, result_yaml_path: str, weights_base_name: str) -> None:
