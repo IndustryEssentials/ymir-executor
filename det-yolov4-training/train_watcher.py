@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 import re
 from typing import Callable, Tuple
@@ -58,6 +59,11 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         avg_loss = float(train_log_dict['avg_loss'])
         rate = float(train_log_dict['rate'])
 
+        # for test
+        with open('/out/tb-tmp.txt', 'w') as f:
+            f.write(f"writing tensorboard: i: {iteration}, l: {loss}, a: {avg_loss}, r: {rate}\n")
+        # for test ends
+
         self._tensorboard_writer.add_scalar(tag="train/loss", scalar_value=loss, global_step=iteration)
         self._tensorboard_writer.add_scalar(tag="train/avg_loss", scalar_value=avg_loss, global_step=iteration)
         self._tensorboard_writer.add_scalar(tag="train/rate", scalar_value=rate, global_step=iteration)
@@ -103,4 +109,3 @@ class TrainWatcher:
         if not self._observer:
             return
         self._observer.stop()
-        self._tensorboard_writer.close()
