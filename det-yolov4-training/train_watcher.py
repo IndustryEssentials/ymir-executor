@@ -1,7 +1,8 @@
+from fileinput import filename
 import logging
-import math
 import os
 import re
+import time  # for test
 from typing import Callable, Tuple
 
 from tensorboardX import SummaryWriter
@@ -12,6 +13,11 @@ from watchdog.observers import Observer
 
 import convert_model_darknet2mxnet_yolov4
 
+
+logging.basicConfig(level=logging.DEBUG,
+                    filename='/out/tb-tmp.txt',
+                    filemode='a',
+                    format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
 class _DarknetTrainingHandler(FileSystemEventHandler):
     # life circle
@@ -33,6 +39,7 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
             return
         src_path: str = event.src_path
         src_basename = os.path.basename(src_path)
+        logging.info(f"found modified: {src_path}")  # for test
         for pattern, handler in self._pattern_and_handlers:
             if re.match(pattern=pattern, string=src_basename):
                 handler(self, src_path)
@@ -54,20 +61,26 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         with open(src_path, 'r') as f:
             train_log_dict = yaml.safe_load(f.read())
 
+        # for test
+        logging.info(f"train log: {train_log_dict}")
+        # for test ends
+
         iteration = int(train_log_dict['iteration'])
         loss = float(train_log_dict['loss'])
         avg_loss = float(train_log_dict['avg_loss'])
         rate = float(train_log_dict['rate'])
 
         # for test
-        with open('/out/tb-tmp.txt', 'w') as f:
-            f.write(f"writing tensorboard: i: {iteration}, l: {loss}, a: {avg_loss}, r: {rate}\n")
+        logging.info(f"writing tensorboard: i: {iteration}, l: {loss}, a: {avg_loss}, r: {rate}")
         # for test ends
 
-        self._tensorboard_writer.add_scalar(tag="train/loss", scalar_value=loss, global_step=iteration)
-        self._tensorboard_writer.add_scalar(tag="train/avg_loss", scalar_value=avg_loss, global_step=iteration)
-        self._tensorboard_writer.add_scalar(tag="train/rate", scalar_value=rate, global_step=iteration)
-        self._tensorboard_writer.flush()
+        try:
+            self._tensorboard_writer.add_scalar(tag="train/loss", scalar_value=loss, global_step=iteration)
+            self._tensorboard_writer.add_scalar(tag="train/avg_loss", scalar_value=avg_loss, global_step=iteration)
+            self._tensorboard_writer.add_scalar(tag="train/rate", scalar_value=rate, global_step=iteration)
+            self._tensorboard_writer.flush()
+        except BaseException as e:
+            logging.exception(msg=f'tensorboard write error in step: {iteration}')
 
     # protected: general
     def _write_result_yaml(self, result_yaml_path: str, weights_base_name: str) -> None:
@@ -109,3 +122,6 @@ class TrainWatcher:
         if not self._observer:
             return
         self._observer.stop()
+
+# 42032
+# mir train --model-location /data/zhaozhiwei/playground/ymir-models --media-location /data/zhaozhiwei/playground/ymir-assets -w /data/zhaozhiwei/playground/mir-tmp/training-1 --src-revs tr-va-1 --dst-rev trainig-1@training-1 --config-file /data/zhaozhiwei/playground/datasets/training-config.yaml --executor yolov4-training:test --executor-instance training-1-ins
