@@ -12,9 +12,6 @@ from watchdog.observers import Observer
 import convert_model_darknet2mxnet_yolov4
 
 
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s')
-
 class _DarknetTrainingHandler(FileSystemEventHandler):
     # life circle
     def __init__(self, width: int, height: int, class_num: int) -> None:
