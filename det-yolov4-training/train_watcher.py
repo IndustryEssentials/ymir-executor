@@ -1,8 +1,6 @@
-from fileinput import filename
 import logging
 import os
 import re
-import time  # for test
 from typing import Callable, Tuple
 
 from tensorboardX import SummaryWriter
@@ -14,9 +12,7 @@ from watchdog.observers import Observer
 import convert_model_darknet2mxnet_yolov4
 
 
-logging.basicConfig(level=logging.DEBUG,
-                    filename='/out/tb-tmp.txt',
-                    filemode='a',
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
 class _DarknetTrainingHandler(FileSystemEventHandler):
@@ -33,19 +29,21 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
             ('^.*train-log.yaml$', _DarknetTrainingHandler._on_train_log_yaml_modified)
         ]
 
+    def stop(self) -> None:
+        self._tensorboard_writer.close()
+
     # public: interit from FileSystemEventHandler
     def on_modified(self, event: FileSystemEvent) -> None:
         if not os.path.isfile(event.src_path):
             return
         src_path: str = event.src_path
         src_basename = os.path.basename(src_path)
-        logging.info(f"found modified: {src_path}")  # for test
-        try:
-            for pattern, handler in self._pattern_and_handlers:
-                if re.match(pattern=pattern, string=src_basename):
+        for pattern, handler in self._pattern_and_handlers:
+            if re.match(pattern=pattern, string=src_basename):
+                try:
                     handler(self, src_path)
-        except BaseException:
-            logging.exception(f"on_modified: {src_path}")
+                except BaseException:
+                    logging.exception(msg=f"error occured in handler: {handler} and path: {src_path}")
 
     # protected: pattern handlers
     def _on_best_weights_modified(self, src_path: str) -> None:
@@ -64,10 +62,6 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         with open(src_path, 'r') as f:
             train_log_dict = yaml.safe_load(f.read())
 
-        # for test
-        logging.info(f"train log: {train_log_dict}")
-        # for test ends
-
         if not isinstance(train_log_dict, dict):
             return
 
@@ -76,18 +70,12 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         avg_loss = float(train_log_dict['avg_loss'])
         rate = float(train_log_dict['rate'])
 
-        # for test
-        logging.info(f"writing tensorboard: i: {iteration}, l: {loss}, a: {avg_loss}, r: {rate}")
-        # for test ends
+        logging.debug(f"writing tensorboard: i: {iteration}, l: {loss}, a: {avg_loss}, r: {rate}")
 
         self._tensorboard_writer.add_scalar(tag="train/loss", scalar_value=loss, global_step=iteration)
         self._tensorboard_writer.add_scalar(tag="train/avg_loss", scalar_value=avg_loss, global_step=iteration)
         self._tensorboard_writer.add_scalar(tag="train/rate", scalar_value=rate, global_step=iteration)
         self._tensorboard_writer.flush()
-
-        # for test
-        logging.info(f"writing tensorboard: i: {iteration} done")
-        # for test ends
 
     # protected: general
     def _write_result_yaml(self, result_yaml_path: str, weights_base_name: str) -> None:
@@ -108,22 +96,17 @@ class TrainWatcher:
         super().__init__()
         self._model_dir = model_dir
         self._observer = None
-        self._image_width = width
-        self._image_height = height
-        self._class_numbers = class_num
+        self._event_handler = _DarknetTrainingHandler(width=width,
+                                                      height=height,
+                                                      class_num=class_num)
 
     def start(self) -> None:
         if self._observer:
             logging.warning('watcher is already running')
             return
 
-        logging.info('TrainWatcher start')  # for test
-
         self._observer = Observer()
-        event_handler = _DarknetTrainingHandler(width=self._image_width,
-                                                height=self._image_height,
-                                                class_num=self._class_numbers)
-        self._observer.schedule(event_handler=event_handler, path=self._model_dir)
+        self._observer.schedule(event_handler=self._event_handler, path=self._model_dir)
 
         self._observer.start()
 
@@ -131,6 +114,4 @@ class TrainWatcher:
         if not self._observer:
             return
         self._observer.stop()
-
-# 42032
-# mir train --model-location /data/zhaozhiwei/playground/ymir-models --media-location /data/zhaozhiwei/playground/ymir-assets -w /data/zhaozhiwei/playground/mir-tmp/training-1 --src-revs tr-va-1 --dst-rev trainig-1@training-1 --config-file /data/zhaozhiwei/playground/datasets/training-config.yaml --executor yolov4-training:test --executor-instance training-1-ins
+        self._event_handler.stop()
