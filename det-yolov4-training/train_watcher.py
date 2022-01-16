@@ -68,6 +68,9 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         logging.info(f"train log: {train_log_dict}")
         # for test ends
 
+        if not isinstance(train_log_dict, dict):
+            return
+
         iteration = int(train_log_dict['iteration'])
         loss = float(train_log_dict['loss'])
         avg_loss = float(train_log_dict['avg_loss'])
@@ -77,14 +80,14 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         logging.info(f"writing tensorboard: i: {iteration}, l: {loss}, a: {avg_loss}, r: {rate}")
         # for test ends
 
-        try:
-            self._tensorboard_writer.add_scalar(tag="train/loss", scalar_value=loss, global_step=iteration)
-            self._tensorboard_writer.add_scalar(tag="train/avg_loss", scalar_value=avg_loss, global_step=iteration)
-            self._tensorboard_writer.add_scalar(tag="train/rate", scalar_value=rate, global_step=iteration)
-            self._tensorboard_writer.flush()
-        except BaseException as e:
-            logging.exception(msg=f'tensorboard write error in step: {iteration}')
-            raise e
+        self._tensorboard_writer.add_scalar(tag="train/loss", scalar_value=loss, global_step=iteration)
+        self._tensorboard_writer.add_scalar(tag="train/avg_loss", scalar_value=avg_loss, global_step=iteration)
+        self._tensorboard_writer.add_scalar(tag="train/rate", scalar_value=rate, global_step=iteration)
+        self._tensorboard_writer.flush()
+
+        # for test
+        logging.info(f"writing tensorboard: i: {iteration} done")
+        # for test ends
 
     # protected: general
     def _write_result_yaml(self, result_yaml_path: str, weights_base_name: str) -> None:
@@ -113,6 +116,8 @@ class TrainWatcher:
         if self._observer:
             logging.warning('watcher is already running')
             return
+
+        logging.info('TrainWatcher start')  # for test
 
         self._observer = Observer()
         event_handler = _DarknetTrainingHandler(width=self._image_width,
