@@ -196,7 +196,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     while (get_current_iteration(net) < net.max_batches) {
         float running_percentage = (float)get_current_iteration(net) / max_batches;
         FILE *file_handler_monitor = fopen("/out/monitor.txt", "w");
-        time_t curr_time = time(NULL) * 1000;
+        time_t curr_time = time(NULL);
         fprintf(file_handler_monitor, "%s\t%ld\t%0.2f\t%s", task_id, curr_time, running_percentage, "running");
         fclose(file_handler_monitor);
         if (l.random && count++ % 10 == 0) {
