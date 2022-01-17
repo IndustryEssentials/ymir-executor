@@ -58,9 +58,9 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         avg_loss = float(train_log_dict['avg_loss'])
         rate = float(train_log_dict['rate'])
 
-        self._tensorboard_writer.add_scalar(tag="loss", scalar_value=loss, global_step=iteration)
-        self._tensorboard_writer.add_scalar(tag="avg_loss", scalar_value=avg_loss, global_step=iteration)
-        self._tensorboard_writer.add_scalar(tag="rate", scalar_value=rate, global_step=iteration)
+        self._tensorboard_writer.add_scalar(tag="train/loss", scalar_value=loss, global_step=iteration)
+        self._tensorboard_writer.add_scalar(tag="train/avg_loss", scalar_value=avg_loss, global_step=iteration)
+        self._tensorboard_writer.add_scalar(tag="train/rate", scalar_value=rate, global_step=iteration)
         self._tensorboard_writer.flush()
 
     # protected: general
