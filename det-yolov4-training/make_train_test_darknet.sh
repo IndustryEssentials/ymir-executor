@@ -1,3 +1,5 @@
+set -e
+
 cat /in/config.yaml | grep task_id: | tr -s " " "\012" > /out/tmp.txt
 echo -e "$(sed '2!d' /out/tmp.txt)\t$(date +%s)000\t"0.00"\t"running"\t" > /out/monitor.txt
 # find all jpg image files and save their paths in img.txt

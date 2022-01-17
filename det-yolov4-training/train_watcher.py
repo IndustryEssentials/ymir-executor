@@ -26,6 +26,9 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
             ('^.*train-log.yaml$', _DarknetTrainingHandler._on_train_log_yaml_modified)
         ]
 
+    def stop(self) -> None:
+        self._tensorboard_writer.close()
+
     # public: interit from FileSystemEventHandler
     def on_modified(self, event: FileSystemEvent) -> None:
         if not os.path.isfile(event.src_path):
@@ -34,7 +37,10 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         src_basename = os.path.basename(src_path)
         for pattern, handler in self._pattern_and_handlers:
             if re.match(pattern=pattern, string=src_basename):
-                handler(self, src_path)
+                try:
+                    handler(self, src_path)
+                except BaseException:
+                    logging.exception(msg=f"error occured in handler: {handler} and path: {src_path}")
 
     # protected: pattern handlers
     def _on_best_weights_modified(self, src_path: str) -> None:
@@ -53,10 +59,15 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         with open(src_path, 'r') as f:
             train_log_dict = yaml.safe_load(f.read())
 
+        if not isinstance(train_log_dict, dict):
+            return
+
         iteration = int(train_log_dict['iteration'])
         loss = float(train_log_dict['loss'])
         avg_loss = float(train_log_dict['avg_loss'])
         rate = float(train_log_dict['rate'])
+
+        logging.debug(f"writing tensorboard: i: {iteration}, l: {loss}, a: {avg_loss}, r: {rate}")
 
         self._tensorboard_writer.add_scalar(tag="train/loss", scalar_value=loss, global_step=iteration)
         self._tensorboard_writer.add_scalar(tag="train/avg_loss", scalar_value=avg_loss, global_step=iteration)
@@ -82,9 +93,9 @@ class TrainWatcher:
         super().__init__()
         self._model_dir = model_dir
         self._observer = None
-        self._image_width = width
-        self._image_height = height
-        self._class_numbers = class_num
+        self._event_handler = _DarknetTrainingHandler(width=width,
+                                                      height=height,
+                                                      class_num=class_num)
 
     def start(self) -> None:
         if self._observer:
@@ -92,10 +103,7 @@ class TrainWatcher:
             return
 
         self._observer = Observer()
-        event_handler = _DarknetTrainingHandler(width=self._image_width,
-                                                height=self._image_height,
-                                                class_num=self._class_numbers)
-        self._observer.schedule(event_handler=event_handler, path=self._model_dir)
+        self._observer.schedule(event_handler=self._event_handler, path=self._model_dir)
 
         self._observer.start()
 
@@ -103,4 +111,4 @@ class TrainWatcher:
         if not self._observer:
             return
         self._observer.stop()
-        self._tensorboard_writer.close()
+        self._event_handler.stop()
