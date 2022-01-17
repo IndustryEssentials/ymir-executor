@@ -89,7 +89,7 @@ class DockerALAPI:
         count = 0
         output_file_handle = open(tmp_result_filename, 'w')
         executor = ThreadPoolExecutor(max_workers=len(self.ctx))
-        
+
         for batch in tqdm.tqdm(datareader):
             data = gluon.utils.split_and_load(batch[0], ctx_list=self.ctx, batch_axis=0, even_split=False)
             img_index = batch[1].asnumpy().tolist()
@@ -105,8 +105,8 @@ class DockerALAPI:
             count += self.batch_size * len(self.ctx)
             self.progress_count = float(count) / self.total_num
             log_collector.monitor_collect(self.progress, "runing")
-        output_file_handle.close() 
-        
+        output_file_handle.close()
+
         self.path2score.sort(key=lambda x: x[1], reverse=True)
         with open(tmp_result_filename, "w") as f:
             path2score = ["\t".join(list(map(str, x))) + "\n" for x in self.path2score]
