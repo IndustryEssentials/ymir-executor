@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu16.04
+FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 WORKDIR /darknet
 RUN apt-get update
 RUN apt install -y software-properties-common wget
