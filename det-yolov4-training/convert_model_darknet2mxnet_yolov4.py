@@ -5,6 +5,9 @@ import mxnet.ndarray as nd
 import mxnet as mx
 import pdb
 import argparse
+import os
+from datetime import datetime 
+
 
 def ConvBNBlock(channels,kernel_size,strides,pad=0,use_bias=False,groups=1,activation='linear'):
     blk = nn.HybridSequential()
@@ -422,13 +425,26 @@ def parse_args():
 
     return args
 
-if __name__ == "__main__":
-    args = parse_args()
-    net = Darknet(args.num_of_classes)
+
+def run(num_of_classes: int, input_h: int, input_w: int, load_param_name: str, export_dir: str) -> None:
+    if not os.path.isfile(load_param_name):
+        return
+
+    net = Darknet(num_of_classes)
     net.initialize()
-    X = mx.nd.ones(shape=(1,3,args.input_h,args.input_w)) 
+    X = mx.nd.ones(shape=(1, 3, input_h, input_w)) 
     Y = net(X)
-    net.load_weights(args.load_param_name)
+    net.load_weights(load_param_name)
     net.hybridize()
     Y = net(X)
-    net.export("/out/models/model", 0)
+    net.export(os.path.join(export_dir, 'model'), 0)
+
+
+if __name__ == "__main__":
+    args = parse_args()
+
+    run(num_of_classes=args.num_of_classes,
+        input_h=args.input_h,
+        input_w=args.input_w,
+        load_param_name=args.load_param_name,
+        export_dir="/out/models")

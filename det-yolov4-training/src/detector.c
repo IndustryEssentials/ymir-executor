@@ -9,6 +9,7 @@
 #include <time.h>
 #include "demo.h"
 #include "option_list.h"
+#include <unistd.h>
 
 #ifndef __COMPAR_FN_T
 #define __COMPAR_FN_T
@@ -195,7 +196,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     while (get_current_iteration(net) < net.max_batches) {
         float running_percentage = (float)get_current_iteration(net) / max_batches;
         FILE *file_handler_monitor = fopen("/out/monitor.txt", "w");
-        time_t curr_time = time(NULL) * 1000;
+        time_t curr_time = time(NULL);
         fprintf(file_handler_monitor, "%s\t%ld\t%0.2f\t%s", task_id, curr_time, running_percentage, "running");
         fclose(file_handler_monitor);
         if (l.random && count++ % 10 == 0) {
@@ -320,8 +321,17 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
             else fprintf(stderr, "\n Tensor Cores are used.\n");
             fflush(stderr);
         }
-        printf("\n %d: %f, %f avg loss, %f rate, %lf seconds, %d images, %f hours left\n", iteration, loss, avg_loss, get_current_rate(net), (what_time_is_it_now() - time), iteration*imgs, avg_time);
+        float current_rate = get_current_rate(net);
+        printf("\n %d: %f, %f avg loss, %f rate, %lf seconds, %d images, %f hours left\n", iteration, loss, avg_loss, current_rate, (what_time_is_it_now() - time), iteration*imgs, avg_time);
         fflush(stdout);
+
+        // write iteration, loss, avg loss, rate to train log yaml
+        FILE *file_ptr = fopen("/out/models/train-log.yaml", "w");
+        if (file_ptr != NULL) {
+            fprintf(file_ptr, "iteration: %d\nloss: %f\navg_loss: %f\nrate: %f\n", iteration, loss, avg_loss, current_rate);
+            fclose(file_ptr);
+        } // don't write if file open failed
+        // write train log yaml ends
 
         int draw_precision = 0;
         if (calc_map && (iteration >= next_map_calc || iteration == net.max_batches)) {
@@ -421,9 +431,17 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
 #ifdef GPU
     if (ngpus != 1) sync_nets(nets, ngpus, 0);
 #endif
+
+    // save final
     char buff[256];
     sprintf(buff, "%s/%s_final.weights", backup_directory, base);
     save_weights(net, buff);
+
+    // save best if not exists
+    sprintf(buff, "%s/%s_best.weights", backup_directory, base);
+    if (!file_exists(buff)) {
+        save_weights(net, buff);
+    }
     printf("If you want to train from the beginning, then use flag in the end of training command: -clear \n");
 
 #ifdef OPENCV
@@ -1366,13 +1384,16 @@ float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, floa
 
     printf(" mean average precision (mAP@%0.6f) = %f, or %2.2f %% \n", iou_thresh, mean_average_precision, mean_average_precision * 100);
     fprintf(file_handle, "map: '%0.6f'\n", mean_average_precision);
+
     fprintf(file_handle, "model:\n");
     fprintf(file_handle, "- model-symbol.json\n");
     fprintf(file_handle, "- model-0000.params\n");
+    fprintf(file_handle, "- yolov4_best.weights\n");
+
     fprintf(file_handle, "extra-info: ");
     fprintf(file_handle, "'for conf_thresh = %1.2f, precision = %1.2f, recall = %1.2f, F1-score = %1.2f, TP = %d, FP = %d, FN = %d, average IoU = %0.6f, IoU threshold = %0.6f'",
         thresh_calc_avg_iou, cur_precision, cur_recall, f1_score, tp_for_thresh, fp_for_thresh, unique_truth_count - tp_for_thresh, avg_iou, iou_thresh);
-    
+
     fclose(file_handle);
 
     for (i = 0; i < classes; ++i) {
@@ -2065,4 +2086,11 @@ void run_detector(int argc, char **argv)
     else printf(" There isn't such command: %s", argv[2]);
 
     if (gpus && gpu_list && ngpus > 1) free(gpus);
+}
+
+int file_exists(const char *file_path) {
+    if (file_path && access(file_path, F_OK) == 0) {
+        return 1;  // file exists
+    }
+    return 0;  // file not exists
 }

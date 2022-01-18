@@ -4,11 +4,10 @@ image_width: 608
 learning_rate: 0.013
 max_batches: 20000
 warmup_iterations: 1000
-pretrained_model_params: '/fake_model'
 batch: 64
 subdivisions: 32
 shm_size: '16G'
 # class_names:
-# - expose_rubbish
+# - cat
 # gpu_id: '0,1,2,3'
-
+# pretrained_model_params: []

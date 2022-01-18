@@ -1,7 +1,25 @@
+from itertools import count
+import logging
 import yaml
 import os
-import mxnet
 import time
+
+import numpy as np
+from mxnet import nd
+
+import train_watcher
+
+
+def get_model_seen(model_path):
+    with open(model_path, 'rb') as mf:
+        header = nd.array(np.fromfile(mf, dtype=np.int32, count=5))
+        seen_images_array = header[3]
+        return int(seen_images_array.asscalar())
+
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s')
+
 
 config_file = "/in/config.yaml"
 
@@ -17,8 +35,10 @@ image_height = config["image_height"]
 image_width = config["image_width"]
 learning_rate = config["learning_rate"]
 max_batches = config["max_batches"]
-pretrained_model_params = config["pretrained_model_params"]
-batch = config["batch"]
+pretrained_model_params_conf = config.get("pretrained_model_params", None)
+batch = int(config["batch"])
+if batch <= 0:
+    raise ValueError('invalid batch size')
 subdivisions = config["subdivisions"]
 warmup_iterations = config["warmup_iterations"]
 
@@ -33,7 +53,7 @@ if class_names is not None:
         f.write(each_name)
         f.write("\n")
     f.close()
-    
+
 if classnum != 1:
     num_filter = (5 + classnum) * 3
     os.system("sed -i 's/classes=1/classes={}/g' /out/models/yolov4.cfg".format(classnum))
@@ -62,6 +82,29 @@ max_batches = max_batches // len(gpus.split(","))
 if max_batches < warmup_iterations:
     max_batches = warmup_iterations
 
+# start watcher
+watcher = train_watcher.TrainWatcher(model_dir='/out/models/',
+                                     width=image_width,
+                                     height=image_height,
+                                     class_num=classnum)
+watcher.start()
+
+pretrained_model_params = None
+if pretrained_model_params_conf:
+    if isinstance(pretrained_model_params_conf, list):
+        # list
+        for model_path in pretrained_model_params_conf:
+            if os.path.splitext(model_path)[1] == '.weights':
+                pretrained_model_params = model_path
+                break
+
+        if not pretrained_model_params:
+            raise ValueError("can not find proper pretrained model in config: {}".format(pretrained_model_params_conf))
+    else:
+        # other types: not supported
+        raise ValueError("unsupported pretrained_model_params_list: {}".format(type(pretrained_model_params_conf)))
+
+# run training
 if pretrained_model_params is None or not os.path.isfile(pretrained_model_params):
     # if pretrained model params doesn't exist, train model from image net pretrain model
     os.system("sed -i 's/max_batches=20000/max_batches={}/g' /out/models/yolov4.cfg".format(warmup_iterations))
@@ -71,11 +114,15 @@ if pretrained_model_params is None or not os.path.isfile(pretrained_model_params
     os.system("sed -i 's/max_batches={}/max_batches={}/g' /out/models/yolov4.cfg".format(warmup_iterations, max_batches))
     train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg /out/models/yolov4_last.weights -map -gpus {} -task_id {} -max_batches {} -dont_show".format(gpus, task_id, max_batches)
 else:
-    # if pretrained model params does exist, train model from last best weights
+    # if pretrained model params does exist, train model from last best weights, clear previous trained count
+    model_seen = get_model_seen(pretrained_model_params)
+    model_trained_batches = model_seen // batch
+    logging.info(f"model already seen: {model_seen}, {model_trained_batches}")
+    max_batches += model_trained_batches
+    logging.info(f"max_batches reset to {max_batches}")
     os.system("sed -i 's/max_batches=20000/max_batches={}/g' /out/models/yolov4.cfg".format(max_batches))
     train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg {} -map -gpus {} -task_id {} -max_batches {} -dont_show".format(pretrained_model_params, gpus, task_id, max_batches)
 
-# run training
 os.system(train_script_str)
 
 best_param_name = "/out/models/yolov4_best.weights"
@@ -92,3 +139,5 @@ os.system(darknet2mxnet_script_str)
 # run map and output log
 run_map_script_str = "./darknet detector map /out/coco.data /out/models/yolov4.cfg {}".format(best_param_name)
 os.system(run_map_script_str)
+
+watcher.stop()

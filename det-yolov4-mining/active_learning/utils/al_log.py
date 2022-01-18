@@ -24,7 +24,7 @@ class LogCollector:
         self.verbose = verbose
 
     def get_time(self):
-        return int(time.time() * 1000)
+        return int(time.time())
 
     def monitor_collect(self, percent, status, per_seconds=5, force=False):
         if self.last_monitor_collect_time is None or \

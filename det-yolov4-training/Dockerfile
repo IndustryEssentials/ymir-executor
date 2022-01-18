@@ -10,9 +10,10 @@ RUN wget https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_o
 RUN rm /usr/bin/python3
 RUN ln -s /usr/bin/python3.7 /usr/bin/python3
 RUN python3 get-pip.py
-RUN pip3 install mxnet-cu101==1.5.1 pyyaml numpy opencv-python
+RUN pip3 install mxnet-cu101==1.5.1 numpy opencv-python
+RUN pip3 install pyyaml watchdog tensorboardX six
 RUN apt-get install -y libopencv-dev
 COPY . /darknet
-RUN make
+RUN mkdir /img-man && cp /darknet/training-template.yaml /img-man/training-template.yaml
+RUN make -j
 CMD bash make_train_test_darknet.sh
-
