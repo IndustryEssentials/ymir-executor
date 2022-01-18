@@ -1,7 +1,7 @@
 anchors: '12, 16, 19, 36, 40, 28, 36, 75, 76, 55, 72, 146, 142, 110, 192, 243, 459, 401'
 image_height: 608
 image_width: 608
-learning_rate: 0.013
+learning_rate: 0.0013
 max_batches: 20000
 warmup_iterations: 1000
 batch: 64
