@@ -39,7 +39,7 @@ if __name__ == '__main__':
                            monitor_pure_path="/out/monitor-log.txt",
                            summary_path="/out/log.txt")
     log_collector.set_logger(log_writer, config["task_id"], verbose=True)
-    log_collector.monitor_collect(0.00, "pending", per_seconds=0)
+    log_collector.monitor_collect(0.00, "1", per_seconds=0)
     log_collector.summary_collect("config: {}".format(config))
 
     run_infer = int(config['run_infer'])
