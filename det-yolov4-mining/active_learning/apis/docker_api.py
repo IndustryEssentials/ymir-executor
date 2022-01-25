@@ -2,8 +2,9 @@ from active_learning.dataset import DataReader, ImageFolderDataset
 from active_learning.strategy import ALDD, CALD, ALDD_YOLO
 from active_learning.model_inference import CenterNet
 from active_learning.model_inference import YoloNet
-from active_learning.utils import softmax, log_collector, try_exception_log
+from active_learning.utils import softmax, log_collector, try_exception_log, TaskState
 
+from enum import Enum
 import os
 import sys
 import traceback
@@ -59,7 +60,7 @@ class DockerALAPI:
         self.progress_count = 0.0
         self.batch_size = 1 if self.strategy == "cald" else batch_size
         self.is_done = False
-        log_collector.monitor_collect(0.00, "pending", per_seconds=0)
+        log_collector.monitor_collect(0.00, TaskState.PENDING, per_seconds=0)
         log_collector.summary_collect("init api success")
         self.transform = transforms.Compose([transforms.Resize(size=(image_width, image_height)),
                                              transforms.ToTensor()])
@@ -104,7 +105,7 @@ class DockerALAPI:
                 output_file_handle.write(output_str)
             count += self.batch_size * len(self.ctx)
             self.progress_count = float(count) / self.total_num
-            log_collector.monitor_collect(self.progress, "runing")
+            log_collector.monitor_collect(self.progress, TaskState.RUNNING)
         output_file_handle.close()
 
         self.path2score.sort(key=lambda x: x[1], reverse=True)
@@ -115,7 +116,7 @@ class DockerALAPI:
         os.system("mv {} {}".format(tmp_result_filename, self.result_path))
 
         self.is_done = True
-        log_collector.monitor_collect(self.progress, "running", force=True)
+        log_collector.monitor_collect(self.progress, TaskState.RUNNING, force=True)
 
     def run(self):
         try:
@@ -124,7 +125,7 @@ class DockerALAPI:
         except Exception:
             exctype, value, tb = sys.exc_info()
             text = "".join(traceback.format_exception(exctype, value, tb))
-            log_collector.monitor_collect(self.progress, "error", force=True)
+            log_collector.monitor_collect(self.progress, TaskState.ERROR, force=True)
             text = "".join(log_collector.error_msg) + text
             log_collector.error_collect(text)
             log_collector.summary_collect(text)

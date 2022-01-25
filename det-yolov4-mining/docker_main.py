@@ -4,7 +4,7 @@ from typing import List
 import yaml
 
 from active_learning import DockerALAPI
-from active_learning.utils import log_collector, LogWriter
+from active_learning.utils import log_collector, LogWriter, TaskState
 import write_result
 
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
                            monitor_pure_path="/out/monitor-log.txt",
                            summary_path="/out/log.txt")
     log_collector.set_logger(log_writer, config["task_id"], verbose=True)
-    log_collector.monitor_collect(0.00, "pending", per_seconds=0)
+    log_collector.monitor_collect(0.00, TaskState.PENDING, per_seconds=0)
     log_collector.summary_collect("config: {}".format(config))
 
     run_infer = int(config['run_infer'])

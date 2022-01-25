@@ -112,3 +112,10 @@ def try_exception_log(func):
 
 
 # sys.excepthook = foo_excepthook
+
+
+class TaskState:
+    PENDING = '1'
+    RUNNING = '2'
+    DONE = '3'
+    ERROR = '4'
