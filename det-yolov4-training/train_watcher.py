@@ -66,12 +66,16 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         loss = float(train_log_dict['loss'])
         avg_loss = float(train_log_dict['avg_loss'])
         rate = float(train_log_dict['rate'])
-
-        logging.debug(f"writing tensorboard: i: {iteration}, l: {loss}, a: {avg_loss}, r: {rate}")
+        mean_ap = train_log_dict.get('map', None)
+        class_aps = train_log_dict.get('aps', None)
 
         self._tensorboard_writer.add_scalar(tag="train/loss", scalar_value=loss, global_step=iteration)
         self._tensorboard_writer.add_scalar(tag="train/avg_loss", scalar_value=avg_loss, global_step=iteration)
         self._tensorboard_writer.add_scalar(tag="train/rate", scalar_value=rate, global_step=iteration)
+        if isinstance(mean_ap, float):
+            self._tensorboard_writer.add_scalar(tag="train/mAP", scalar_value=mean_ap, global_step=iteration)
+        if class_aps and isinstance(class_aps, dict):
+            self._tensorboard_writer.add_scalars(main_tag='train/aps', tag_scalar_dict=class_aps, global_step=iteration)
         self._tensorboard_writer.flush()
 
     # protected: general
@@ -93,9 +97,7 @@ class TrainWatcher:
         super().__init__()
         self._model_dir = model_dir
         self._observer = None
-        self._event_handler = _DarknetTrainingHandler(width=width,
-                                                      height=height,
-                                                      class_num=class_num)
+        self._event_handler = _DarknetTrainingHandler(width=width, height=height, class_num=class_num)
 
     def start(self) -> None:
         if self._observer:
