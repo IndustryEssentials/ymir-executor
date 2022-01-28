@@ -327,14 +327,6 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
         printf("\n %d: %f, %f avg loss, %f rate, %lf seconds, %d images, %f hours left\n", iteration, loss, avg_loss, current_rate, (what_time_is_it_now() - time), iteration*imgs, avg_time);
         fflush(stdout);
 
-        // write iteration, loss, avg loss, rate to train log yaml
-        FILE *file_ptr = fopen("/out/models/train-log.yaml", "w");
-        if (file_ptr != NULL) {
-            fprintf(file_ptr, "iteration: %d\nloss: %f\navg_loss: %f\nrate: %f\n", iteration, loss, avg_loss, current_rate);
-            fclose(file_ptr);
-        } // don't write if file open failed
-        // write train log yaml ends
-
         int draw_precision = 0;
         if (calc_map && (iteration >= next_map_calc || iteration == net.max_batches)) {
             if (l.random) {
@@ -372,7 +364,14 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
             //network net_combined = combine_train_valid_networks(net, net_map);
 
             iter_map = iteration;
-            mean_average_precision = validate_detector_map(datacfg, cfgfile, weightfile, thresh, iou_thresh, 0, net.letter_box, &net_map);// &net_combined);
+            list *options = read_data_cfg(datacfg);
+            char *name_list = option_find_str(options, "names", "data/names.list");
+            int names_size = 0;
+            char **names = get_labels_custom(name_list, &names_size);
+            double *aps = (double *)xcalloc(names_size, sizeof(double));
+            mean_average_precision = validate_detector_map(datacfg, cfgfile, weightfile, thresh, iou_thresh, 0,
+                net.letter_box, &net_map, names, names_size, aps, best_map);
+
             printf("\n mean_average_precision (mAP@%0.2f) = %f \n", iou_thresh, mean_average_precision);
             if (mean_average_precision > best_map) {
                 best_map = mean_average_precision;
@@ -383,6 +382,31 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
             }
 
             draw_precision = 1;
+
+            // write iteration, loss, avg loss, rate, average map to train log yaml
+            FILE *file_ptr = fopen("/out/models/train-log.yaml", "w");
+            if (file_ptr != NULL) {
+                fprintf(file_ptr, "iteration: %d\nloss: %f\navg_loss: %f\nrate: %f\nmap: %f\n", iteration, loss, avg_loss, current_rate, mean_average_precision);
+                if (names_size > 0) {
+                    fprintf(file_ptr, "aps:\n");
+                    for (int idx = 0; idx < names_size; ++idx) {
+                        fprintf(file_ptr, "    %s: %f\n", names[idx], aps[idx]);
+                    }
+                }
+                fclose(file_ptr);
+            } // don't write if file open failed
+            // write train log yaml ends
+
+            free_ptrs((void **)names, names_size);
+            free(aps);
+        } else {
+            // write iteration, loss, avg loss, rate to train log yaml
+            FILE *file_ptr = fopen("/out/models/train-log.yaml", "w");
+            if (file_ptr != NULL) {
+                fprintf(file_ptr, "iteration: %d\nloss: %f\navg_loss: %f\nrate: %f\n", iteration, loss, avg_loss, current_rate);
+                fclose(file_ptr);
+            } // don't write if file open failed
+            // write train log yaml ends
         }
         time_remaining = ((net.max_batches - iteration) / ngpus)*(what_time_is_it_now() - time + load_time) / 60 / 60;
         // set initial value, even if resume training from 10000 iteration
@@ -954,15 +978,14 @@ int detections_comparator(const void *pa, const void *pb)
     return 0;
 }
 
-float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, float thresh_calc_avg_iou, const float iou_thresh, const int map_points, int letter_box, network *existing_net)
+float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, float thresh_calc_avg_iou,
+                            const float iou_thresh, const int map_points, int letter_box, network *existing_net,
+                            char **names, int names_size, double *aps, float best_map)
 {
     int j;
     list *options = read_data_cfg(datacfg);
     char *valid_images = option_find_str(options, "valid", "data/train.txt");
     char *difficult_valid_images = option_find_str(options, "difficult", NULL);
-    char *name_list = option_find_str(options, "names", "data/names.list");
-    int names_size = 0;
-    char **names = get_labels_custom(name_list, &names_size); //get_labels(name_list);
     //char *mapf = option_find_str(options, "map", 0);
     //int *map = 0;
     //if (mapf) map = read_map(mapf);
@@ -987,8 +1010,8 @@ float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, floa
         calculate_binary_weights(net);
     }
     if (net.layers[net.n - 1].classes != names_size) {
-        printf("\n Error: in the file %s number of names %d that isn't equal to classes=%d in the file %s \n",
-            name_list, names_size, net.layers[net.n - 1].classes, cfgfile);
+        printf("\n Error: number of names %d that isn't equal to classes=%d in the file %s \n",
+            names_size, net.layers[net.n - 1].classes, cfgfile);
         getchar();
     }
     srand(time(0));
@@ -1368,6 +1391,10 @@ float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, floa
         //printf("Precision = %1.2f, Recall = %1.2f, avg IOU = %2.2f%% \n\n", class_precision, class_recall, avg_iou_per_class[i]);
 
         mean_average_precision += avg_precision;
+
+        if (aps) {
+            aps[i] = avg_precision;
+        }
     }
 
     const float cur_precision = (float)tp_for_thresh / ((float)tp_for_thresh + (float)fp_for_thresh);
@@ -1385,7 +1412,7 @@ float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, floa
     else printf("used Area-Under-Curve for each unique Recall \n");
 
     printf(" mean average precision (mAP@%0.6f) = %f, or %2.2f %% \n", iou_thresh, mean_average_precision, mean_average_precision * 100);
-    fprintf(file_handle, "map: '%0.6f'\n", mean_average_precision);
+    fprintf(file_handle, "map: '%0.6f'\n", (best_map > mean_average_precision? best_map: mean_average_precision));
 
     fprintf(file_handle, "model:\n");
     fprintf(file_handle, "- model-symbol.json\n");
@@ -1418,7 +1445,7 @@ float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, floa
     if (reinforcement_fd != NULL) fclose(reinforcement_fd);
 
     // free memory
-    free_ptrs((void**)names, net.layers[net.n - 1].classes);
+    // free_ptrs((void **) names, net.layers[net.n - 1].classes);
     free_list_contents_kvp(options);
     free_list(options);
 
@@ -2065,7 +2092,15 @@ void run_detector(int argc, char **argv)
     else if (0 == strcmp(argv[2], "train")) train_detector(datacfg, cfg, weights, gpus, ngpus, clear, dont_show, calc_map, thresh, iou_thresh, mjpeg_port, show_imgs, benchmark_layers, chart_path, max_batches, task_id);
     else if (0 == strcmp(argv[2], "valid")) validate_detector(datacfg, cfg, weights, outfile);
     else if (0 == strcmp(argv[2], "recall")) validate_detector_recall(datacfg, cfg, weights);
-    else if (0 == strcmp(argv[2], "map")) validate_detector_map(datacfg, cfg, weights, thresh, iou_thresh, map_points, letter_box, NULL);
+    else if (0 == strcmp(argv[2], "map")) {
+        list *options = read_data_cfg(datacfg);
+        char *name_list = option_find_str(options, "names", "data/names.list");
+        int names_size = 0;
+        char **names = get_labels_custom(name_list, &names_size);
+        validate_detector_map(datacfg, cfg, weights, thresh, iou_thresh, map_points, letter_box, NULL, names,
+            names_size, NULL, -1);
+        free_ptrs((void **)names, names_size);
+    }
     else if (0 == strcmp(argv[2], "calc_anchors")) calc_anchors(datacfg, num_of_clusters, width, height, show);
     else if (0 == strcmp(argv[2], "draw")) {
         int it_num = 100;
