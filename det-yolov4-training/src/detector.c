@@ -129,7 +129,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     iter_save_last = get_current_iteration(net);
     iter_map = get_current_iteration(net);
     float mean_average_precision = -1;
-    float best_map = mean_average_precision;
+    static float best_map = -1;
 
     load_args args = { 0 };
     args.w = net.w;
@@ -374,8 +374,8 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
 
             printf("\n mean_average_precision (mAP@%0.2f) = %f \n", iou_thresh, mean_average_precision);
             if (mean_average_precision > best_map) {
+                printf("New best mAP! previous: %f vs current: %f\n", best_map, mean_average_precision);
                 best_map = mean_average_precision;
-                printf("New best mAP!\n");
                 char buff[256];
                 sprintf(buff, "%s/%s_best.weights", backup_directory, base);
                 save_weights(net, buff);
