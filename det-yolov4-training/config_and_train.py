@@ -23,6 +23,7 @@ def get_pretrained_best_map():
             result_obj = yaml.safe_load(f)
             return float(result_obj['map'])
     except (FileNotFoundError, KeyError, yaml.YAMLError):
+        logging.exception(msg='error occured when get pretrained best mAP, will use default value -1')
         return -1
 
 
