@@ -24,14 +24,14 @@ class LogCollector:
         self.verbose = verbose
 
     def get_time(self):
-        return int(time.time())
+        return time.time()
 
     def monitor_collect(self, percent, status, per_seconds=5, force=False):
         if self.last_monitor_collect_time is None or \
             (time.time() - self.last_monitor_collect_time) > per_seconds or force:
             current_time = self.get_time()
             percent = round(percent, 5)
-            items = [self.task_id, current_time, percent, status]
+            items = [self.task_id, f"{current_time:.6f}", percent, status]
             items = list(map(str, items))
             _log = "\t".join(items)
             # if self.verbose:
