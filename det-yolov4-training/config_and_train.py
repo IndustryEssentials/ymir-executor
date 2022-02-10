@@ -15,6 +15,16 @@ def get_model_seen(model_path):
         header = nd.array(np.fromfile(mf, dtype=np.int32, count=5))
         seen_images_array = header[3]
         return int(seen_images_array.asscalar())
+    
+    
+def get_pretrained_best_map():
+    try:
+        with open('/out/models/result.yaml', 'r') as f:
+            result_obj = yaml.safe_load(f)
+            return float(result_obj['map'])
+    except (FileNotFoundError, KeyError, yaml.YAMLError):
+        logging.exception(msg='error occured when get pretrained best mAP, will use default value -1')
+        return -1
 
 
 logging.basicConfig(level=logging.INFO,
@@ -109,10 +119,12 @@ if pretrained_model_params is None or not os.path.isfile(pretrained_model_params
     # if pretrained model params doesn't exist, train model from image net pretrain model
     os.system("sed -i 's/max_batches=20000/max_batches={}/g' /out/models/yolov4.cfg".format(warmup_iterations))
     warmup_train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg ./yolov4.conv.137 -map -gpus {} -task_id {} -max_batches {} -dont_show".format(warmup_gpu_index, task_id, max_batches)
+    logging.info(f"warmup: {warmup_train_script_str}")
     os.system("python3 warm_up_training.py --train_script='{}' --gpus='{}'".format(warmup_train_script_str, gpus))
     time.sleep(60)
     os.system("sed -i 's/max_batches={}/max_batches={}/g' /out/models/yolov4.cfg".format(warmup_iterations, max_batches))
-    train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg /out/models/yolov4_last.weights -map -gpus {} -task_id {} -max_batches {} -dont_show".format(gpus, task_id, max_batches)
+    best_map = get_pretrained_best_map()
+    train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg /out/models/yolov4_last.weights -map -gpus {} -task_id {} -max_batches {} -best_map {} -dont_show".format(gpus, task_id, max_batches, best_map)
 else:
     # if pretrained model params does exist, train model from last best weights, clear previous trained count
     model_seen = get_model_seen(pretrained_model_params)
@@ -123,6 +135,7 @@ else:
     os.system("sed -i 's/max_batches=20000/max_batches={}/g' /out/models/yolov4.cfg".format(max_batches))
     train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg {} -map -gpus {} -task_id {} -max_batches {} -dont_show".format(pretrained_model_params, gpus, task_id, max_batches)
 
+logging.info(f"training: {train_script_str}")
 os.system(train_script_str)
 
 best_param_name = "/out/models/yolov4_best.weights"
@@ -134,6 +147,7 @@ if not os.path.isfile(best_param_name):
 
 # convert model darkent to mxnet
 darknet2mxnet_script_str = "python3 convert_model_darknet2mxnet_yolov4.py --input_h={} --input_w={} --num_of_classes={} --load_param_name={}".format(image_height, image_width, classnum, best_param_name)
+logging.info(f"converting: {darknet2mxnet_script_str}")
 os.system(darknet2mxnet_script_str)
 
 # run map and output log
