@@ -430,7 +430,7 @@ def run(num_of_classes: int, input_h: int, input_w: int, load_param_name: str, e
     if not os.path.isfile(load_param_name):
         return
 
-    net = Darknet(num_of_classes)
+    net = Darknet(num_of_classes, input_dim=input_h)
     net.initialize()
     X = mx.nd.ones(shape=(1, 3, input_h, input_w)) 
     Y = net(X)
