@@ -1,5 +1,4 @@
 # -*- encoding:utf-8 -*-
-import logging
 from mxnet.gluon import nn
 import numpy as np
 import mxnet.ndarray as nd
