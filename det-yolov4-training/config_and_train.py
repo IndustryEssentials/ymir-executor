@@ -48,7 +48,7 @@ max_batches = config["max_batches"]
 pretrained_model_params_conf = config.get("pretrained_model_params", None)
 batch = int(config["batch"])
 if image_width != image_height:
-    raise ValueError('width and height mismatch')
+    raise ValueError(f"width: {image_width} != height: {image_height}")
 if batch <= 0:
     raise ValueError('invalid batch size')
 subdivisions = config["subdivisions"]
