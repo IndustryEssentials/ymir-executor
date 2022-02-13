@@ -430,9 +430,6 @@ def parse_args():
 def run(num_of_classes: int, input_h: int, input_w: int, load_param_name: str, export_dir: str) -> None:
     if not os.path.isfile(load_param_name):
         return
-    if input_w != input_h:
-        logging.error(f"width: {input_w} vs height: {input_h}")
-        return
 
     net = Darknet(num_of_classes, input_dim=input_h)
     net.initialize()

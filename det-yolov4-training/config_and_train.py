@@ -15,8 +15,8 @@ def get_model_seen(model_path):
         header = nd.array(np.fromfile(mf, dtype=np.int32, count=5))
         seen_images_array = header[3]
         return int(seen_images_array.asscalar())
-    
-    
+
+
 def get_pretrained_best_map():
     try:
         with open('/out/models/result.yaml', 'r') as f:
@@ -47,6 +47,8 @@ learning_rate = config["learning_rate"]
 max_batches = config["max_batches"]
 pretrained_model_params_conf = config.get("pretrained_model_params", None)
 batch = int(config["batch"])
+if image_width != image_height:
+    raise ValueError('width and height mismatch')
 if batch <= 0:
     raise ValueError('invalid batch size')
 subdivisions = config["subdivisions"]
