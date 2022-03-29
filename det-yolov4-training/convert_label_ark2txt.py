@@ -13,7 +13,7 @@ def _annotation_path_for_image(image_path: str, annotations_dir: str) -> str:
     return annotation_path
 
 
-def _convert_annotations(index_file_path: str, src_annotations_dir: str, dst_annotations_dir: str) -> None:
+def _convert_annotations(index_file_path: str, dst_annotations_dir: str) -> None:
     """
     read all images and annotations in `index_file_path`, change annotations format, write to `annotations_dir`
 
@@ -23,16 +23,13 @@ def _convert_annotations(index_file_path: str, src_annotations_dir: str, dst_ann
         files = f.readlines()
         files = [each.strip() for each in files]
 
-    for i, each_imgpath in enumerate(files):
+    for i, each_img_anno_path in enumerate(files):
         if i % 1000 == 0:
             print(f"converted {i} image annotations")
 
-        each_txtfile = _annotation_path_for_image(image_path=each_imgpath, annotations_dir=src_annotations_dir)
-
-        # if no annotations for that image, create an empty one
-        if not os.path.isfile(each_txtfile):
-            open(each_txtfile, 'w').close()
-            continue
+        # each_imgpath: asset path
+        # each_txtfile: annotation path
+        each_imgpath, each_txtfile = each_img_anno_path.split()
 
         img = cv2.imread(each_imgpath)
         if img is None:
@@ -76,8 +73,17 @@ def _convert_annotations(index_file_path: str, src_annotations_dir: str, dst_ann
                 f.write(f"{each_str}\n")
 
 
+def _create_image_index_file(src_index_path: str, dst_index_path: str) -> None:
+    with open(src_index_path, 'r') as f:
+        lines = f.read().splitlines()
+
+    with open(dst_index_path, 'w') as f:
+        for line in lines:
+            f.write(f"{line.split()[0]}\n")
+
+
 if __name__ == "__main__":
-    _convert_annotations(index_file_path='/in/train/index.tsv', src_annotations_dir='/in/train',
-                         dst_annotations_dir='/in/tmp_labels')
-    _convert_annotations(index_file_path='/in/val/index.tsv', src_annotations_dir='/in/val',
-                         dst_annotations_dir='/in/tmp_labels')
+    _create_image_index_file(src_index_path='/in/train/index.tsv', dst_index_path='/in/train/index-assets.tsv')
+    _create_image_index_file(src_index_path='/in/val/index.tsv', dst_index_path='/in/val/index-assets.tsv')
+    _convert_annotations(index_file_path='/in/train/index.tsv', dst_annotations_dir='/in/tmp_labels')
+    _convert_annotations(index_file_path='/in/val/index.tsv', dst_annotations_dir='/in/tmp_labels')
