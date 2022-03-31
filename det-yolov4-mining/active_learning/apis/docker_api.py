@@ -36,6 +36,7 @@ class DockerALAPI:
         gpu_id=None, data_workers=28, image_width=608, image_height=608, class_distribution_score=[1.0], class_names=None, 
         candidate_path=None, result_path=None, batch_size=16, **kwargs):
         self.task_id = task_id
+        self.image_width = image_width
         self.strategy = strategy
         self.model_type = model_type
         self.model_name = model_name
@@ -74,7 +75,7 @@ class DockerALAPI:
         return self.is_done
 
     def _run(self):
-        model = models[self.model_name](weights_file=self.model_params_path, ctx=self.ctx, num_of_class=self.num_of_class, class_distribution_score=self.class_distribution_score)
+        model = models[self.model_name](weights_file=self.model_params_path, ctx=self.ctx, num_of_class=self.num_of_class, class_distribution_score=self.class_distribution_score, input_dim=self.image_width)
         selector = selectors[self.strategy](model=model)
         log_collector.summary_collect("start run")
         img_dataset = ImageFolderDataset(self.img_list)
