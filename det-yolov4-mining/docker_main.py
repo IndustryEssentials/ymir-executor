@@ -52,7 +52,7 @@ if __name__ == '__main__':
         # mining
         print('>>> RUN MINING <<<')
         print(f"with model: {config['model_params_path']}")
-        api = DockerALAPI(candidate_path="/in/candidate/index.tsv", result_path="/out/result.tsv", **config)
+        api = DockerALAPI(candidate_path="/in/candidate-index.tsv", result_path="/out/result.tsv", **config)
         api.run()
     if run_infer:
         # infer
@@ -68,7 +68,7 @@ if __name__ == '__main__':
         class_names = config["class_names"]
         batch_size = config.get('batch_size', 1)
 
-        write_result.run(candidate_path='/in/candidate/index.tsv',
+        write_result.run(candidate_path='/in/candidate-index.tsv',
                          result_path='/out/infer-result.json',
                          gpu_id=gpu_id,
                          confidence_thresh=confidence_thresh,

@@ -5,9 +5,7 @@ import cv2
 
 def _annotation_path_for_image(image_path: str, annotations_dir: str) -> str:
     # replace dir
-    annotation_path = image_path.replace('/in/cache', annotations_dir, 1)
-    annotation_path = annotation_path.replace('/in/train', annotations_dir, 1)
-    annotation_path = annotation_path.replace('/in/val', annotations_dir, 1)
+    annotation_path = image_path.replace('/in/assets', annotations_dir, 1)
     # replace ext
     annotation_path = os.path.splitext(annotation_path)[0] + '.txt'
     return annotation_path
@@ -83,7 +81,7 @@ def _create_image_index_file(src_index_path: str, dst_index_path: str) -> None:
 
 
 if __name__ == "__main__":
-    _create_image_index_file(src_index_path='/in/train/index.tsv', dst_index_path='/in/train/index-assets.tsv')
-    _create_image_index_file(src_index_path='/in/val/index.tsv', dst_index_path='/in/val/index-assets.tsv')
-    _convert_annotations(index_file_path='/in/train/index.tsv', dst_annotations_dir='/in/tmp_labels')
-    _convert_annotations(index_file_path='/in/val/index.tsv', dst_annotations_dir='/in/tmp_labels')
+    _create_image_index_file(src_index_path='/in/train-index.tsv', dst_index_path='/in/train-index-assets.tsv')
+    _create_image_index_file(src_index_path='/in/val-index.tsv', dst_index_path='/in/val-index-assets.tsv')
+    _convert_annotations(index_file_path='/in/train-index.tsv', dst_annotations_dir='/in/tmp_labels')
+    _convert_annotations(index_file_path='/in/val-index.tsv', dst_annotations_dir='/in/tmp_labels')
