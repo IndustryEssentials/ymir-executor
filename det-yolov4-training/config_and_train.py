@@ -60,11 +60,9 @@ os.system("cp ./cfg/coco.data /out/coco.data")
 
 # write class names to file
 if class_names is not None:
-    f = open("/out/coco.names", 'w')
-    for each_name in class_names:
-        f.write(each_name)
-        f.write("\n")
-    f.close()
+    with open("/out/coco.names", 'w') as f:
+        for each_name in class_names:
+            f.write(f"{each_name}\n")
 
 if classnum != 1:
     num_filter = (5 + classnum) * 3

@@ -50,7 +50,7 @@ docker方式见 [docker_readme](docker_readme.md)
 ```python
 import write_result
 
-write_result.run(candidate_path='/in/candidate/index.tsv',  # path to assets index file
+write_result.run(candidate_path='/in/candidate-index.tsv',  # path to assets index file
                  result_path='/out/infer-result.json',  # path to output result file
                  gpu_id=gpu_id,  # gpus to run, if None or empty, runs on cpu
                  confidence_thresh=confidence_thresh,  # conf thresh
