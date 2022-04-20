@@ -12,9 +12,15 @@ import mxnet as mx
 from mxnet import gluon, nd
 import tqdm
 
+import monitor_process
+from active_learning.utils import log_collector, TaskState
+
 # image_name = 0
 # os.environ["VISIBLE_CUDA_DEVICES"] = "2"
 os.environ["MXNET_CUDNN_AUTOTUNE_DEFAULT"] = "0"
+
+
+infer_task_id = 'default-infer-task'
 
 
 def _convert_square(bbox, exth_scale=0.0, extw_scale=0.0):
@@ -384,6 +390,13 @@ class darknet_mxnet():
             batch_end = time.time()
             cost = (batch_end - batch_start) / len(batch)
             sc += cost
+
+            # write monitor process
+            if i > 0 and i % 4 == 0:
+                infer_percent = i / len(im_batches)
+                monitor_process.infer_percent = infer_percent
+                log_collector.monitor_collect(percent=monitor_process.get_total_percent(),
+                                              status=TaskState.RUNNING)
 
         logging.debug(f"\naverage infer seconds per batch: {sc / len(im_batches)}")
 

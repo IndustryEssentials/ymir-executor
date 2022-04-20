@@ -15,6 +15,7 @@ import mxnet as mx
 from mxnet.gluon.data.vision import transforms
 from concurrent.futures import ThreadPoolExecutor
 import tqdm
+import monitor_process
 
 
 models = {
@@ -106,7 +107,9 @@ class DockerALAPI:
                 output_file_handle.write(output_str)
             count += self.batch_size * len(self.ctx)
             self.progress_count = float(count) / self.total_num
-            log_collector.monitor_collect(self.progress, TaskState.RUNNING)
+
+            monitor_process.mining_percent = self.progress
+            log_collector.monitor_collect(monitor_process.get_total_percent(), TaskState.RUNNING)
         output_file_handle.close()
 
         self.path2score.sort(key=lambda x: x[1], reverse=True)
@@ -117,7 +120,8 @@ class DockerALAPI:
         os.system("mv {} {}".format(tmp_result_filename, self.result_path))
 
         self.is_done = True
-        log_collector.monitor_collect(self.progress, TaskState.RUNNING, force=True)
+        monitor_process.mining_percent = self.progress
+        log_collector.monitor_collect(monitor_process.get_total_percent(), TaskState.RUNNING, force=True)
 
     def run(self):
         try:
@@ -126,7 +130,7 @@ class DockerALAPI:
         except Exception:
             exctype, value, tb = sys.exc_info()
             text = "".join(traceback.format_exception(exctype, value, tb))
-            log_collector.monitor_collect(self.progress, TaskState.ERROR, force=True)
+            log_collector.monitor_collect(1, TaskState.ERROR, force=True)
             text = "".join(log_collector.error_msg) + text
             log_collector.error_collect(text)
             log_collector.summary_collect(text)
