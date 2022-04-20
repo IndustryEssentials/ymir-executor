@@ -5,6 +5,7 @@ import yaml
 
 from active_learning import DockerALAPI
 from active_learning.utils import log_collector, LogWriter, TaskState
+import monitor_process
 import write_result
 
 
@@ -35,18 +36,21 @@ def _load_config() -> dict:
 if __name__ == '__main__':
     config = _load_config()
 
+    run_infer = int(config['run_infer'])
+    run_mining = int(config['run_mining'])
+
+    if not run_infer and not run_mining:
+        raise ValueError('both run_infer and run_mining set to 0, abort')
+
+    monitor_process.run_mining = run_mining
+    monitor_process.run_infer = run_infer
+
     log_writer = LogWriter(monitor_path="/out/monitor.txt",
                            monitor_pure_path="/out/monitor-log.txt",
                            summary_path="/out/log.txt")
     log_collector.set_logger(log_writer, config["task_id"], verbose=True)
     log_collector.monitor_collect(0.00, TaskState.PENDING, per_seconds=0)
     log_collector.summary_collect("config: {}".format(config))
-
-    run_infer = int(config['run_infer'])
-    run_mining = int(config['run_mining'])
-
-    if not run_infer and not run_mining:
-        raise ValueError('both run_infer and run_mining set to 0, abort')
 
     if run_mining:
         # mining
@@ -68,6 +72,7 @@ if __name__ == '__main__':
         class_names = config["class_names"]
         batch_size = config.get('batch_size', 1)
 
+        write_result.infer_task_id = config.get('task_id', 'default-infer-task')
         write_result.run(candidate_path='/in/candidate-index.tsv',
                          result_path='/out/infer-result.json',
                          gpu_id=gpu_id,
