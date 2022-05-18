@@ -1,7 +1,7 @@
 import logging
 import os
 import re
-from typing import Callable, Tuple
+from typing import Callable, List, Tuple
 
 from tensorboardX import SummaryWriter
 import yaml
@@ -21,7 +21,7 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         self._class_numbers = class_num
         self._tensorboard_writer = SummaryWriter(log_dir='/out/tensorboard')
 
-        self._pattern_and_handlers: Tuple[str, Callable] = [
+        self._pattern_and_handlers: List[Tuple[str, Callable]] = [
             ('^.*best.weights$', _DarknetTrainingHandler._on_best_weights_modified),
             ('^.*train-log.yaml$', _DarknetTrainingHandler._on_train_log_yaml_modified)
         ]
