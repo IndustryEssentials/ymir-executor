@@ -75,6 +75,7 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         if isinstance(mean_ap, float):
             self._tensorboard_writer.add_scalar(tag="train/mAP", scalar_value=mean_ap, global_step=iteration)
         if class_aps and isinstance(class_aps, dict):
+            class_aps = {str(k): v for k, v in class_aps.items()}
             self._tensorboard_writer.add_scalars(main_tag='train/aps', tag_scalar_dict=class_aps, global_step=iteration)
         self._tensorboard_writer.flush()
 
