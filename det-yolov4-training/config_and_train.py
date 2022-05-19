@@ -88,7 +88,7 @@ if learning_rate is not None:
     os.system("sed -i 's/learning_rate=0.0013/learning_rate={}/g' /out/models/yolov4.cfg".format(learning_rate))
 
 warmup_gpu_index = gpus.split(",")[0]
-max_batches = max_batches // len(gpus.split(","))
+max_batches = max_batches // max(len(gpus.split(",")), 1)
 if max_batches < warmup_iterations:
     max_batches = warmup_iterations
 
@@ -114,6 +114,7 @@ if pretrained_model_params_conf:
         # other types: not supported
         raise ValueError("unsupported pretrained_model_params_list: {}".format(type(pretrained_model_params_conf)))
 
+multi_gpu_learning_rate = float(learning_rate) / max(len(gpus.split(",")), 1)
 # run training
 if pretrained_model_params is None or not os.path.isfile(pretrained_model_params):
     # if pretrained model params doesn't exist, train model from image net pretrain model
@@ -122,6 +123,7 @@ if pretrained_model_params is None or not os.path.isfile(pretrained_model_params
     logging.info(f"warmup: {warmup_train_script_str}")
     os.system("python3 warm_up_training.py --train_script='{}' --gpus='{}'".format(warmup_train_script_str, gpus))
     time.sleep(60)
+    os.system("sed -i 's/learning_rate={}/learning_rate={}/g' /out/models/yolov4.cfg".format(learning_rate, multi_gpu_learning_rate))
     os.system("sed -i 's/max_batches={}/max_batches={}/g' /out/models/yolov4.cfg".format(warmup_iterations, max_batches))
     best_map = get_pretrained_best_map()
     train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg /out/models/yolov4_last.weights -map -gpus {} -task_id {} -max_batches {} -best_map {} -dont_show".format(gpus, task_id, max_batches, best_map)
@@ -132,6 +134,7 @@ else:
     logging.info(f"model already seen: {model_seen}, {model_trained_batches}")
     max_batches += model_trained_batches
     logging.info(f"max_batches reset to {max_batches}")
+    os.system("sed -i 's/learning_rate={}/learning_rate={}/g' /out/models/yolov4.cfg".format(learning_rate, multi_gpu_learning_rate))
     os.system("sed -i 's/max_batches=20000/max_batches={}/g' /out/models/yolov4.cfg".format(max_batches))
     train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg {} -map -gpus {} -task_id {} -max_batches {} -dont_show".format(pretrained_model_params, gpus, task_id, max_batches)
 
