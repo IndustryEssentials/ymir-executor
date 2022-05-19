@@ -1,7 +1,7 @@
 import logging
 import os
 import re
-from typing import Callable, Tuple
+from typing import Callable, List, Tuple
 
 from tensorboardX import SummaryWriter
 import yaml
@@ -21,7 +21,7 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         self._class_numbers = class_num
         self._tensorboard_writer = SummaryWriter(log_dir='/out/tensorboard')
 
-        self._pattern_and_handlers: Tuple[str, Callable] = [
+        self._pattern_and_handlers: List[Tuple[str, Callable]] = [
             ('^.*best.weights$', _DarknetTrainingHandler._on_best_weights_modified),
             ('^.*train-log.yaml$', _DarknetTrainingHandler._on_train_log_yaml_modified)
         ]
@@ -75,6 +75,7 @@ class _DarknetTrainingHandler(FileSystemEventHandler):
         if isinstance(mean_ap, float):
             self._tensorboard_writer.add_scalar(tag="train/mAP", scalar_value=mean_ap, global_step=iteration)
         if class_aps and isinstance(class_aps, dict):
+            class_aps = {str(k): v for k, v in class_aps.items()}
             self._tensorboard_writer.add_scalars(main_tag='train/aps', tag_scalar_dict=class_aps, global_step=iteration)
         self._tensorboard_writer.flush()
 

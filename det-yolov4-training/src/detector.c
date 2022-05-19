@@ -389,7 +389,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
                 if (names_size > 0) {
                     fprintf(file_ptr, "aps:\n");
                     for (int idx = 0; idx < names_size; ++idx) {
-                        fprintf(file_ptr, "    %s: %f\n", names[idx], aps[idx]);
+                        fprintf(file_ptr, "    \'%s\': %f\n", names[idx], aps[idx]);
                     }
                 }
                 fclose(file_ptr);
