@@ -61,15 +61,18 @@ max_batches = max_batches // len(gpus.split(","))
 if max_batches < warmup_iterations:
     max_batches = warmup_iterations
 
+multi_gpu_learning_rate = float(learning_rate) / len(gpus.split(","))
 if pretrained_model_params is None or not os.path.isfile(pretrained_model_params):
     # if pretrained model params doesn't exist, train model from image net pretrain model
     os.system("sed -i 's/max_batches=20000/max_batches={}/g' /out/models/yolov4.cfg".format(warmup_iterations))
     warmup_train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg ./yolov4.conv.137 -map -gpus {} -task_id {} -max_batches {} -dont_show".format(warmup_gpu_index, task_id, max_batches)
     os.system(warmup_train_script_str)
+    os.system("sed -i 's/learning_rate={}/learning_rate={}/g' /out/models/yolov4.cfg".format(learning_rate, multi_gpu_learning_rate))
     os.system("sed -i 's/max_batches={}/max_batches={}/g' /out/models/yolov4.cfg".format(warmup_iterations, max_batches))
     train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg /out/models/yolov4_last.weights -map -gpus {} -task_id {} -max_batches {} -dont_show".format(gpus, task_id, max_batches)
 else:
     # if pretrained model params does exist, train model from last best weights
+    os.system("sed -i 's/learning_rate={}/learning_rate={}/g' /out/models/yolov4.cfg".format(learning_rate, multi_gpu_learning_rate))
     os.system("sed -i 's/max_batches=20000/max_batches={}/g' /out/models/yolov4.cfg".format(max_batches))
     train_script_str = "./darknet detector train /out/coco.data /out/models/yolov4.cfg {} -map -gpus {} -task_id {} -max_batches {} -dont_show".format(pretrained_model_params, gpus, task_id, max_batches)
 
