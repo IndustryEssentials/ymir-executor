@@ -114,7 +114,7 @@ if pretrained_model_params_conf:
         # other types: not supported
         raise ValueError("unsupported pretrained_model_params_list: {}".format(type(pretrained_model_params_conf)))
 
-multi_gpu_learning_rate = float(learning_rate) / len(gpus.split(","))
+multi_gpu_learning_rate = float(learning_rate) / max(len(gpus.split(",")), 1)
 # run training
 if pretrained_model_params is None or not os.path.isfile(pretrained_model_params):
     # if pretrained model params doesn't exist, train model from image net pretrain model
