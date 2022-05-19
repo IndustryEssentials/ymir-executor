@@ -1,4 +1,4 @@
-FROM mxnet/python:1.5.0_gpu_cu101mkl_py3_ub18
+FROM industryessentials/mxnet/python:1.5.0_gpu_cu101mkl_py3_ub18
 
 RUN apt-get update && apt-get install -y --no-install-recommends libsm6 libxext6 ffmpeg libfontconfig1 libxrender1 libgl1-mesa-glx \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
