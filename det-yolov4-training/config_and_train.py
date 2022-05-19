@@ -88,7 +88,7 @@ if learning_rate is not None:
     os.system("sed -i 's/learning_rate=0.0013/learning_rate={}/g' /out/models/yolov4.cfg".format(learning_rate))
 
 warmup_gpu_index = gpus.split(",")[0]
-max_batches = max_batches // len(gpus.split(","))
+max_batches = max_batches // max(len(gpus.split(",")), 1)
 if max_batches < warmup_iterations:
     max_batches = warmup_iterations
 
