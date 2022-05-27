@@ -16,6 +16,7 @@ RUN echo '\ndeb https://mirrors.ustc.edu.cn/ubuntu/ bionic main restricted unive
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y libopencv-dev
 COPY . /darknet
+RUN cp /darknet/make_train_test_darknet.sh /usr/bin/start.sh
 RUN mkdir /img-man && cp /darknet/training-template.yaml /img-man/training-template.yaml
 RUN make -j
-CMD bash make_train_test_darknet.sh
+CMD bash /usr/bin/start.sh
