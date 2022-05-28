@@ -57,7 +57,7 @@ from utils.metrics import fitness
 from utils.plots import plot_evolve, plot_labels
 from utils.torch_utils import EarlyStopping, ModelEMA, de_parallel, select_device, torch_distributed_zero_first
 from utils.ymir_yolov5 import ymir_process_config,write_ymir_training_result
-from executor import monitor 
+from ymir_exc import monitor
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -529,8 +529,8 @@ def main(opt, callbacks=Callbacks()):
         # opt.name: models
         # models_dir: /out/moels
         # tensorboard_dir: /out/tensorboard
-        opt.save_dir = str(increment_path(Path(opt.project)/opt.name, exist_ok=opt.exist_ok))
-        opt.log_dir = str(increment_path(Path(opt.project)/'tensorboard', exist_ok=opt.exist_ok))
+        opt.save_dir = str(increment_path(Path(opt.project) / opt.name, exist_ok=opt.exist_ok))
+        opt.log_dir = str(increment_path(Path(opt.project) / 'tensorboard', exist_ok=opt.exist_ok))
 
     # DDP mode
     device = select_device(opt.device, batch_size=opt.batch_size)

@@ -70,6 +70,7 @@ def _run_training(env_config: env.EnvConfig) -> None:
     """
     # use `env.get_executor_config` to get config file for training
     executor_config = env.get_universal_config()
+
     # use `logging` or `print` to write log to console
     #   notice that logging.basicConfig is invoked at executor.env
     logging.info(f"training config: {executor_config}")
@@ -149,6 +150,7 @@ def _run_infer(env_config: env.EnvConfig) -> None:
     # use `env.get_executor_config` to get config file for training
     #   models are transfered in executor_config's model_params_path
     executor_config = env.get_executor_config()
+
     # use `logging` or `print` to write log to console
     logging.info(f"infer config: {executor_config}")
 
