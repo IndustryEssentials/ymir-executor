@@ -3,8 +3,9 @@ data augmentations for CALD method, including horizontal_flip, rotate(5'), cutou
 """
 
 import random
-import numpy as np
+
 import cv2
+import numpy as np
 
 
 def intersect(boxes1, boxes2):
@@ -19,17 +20,17 @@ def intersect(boxes1, boxes2):
     n1 = boxes1.shape[0]
     n2 = boxes2.shape[0]
     max_xy = np.minimum(np.expand_dims(boxes1[:, 2:], axis=1).repeat(n2, axis=1),
-                       np.expand_dims(boxes2[:, 2:], axis=0).repeat(n1, axis=0))
+                        np.expand_dims(boxes2[:, 2:], axis=0).repeat(n1, axis=0))
 
     min_xy = np.maximum(np.expand_dims(boxes1[:, :2], axis=1).repeat(n2, axis=1),
-                       np.expand_dims(boxes2[:, :2], axis=0).repeat(n1, axis=0))
+                        np.expand_dims(boxes2[:, :2], axis=0).repeat(n1, axis=0))
     inter = np.clip(max_xy - min_xy, a_min=0, a_max=None)  # (n1, n2, 2)
     return inter[:, :, 0] * inter[:, :, 1]  # (n1, n2)
 
 
 def horizontal_flip(image, bbox):
     image = image.copy()
-    
+
     height, width = image.shape[:2]
     image = image[:, ::-1, :]
     if len(bbox) > 0:
@@ -52,8 +53,8 @@ def cutout(image, bbox, cut_num=2, fill_val=0, bbox_remove_thres=0.4, bbox_min_t
     image = image.copy()
     bbox = bbox.copy()
 
-    if len(bbox)==0:
-        return image, bbox 
+    if len(bbox) == 0:
+        return image, bbox
 
     original_h, original_w, original_channel = image.shape
     count = 0
@@ -97,7 +98,7 @@ def my_rotate(image, bbox, rot=5):
     rotate_matirc = cv2.getRotationMatrix2D((w // 2, h // 2), rot, 1.0)
     image = cv2.warpAffine(image, rotate_matirc, (w, h), flags=cv2.INTER_LINEAR)
 
-    if len(bbox)>0:
+    if len(bbox) > 0:
         for i in range(bbox.shape[0]):
             x1, y1 = my_get_affine_transform([bbox[i][0], bbox[i][1]], rotate_matirc)
             x2, y2 = my_get_affine_transform([bbox[i][0], bbox[i][3]], rotate_matirc)
@@ -118,7 +119,7 @@ def rotate(image, bbox, rot=5):
     center = np.array([w / 2.0, h / 2.0])
     s = max(h, w) * 1.0
     trans = get_affine_transform(center, s, rot, [w, h])
-    if len(bbox)>0:
+    if len(bbox) > 0:
         for i in range(bbox.shape[0]):
             x1, y1 = affine_transform(bbox[i, :2], trans)
             x2, y2 = affine_transform(bbox[i, 2:], trans)
@@ -126,13 +127,13 @@ def rotate(image, bbox, rot=5):
             x4, y4 = affine_transform(bbox[i, [0, 3]], trans)
             bbox[i, :2] = [min(x1, x2, x3, x4), min(y1, y2, y3, y4)]
             bbox[i, 2:] = [max(x1, x2, x3, x4), max(y1, y2, y3, y4)]
-    image = cv2.warpAffine(image, trans, (w, h), flags = cv2.INTER_LINEAR)
+    image = cv2.warpAffine(image, trans, (w, h), flags=cv2.INTER_LINEAR)
     return image, bbox
 
 
 def get_3rd_point(a, b):
     direct = a - b
-    return b + np.array([-direct[1], direct[0]], dtype = np.float32)
+    return b + np.array([-direct[1], direct[0]], dtype=np.float32)
 
 
 def get_dir(src_point, rot_rad):
@@ -146,7 +147,7 @@ def get_dir(src_point, rot_rad):
 
 
 def transform_preds(coords, center, scale, rot, output_size):
-    trans = get_affine_transform(center, scale, rot, output_size, inv = 1)
+    trans = get_affine_transform(center, scale, rot, output_size, inv=1)
     target_coords = affine_transform(coords, trans)
     return target_coords
 
@@ -155,10 +156,10 @@ def get_affine_transform(center,
                          scale,
                          rot,
                          output_size,
-                         shift = np.array([0, 0], dtype = np.float32),
-                         inv = 0):
+                         shift=np.array([0, 0], dtype=np.float32),
+                         inv=0):
     if not isinstance(scale, np.ndarray) and not isinstance(scale, list):
-        scale = np.array([scale, scale], dtype = np.float32)
+        scale = np.array([scale, scale], dtype=np.float32)
 
     scale_tmp = scale
     src_w = scale_tmp[0]
@@ -169,8 +170,8 @@ def get_affine_transform(center,
     src_dir = get_dir([0, src_w * -0.5], rot_rad)
     dst_dir = np.array([0, dst_w * -0.5], np.float32)
 
-    src = np.zeros((3, 2), dtype = np.float32)
-    dst = np.zeros((3, 2), dtype = np.float32)
+    src = np.zeros((3, 2), dtype=np.float32)
+    dst = np.zeros((3, 2), dtype=np.float32)
     src[0, :] = center + scale_tmp * shift
     src[1, :] = center + src_dir + scale_tmp * shift
     dst[0, :] = [dst_w * 0.5, dst_h * 0.5]
@@ -188,7 +189,7 @@ def get_affine_transform(center,
 
 
 def affine_transform(pt, t):
-    new_pt = np.array([pt[0], pt[1], 1.], dtype = np.float32).T
+    new_pt = np.array([pt[0], pt[1], 1.], dtype=np.float32).T
     new_pt = np.dot(t, new_pt)
     return new_pt[:2]
 
@@ -201,15 +202,15 @@ def resize(img, boxes, ratio=0.8):
     new_img = img * 0
     new_img[:oh, :ow] = resize_img
 
-    if len(boxes)==0:
-        return new_img, boxes 
+    if len(boxes) == 0:
+        return new_img, boxes
     else:
         return new_img, boxes * ratio
 
 
 if __name__ == '__main__':
-    a = np.array([[0.,0.,2.,2.],[0,0,2,2]])
-    b = np.array([[0.,0.,3.,1.],[0,0,3,1]])
+    a = np.array([[0., 0., 2., 2.], [0, 0, 2, 2]])
+    b = np.array([[0., 0., 3., 1.], [0, 0, 3, 1]])
     area_boxes = (b[:, 2] - b[:, 0]) * (b[:, 3] - b[:, 1])
     inter = intersect(a, b)
     print(inter)
@@ -227,12 +228,16 @@ if __name__ == '__main__':
     my_rot_image, my_rot_bbox = my_rotate(image, bbox)
     for box, rot_box, flip_box, cut_box, res_bbox, my_rot_box in zip(bbox, rot_bbox, flip_bbox, cutout_bbox, resize_bbox, my_rot_bbox):
         image = cv2.rectangle(image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), color, 2)
-        flip_image = cv2.rectangle(flip_image, (int(flip_box[0]), int(flip_box[1])), (int(flip_box[2]), int(flip_box[3])), color, 2)
-        rot_image = cv2.rectangle(rot_image, (int(rot_box[0]), int(rot_box[1])), (int(rot_box[2]), int(rot_box[3])), color, 2)
-        cutout_image = cv2.rectangle(cutout_image, (int(cut_box[0]), int(cut_box[1])), (int(cut_box[2]), int(cut_box[3])), color, 2)
-        resize_image = cv2.rectangle(resize_image, (int(res_bbox[0]), int(res_bbox[1])), (int(res_bbox[2]), int(res_bbox[3])), color, 2)
+        flip_image = cv2.rectangle(flip_image, (int(flip_box[0]), int(
+            flip_box[1])), (int(flip_box[2]), int(flip_box[3])), color, 2)
+        rot_image = cv2.rectangle(rot_image, (int(rot_box[0]), int(
+            rot_box[1])), (int(rot_box[2]), int(rot_box[3])), color, 2)
+        cutout_image = cv2.rectangle(cutout_image, (int(cut_box[0]), int(
+            cut_box[1])), (int(cut_box[2]), int(cut_box[3])), color, 2)
+        resize_image = cv2.rectangle(resize_image, (int(res_bbox[0]), int(
+            res_bbox[1])), (int(res_bbox[2]), int(res_bbox[3])), color, 2)
         my_rot_image = cv2.rectangle(my_rot_image, (int(my_rot_box[0]), int(my_rot_box[1])), (int(my_rot_box[2]), int(my_rot_box[3])),
-                                  color, 2)
+                                     color, 2)
     cv2.imwrite("result/origin.jpg", image)
     cv2.imwrite("result/rot.jpg", rot_image)
     cv2.imwrite("result/cutout.jpg", cutout_image)

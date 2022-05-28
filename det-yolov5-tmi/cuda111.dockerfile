@@ -13,37 +13,35 @@ ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
 ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 ENV LANG=C.UTF-8
 
-RUN sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list && \
-	# apt-get update && apt-get install -y gnupg2 && \
-	# apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC && \
-	apt-get update && apt-get install -y gnupg2 git ninja-build libglib2.0-0 libsm6 \
+# Install linux package
+# RUN sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
+RUN	apt-get update && apt-get install -y gnupg2 git ninja-build libglib2.0-0 libsm6 \
     libxrender-dev libxext6 libgl1-mesa-glx ffmpeg sudo openssh-server \
     libyaml-dev vim tmux tree curl wget zip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install xtcocotools
-RUN pip install -i https://mirrors.aliyun.com/pypi/simple -U pip && \             
-	pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
-	pip install cython xtcocotools jupyter onnx onnx-simplifier loguru \
+# Install python package
+# RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple
+RUN pip install -U pip && \
+	pip install cython xtcocotools onnx onnx-simplifier loguru \
 	tensorboard==2.5.0 numba progress yacs pthflops imagesize pydantic pytest \
-	scipy pydantic pyyaml imagesize opencv-python thop pandas seaborn
+	scipy pyyaml opencv-python thop pandas seaborn
 
+# Install ymir-exc sdk
+RUN pip install ymir-exc
+
+# Copy file from host to docker
 ADD ./det-yolov5-tmi /app
 RUN mkdir /img-man && cp /app/*-template.yaml /img-man/
-# RUN pip install -r requirements.txt 
 
-RUN bash data/scripts/download_weights.sh
-RUN mkdir -p /workspace/.git
-RUN pip install -i https://mirrors.aliyun.com/pypi/simple ymir-exc
+# Download pretrained weight and font file
+RUN cd /app && bash data/scripts/download_weights.sh
 RUN mkdir -p /root/.config/Ultralytics && \
     wget https://ultralytics.com/assets/Arial.ttf -O /root/.config/Ultralytics/Arial.ttf
 
-# make PYTHONPATH include mmdetection and executor
+# Make PYTHONPATH find local package
 ENV PYTHONPATH=.
 
 WORKDIR /app
-# entry point for your app
-# the whole docker image will be started with `nvidia-docker run <other options> <docker-image-name>`
-# and this command will run automatically
 CMD python /app/ymir_start.py

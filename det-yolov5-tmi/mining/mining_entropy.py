@@ -1,12 +1,13 @@
 import os
-import numpy as np
-import yaml
 import time
-import tqdm
-from mmdet.apis import inference_detector, init_detector
-import torch
 from concurrent.futures import ThreadPoolExecutor
+
 import cv2
+import numpy as np
+import torch
+import tqdm
+import yaml
+from mmdet.apis import inference_detector, init_detector
 
 
 def get_img_path(img_file):
@@ -26,7 +27,7 @@ def forward_model(net, tmp_batch):
 
     def forward_hook(module, input, output):
         features.append([output, input])
-        
+
     hook_hanlder = net._modules.get("roi_head").bbox_head.register_forward_hook(forward_hook)
     inference_detector(net, tmp_batch)
     net_roi_output = features[0][0][0]
@@ -37,7 +38,6 @@ def forward_model(net, tmp_batch):
     # reshape tensor from batchx1000, num_cls_with_bg to batch, 1000, num_cls_with_bg
     net_roi_output_with_sm = torch.reshape(net_roi_output_with_sm, (-1, 1000, num_class_with_bg))
     hook_hanlder.remove()
-
 
     return net_roi_output_with_sm
 
@@ -129,7 +129,7 @@ if __name__ == "__main__":
     print("********** start **********")
     for i, batch in tqdm.tqdm(enumerate(im_batches), total=len(im_batches)):
         log_handle = open("/out/monitor.txt", 'w')
-        batches = [batch[k:k+batch_size_per_gpu] for k in range(0, len(batch), batch_size_per_gpu)]
+        batches = [batch[k:k + batch_size_per_gpu] for k in range(0, len(batch), batch_size_per_gpu)]
         executor = ThreadPoolExecutor(max_workers=len(gpu_id))
         score_list = []
 
@@ -150,4 +150,3 @@ if __name__ == "__main__":
         f.writelines(path2score)
     assert os.path.isfile(OUTPUT_FILE_NAME_TMP)
     os.system("mv {} {}".format(OUTPUT_FILE_NAME_TMP, OUTPUT_FILE_NAME))
-
