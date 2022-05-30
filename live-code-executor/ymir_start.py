@@ -14,7 +14,7 @@ def main():
     git_branch = executor_config['git_branch']
 
     cmd = f'git clone {git_url} -b {git_branch} /app'
-    logger.info(f'step::1 {cmd} '+'*'*20)
+    logger.info(f'clone code: {cmd}')
     subprocess.check_output(cmd.split())
 
     # step 2. read /app/extra-requirements.txt and install it.
@@ -27,14 +27,14 @@ def main():
         else:
             cmd = f'pip install -r {pypi_file} -i {pypi_mirror}'
 
-        logger.info(f'step::2 {cmd} '+'*'*20)
+        logger.info(f'install python package: {cmd}')
         subprocess.check_output(cmd.split())
     else:
-        logger.info(f'step::2 not find {pypi_file} '+'*'*20)
+        logger.info('no python package needs to install')
 
     # step 3. run /app/start.py
     cmd = 'python3 start.py'
-    logger.info(f'step::3 {cmd} '+'*'*20)
+    logger.info(f'run task: {cmd}')
     subprocess.check_output(cmd.split(), cwd='/app')
     return 0
 
