@@ -20,8 +20,7 @@ def main():
     # step 2. read /app/extra-requirements.txt and install it.
     pypi_file = '/app/extra-requirements.txt'
     if osp.exists(pypi_file):
-        pypi_mirror = executor_config.get(
-            'pypi_mirror', 'https://pypi.tuna.tsinghua.edu.cn/simple')
+        pypi_mirror = executor_config.get('pypi_mirror', '')
         if not pypi_mirror:
             cmd = f'pip install -r {pypi_file}'
         else:

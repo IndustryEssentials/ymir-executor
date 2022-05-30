@@ -1,3 +1,3 @@
-git_url: 'https://github.com/yzbx/ymir-executor-yolov5.git'
-git_branch: 'master'
-code_config: 'configs/default.yaml'
+git_url: ''
+git_branch: ''
+code_config: ''
