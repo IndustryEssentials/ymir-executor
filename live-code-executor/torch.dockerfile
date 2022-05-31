@@ -11,11 +11,13 @@ ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 ENV LANG=C.UTF-8
 
 # install linux package
-RUN apt-get update && apt-get install -y git curl wget zip build-essential \
+# RUN sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
+RUN apt-get update && apt-get install -y git curl wget zip gcc \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python package
+# RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple
 RUN pip install -U pip && \
     pip install loguru
 
@@ -24,11 +26,11 @@ RUN pip install ymir-exc
 
 # copy template training/mining/infer config file
 RUN mkdir -p /img-man
-COPY app/*.yaml /img-man/
+COPY img-man/*.yaml /img-man/
 COPY start.sh /usr/bin
 COPY ymir_start.py /workspace/ymir_start.py
 
 # set up python path
 ENV PYTHONPATH=.
 
-CMD /usr/bin/start.sh
+CMD bash /usr/bin/start.sh

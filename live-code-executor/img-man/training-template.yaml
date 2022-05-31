@@ -6,4 +6,3 @@ gpu_id: '0'
 task_id: 'default-training-task'
 pretrained_model_paths: []
 class_names: []
-

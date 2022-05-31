@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python /workspace/ymir_start.py
+python3 /workspace/ymir_start.py
