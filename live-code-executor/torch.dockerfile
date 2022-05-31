@@ -28,6 +28,8 @@ RUN pip install ymir-exc
 RUN mkdir -p /img-man
 COPY img-man/*.yaml /img-man/
 COPY start.sh /usr/bin
+
+WORKDIR /workspace
 COPY ymir_start.py /workspace/ymir_start.py
 
 # set up python path
