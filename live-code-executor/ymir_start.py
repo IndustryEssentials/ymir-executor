@@ -6,7 +6,18 @@ from loguru import logger
 from ymir_exc import env
 
 
+def show_ymir_exc() -> None:
+    executor_config = env.get_executor_config()
+    ymir_env = env.get_current_env()
+
+    logger.info(f'executor config: {executor_config}')
+    logger.info(f'ymir input env: {ymir_env.input}')
+    logger.info(f'ymir output env: {ymir_env.output}')
+
+
 def main():
+    show_ymir_exc()
+
     # step 1. read config.yaml and clone git_url:git_branch to /app
     executor_config = env.get_executor_config()
 
