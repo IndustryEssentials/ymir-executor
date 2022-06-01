@@ -24,10 +24,9 @@ def main():
     pypi_file = '/app/extra-requirements.txt'
     if osp.exists(pypi_file):
         pypi_mirror = executor_config.get('pypi_mirror', '')
-        if not pypi_mirror:
-            cmd = f'pip install -r {pypi_file}'
-        else:
-            cmd = f'pip install -r {pypi_file} -i {pypi_mirror}'
+
+        cmd = f'pip install -r {pypi_file}'
+        cmd += ' -i {pypi_mirror}' if pypi_mirror else ''
 
         logger.info(f'install python package: {cmd}')
         subprocess.check_output(cmd.split())
