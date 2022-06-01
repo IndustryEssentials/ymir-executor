@@ -37,6 +37,8 @@ def main():
     cmd = 'python3 start.py'
     logger.info(f'run task: {cmd}')
     subprocess.check_output(cmd.split(), cwd='/app')
+
+    logger.info('live code executor run successfully')
     return 0
 
 
