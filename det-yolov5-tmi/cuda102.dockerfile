@@ -10,7 +10,6 @@ ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 ENV LANG=C.UTF-8
 
 # Install linux package
-# RUN sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
 RUN	apt-get update && apt-get install -y gnupg2 git ninja-build libglib2.0-0 libsm6 \
     libxrender-dev libxext6 libgl1-mesa-glx ffmpeg sudo openssh-server \
     libyaml-dev vim tmux tree curl wget zip \
@@ -18,7 +17,6 @@ RUN	apt-get update && apt-get install -y gnupg2 git ninja-build libglib2.0-0 lib
     && rm -rf /var/lib/apt/lists/*
 
 # Install python package
-# RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple
 RUN pip install -U pip && \
 	pip install cython xtcocotools onnx onnx-simplifier loguru \
 	tensorboard==2.5.0 numba progress yacs pthflops imagesize pydantic pytest \

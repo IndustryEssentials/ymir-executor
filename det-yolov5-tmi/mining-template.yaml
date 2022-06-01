@@ -7,5 +7,6 @@
 # model_params_path: []
 # class_names: []
 
-# batch_size: 16
 img_size: 640
+conf_thres: 0.25
+iou_thres: 0.45

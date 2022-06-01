@@ -1,45 +1,19 @@
 import os.path as osp
+import sys
 
 import cv2
 import numpy as np
+from scipy.stats import entropy
+from tqdm import tqdm
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
-from loguru import logger
-from scipy.stats import entropy
-from tqdm import tqdm
 
 from mining.data_augment import cutout, horizontal_flip, intersect, resize, rotate
-from models.common import DetectMultiBackend
-from utils.ymir_yolov5 import Ymir_Yolov5
+from utils.ymir_yolov5 import YmirYolov5, POSTPROCESS_PERCENT, TASK_PERCENT
 
 
-def init_detector(device):
-    executor_config = env.get_executor_config()
-
-    weights = None
-    model_params_path = executor_config['model_params_path']
-    if 'best.pt' in model_params_path:
-        weights = '/in/models/best.pt'
-    else:
-        for f in model_params_path:
-            if f.endswith('.pt'):
-                weights = f'/in/models/{f}'
-                break
-
-    if weights is None:
-        weights = 'yolov5s.pt'
-        logger.info(f'cannot find pytorch weight in {model_params_path}, use {weights} instead')
-
-    model = DetectMultiBackend(weights=weights,
-                               device=device,
-                               dnn=False,  # not use opencv dnn for onnx inference
-                               data='data.yaml')  # dataset.yaml path
-
-    return model
-
-
-class MiningCald(Ymir_Yolov5):
+class MiningCald(YmirYolov5):
     def mining(self):
         def split_result(result):
             if len(result) > 0:
@@ -55,7 +29,8 @@ class MiningCald(Ymir_Yolov5):
 
         path_env = env.get_current_env()
         N = dr.items_count(env.DatasetType.CANDIDATE)
-        idx = 0
+        monitor_gap = max(1, N // 100)
+        idx = -1
         beta = 1.3
         mining_result = []
         for asset_path, _ in tqdm(dr.item_paths(dataset_type=env.DatasetType.CANDIDATE)):
@@ -106,7 +81,10 @@ class MiningCald(Ymir_Yolov5):
 
             mining_result.append((asset_path, consistency))
             idx += 1
-            monitor.write_monitor_logger(percent=0.1 + 0.8 * idx / N)
+
+            if idx % monitor_gap == 0:
+                percent = POSTPROCESS_PERCENT + TASK_PERCENT * idx / N
+                monitor.write_monitor_logger(percent=percent)
 
         return mining_result
 
@@ -145,7 +123,13 @@ def _ious(boxes1, boxes2):
     return iou
 
 
-if __name__ == "__main__":
+def main():
     miner = MiningCald()
     mining_result = miner.mining()
     rw.write_mining_result(mining_result=mining_result)
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

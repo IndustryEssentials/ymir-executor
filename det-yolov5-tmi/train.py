@@ -47,7 +47,7 @@ from utils.callbacks import Callbacks
 from utils.datasets import create_dataloader
 from utils.downloads import attempt_download
 from utils.general import (LOGGER, check_dataset, check_file, check_git_status, check_img_size, check_requirements,
-                           check_suffix, check_yaml, colorstr, get_latest_run, increment_path, init_seeds,
+                           check_suffix, check_version, check_yaml, colorstr, get_latest_run, increment_path, init_seeds,
                            intersect_dicts, labels_to_class_weights, labels_to_image_weights, methods, one_cycle,
                            print_args, print_mutation, strip_optimizer)
 from utils.loggers import Loggers
@@ -56,8 +56,8 @@ from utils.loss import ComputeLoss
 from utils.metrics import fitness
 from utils.plots import plot_evolve, plot_labels
 from utils.torch_utils import EarlyStopping, ModelEMA, de_parallel, select_device, torch_distributed_zero_first
-from utils.ymir_yolov5 import ymir_process_config,write_ymir_training_result
-from ymir_exc import monitor
+from utils.ymir_yolov5 import write_ymir_training_result, PREPROCESS_PERCENT, TASK_PERCENT
+from ymir_exc import monitor, env
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -255,7 +255,10 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
 
     # DDP mode
     if cuda and RANK != -1:
-        model = DDP(model, device_ids=[LOCAL_RANK], output_device=LOCAL_RANK)
+        if check_version(torch.__version__, '1.11.0'):
+            model = DDP(model, device_ids=[LOCAL_RANK], output_device=LOCAL_RANK, static_graph=True)
+        else:
+            model = DDP(model, device_ids=[LOCAL_RANK], output_device=LOCAL_RANK)
 
     # Model attributes
     nl = de_parallel(model).model[-1].nl  # number of detection layers (to scale hyps)
@@ -283,11 +286,15 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                 f'Using {train_loader.num_workers * WORLD_SIZE} dataloader workers\n'
                 f"Logging results to {colorstr('bold', save_dir)}\n"
                 f'Starting training for {epochs} epochs...')
+
+    monitor_gap = max(1, (epochs - start_epoch + 1) // 100)
     for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
         model.train()
 
         # ymir monitor
-        monitor.write_monitor_logger(percent=ymir_process_config['preprocess']+ymir_process_config['task']*epoch/epochs)
+        if epoch % monitor_gap == 0:
+            percent = PREPROCESS_PERCENT + TASK_PERCENT * epoch / (epochs - start_epoch + 1)
+            monitor.write_monitor_logger(percent=percent)
 
         # Update image weights (optional, single-GPU only)
         if opt.image_weights:
@@ -403,10 +410,10 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
 
                 # Save last, best and delete
                 torch.save(ckpt, last)
-                write_ymir_training_result(results,maps,rewrite=False)
+                write_ymir_training_result(results, maps, rewrite=False)
                 if best_fitness == fi:
                     torch.save(ckpt, best)
-                    write_ymir_training_result(results,maps,rewrite=True)
+                    write_ymir_training_result(results, maps, rewrite=True)
                 if (epoch > 0) and (opt.save_period > 0) and (epoch % opt.save_period == 0):
                     torch.save(ckpt, w / f'epoch{epoch}.pt')
                 del ckpt
@@ -525,12 +532,9 @@ def main(opt, callbacks=Callbacks()):
         if opt.evolve:
             if opt.project == str(ROOT / 'runs/train'):  # if default project name, rename to runs/evolve
                 opt.project = str(ROOT / 'runs/evolve')
-        # opt.project: /out
-        # opt.name: models
-        # models_dir: /out/moels
-        # tensorboard_dir: /out/tensorboard
         opt.save_dir = str(increment_path(Path(opt.project) / opt.name, exist_ok=opt.exist_ok))
-        opt.log_dir = str(increment_path(Path(opt.project) / 'tensorboard', exist_ok=opt.exist_ok))
+        opt.log_dir = env.get_current_env().output.tensorboard_dir
+
 
     # DDP mode
     device = select_device(opt.device, batch_size=opt.batch_size)

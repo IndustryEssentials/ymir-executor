@@ -8,3 +8,5 @@
 # class_names: []
 
 img_size: 640
+conf_thres: 0.25
+iou_thres: 0.45
