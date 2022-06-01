@@ -8,16 +8,14 @@ ARG MXNET="1.9.1"
 ENV LANG=C.UTF-8
 
 # install linux package, needs to fix GPG error first.
-# RUN sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC && \
     apt-get update && \
-    apt-get install -y git wget curl python3-dev gcc zip && \
+    apt-get install -y git wget curl python3-dev gcc zip libglib2.0-0 libgl1-mesa-glx && \
     wget https://bootstrap.pypa.io/get-pip.py && \
     python3 get-pip.py
 
 # Install python package
 # view https://mxnet.apache.org/versions/1.9.1/get_started for detail
-# RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple
 RUN pip3 install mxnet-cu112==${MXNET} loguru ymir-exc
 
 # copy template training/mining/infer config file

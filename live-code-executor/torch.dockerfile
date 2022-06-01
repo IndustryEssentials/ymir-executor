@@ -11,13 +11,12 @@ ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 ENV LANG=C.UTF-8
 
 # install linux package
-# RUN sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
 RUN apt-get update && apt-get install -y git curl wget zip gcc \
+    libglib2.0-0 libgl1-mesa-glx \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python package
-# RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple
 RUN pip install -U pip && \
     pip install loguru
 
