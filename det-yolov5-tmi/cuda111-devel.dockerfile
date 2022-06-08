@@ -12,31 +12,22 @@ ENV LANG=C.UTF-8
 
 # Install linux package
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC && \
-	apt-get update && apt-get install -y gnupg2 git ninja-build libglib2.0-0 libsm6 \
-    libxrender-dev libxext6 libgl1-mesa-glx ffmpeg sudo openssh-server \
-    libyaml-dev vim tmux tree curl wget zip \
+	apt-get update && apt-get install -y gnupg2 git libglib2.0-0 libgl1-mesa-glx \
+    curl wget zip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
-# Install python package
-RUN pip install -U pip && \
-	pip install cython xtcocotools jupyter onnx onnx-simplifier loguru \
-	tensorboard==2.5.0 numba progress yacs pthflops pytest \
-	scipy pydantic pyyaml imagesize opencv-python thop pandas seaborn
-
-# Install ymir-exc sdk
-RUN pip install ymir-exc
 
 # Copy file from host to docker
 ADD ./det-yolov5-tmi /app
 RUN mkdir /img-man && mv /app/*-template.yaml /img-man/
+RUN pip install ymir-exc && pip install -r /app/requirements.txt
 
 # Download pretrained weight and font file
 RUN cd /app && bash data/scripts/download_weights.sh
 RUN mkdir -p /root/.config/Ultralytics && \
     wget https://ultralytics.com/assets/Arial.ttf -O /root/.config/Ultralytics/Arial.ttf
 
-# setup PYTHONPATH to find local package
+# Make PYTHONPATH find local package
 ENV PYTHONPATH=.
 
 WORKDIR /app
