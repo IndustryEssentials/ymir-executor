@@ -578,6 +578,10 @@ def xyxy2xywh(x):
     y[:, 3] = x[:, 3] - x[:, 1]  # height
     return y
 
+def ymir_xyxy2xywh(x, width, height):
+    x[:,0:3:2]/=width   # normal x1,x2
+    x[:,1:4:2]/=height  # normal y1,y2
+    return xyxy2xywh(x)
 
 def xywh2xyxy(x):
     # Convert nx4 boxes from [x, y, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
