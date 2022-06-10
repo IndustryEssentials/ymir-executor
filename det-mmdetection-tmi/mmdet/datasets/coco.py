@@ -3,6 +3,7 @@ import contextlib
 import io
 import itertools
 import logging
+import os
 import os.path as osp
 import tempfile
 import warnings
@@ -12,7 +13,6 @@ import mmcv
 import numpy as np
 from mmcv.utils import print_log
 from terminaltables import AsciiTable
-
 from mmdet.core import eval_recalls
 from .api_wrappers import COCO, COCOeval
 from .builder import DATASETS
@@ -561,6 +561,15 @@ class CocoDataset(CustomDataset):
                             ap = float('nan')
                         results_per_category.append(
                             (f'{nm["name"]}', f'{float(ap):0.3f}'))
+
+
+                    COCO_EVAL_TMP_FILE = os.getenv('COCO_EVAL_TMP_FILE')
+                    if COCO_EVAL_TMP_FILE is not None:
+                        mmcv.dump({name:value for name,value in results_per_category}, COCO_EVAL_TMP_FILE, file_format='json')
+                    else:
+                        raise Exception('please set valid environment variable COCO_EVAL_TMP_FILE to write result into json file')
+
+                    print_log(f'\n write eval result to {COCO_EVAL_TMP_FILE}', logger=logger)
 
                     num_columns = min(6, len(results_per_category) * 2)
                     results_flatten = list(

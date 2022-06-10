@@ -7,7 +7,9 @@ import torch.distributed as dist
 from mmcv.runner import DistEvalHook as BaseDistEvalHook
 from mmcv.runner import EvalHook as BaseEvalHook
 from torch.nn.modules.batchnorm import _BatchNorm
-
+from ymir_exc import monitor
+from mmdet.utils.util_ymir import update_training_result_file
+import os.path as osp
 
 def _calc_dynamic_intervals(start_interval, dynamic_interval_list):
     assert mmcv.is_list_of(dynamic_interval_list, tuple)
@@ -43,6 +45,12 @@ class EvalHook(BaseEvalHook):
         self._decide_interval(runner)
         super().before_train_epoch(runner)
 
+    def after_train_epoch(self, runner):
+        """Report the training process for ymir"""
+        percent=0.95*(runner.epoch/runner.max_epochs)
+        monitor.write_monitor_logger(percent=percent)
+        super().after_train_epoch(runner)
+
     def before_train_iter(self, runner):
         self._decide_interval(runner)
         super().before_train_iter(runner)
@@ -60,6 +68,10 @@ class EvalHook(BaseEvalHook):
         # the best checkpoint
         if self.save_best and key_score:
             self._save_ckpt(runner, key_score)
+            best_score = runner.meta['hook_msgs'].get(
+                'best_score', self.init_value_map[self.rule])
+            if self.compare_func(key_score, best_score):
+                update_training_result_file(key_score)
 
 
 # Note: Considering that MMCV's EvalHook updated its interface in V1.3.16,
@@ -86,6 +98,12 @@ class DistEvalHook(BaseDistEvalHook):
         """Evaluate the model only at the start of training by epoch."""
         self._decide_interval(runner)
         super().before_train_epoch(runner)
+
+    def after_train_epoch(self, runner):
+        """Report the training process for ymir"""
+        percent=0.1+0.8*(runner.epoch/runner.max_epochs)
+        monitor.write_monitor_logger(percent=percent)
+        super().after_train_epoch(runner)
 
     def before_train_iter(self, runner):
         self._decide_interval(runner)
@@ -128,3 +146,8 @@ class DistEvalHook(BaseDistEvalHook):
             # the action to save the best checkpoint
             if self.save_best and key_score:
                 self._save_ckpt(runner, key_score)
+
+                best_score = runner.meta['hook_msgs'].get(
+                    'best_score', self.init_value_map[self.rule])
+                if self.compare_func(key_score, best_score):
+                    update_training_result_file(key_score)
