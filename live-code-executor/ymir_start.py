@@ -15,7 +15,7 @@ def show_ymir_info(executor_config: dict) -> None:
 
 
 def main():
-    # step 1. read config.yaml and clone git_url:git_branch to /app
+    # step 1. read config.yaml and clone git_url:git_branch to /workspace/app
     executor_config = env.get_executor_config()
     show_ymir_info(executor_config)
 
@@ -23,14 +23,14 @@ def main():
     git_branch = executor_config.get('git_branch', '')
 
     if not git_branch:
-        cmd = f'git clone {git_url} /app'
+        cmd = f'git clone {git_url} /workspace/app'
     else:
-        cmd = f'git clone {git_url} -b {git_branch} /app'
+        cmd = f'git clone {git_url} -b {git_branch} /workspace/app'
     logger.info(f'clone code: {cmd}')
     subprocess.check_output(cmd.split())
 
-    # step 2. read /app/extra-requirements.txt and install it.
-    pypi_file = '/app/extra-requirements.txt'
+    # step 2. read /workspace/app/extra-requirements.txt and install it.
+    pypi_file = '/workspace/app/extra-requirements.txt'
     if osp.exists(pypi_file):
         pypi_mirror = executor_config.get('pypi_mirror', '')
 
@@ -42,10 +42,10 @@ def main():
     else:
         logger.info('no python package needs to install')
 
-    # step 3. run /app/start.py
+    # step 3. run /workspace/app/start.py
     cmd = 'python3 start.py'
     logger.info(f'run task: {cmd}')
-    subprocess.check_output(cmd.split(), cwd='/app')
+    subprocess.check_output(cmd.split(), cwd='/workspace/app')
 
     logger.info('live code executor run successfully')
     return 0
