@@ -115,7 +115,7 @@ def main(cfg: edict) -> int:
 
 if __name__ == '__main__':
     cfg = get_merged_config()
-    os.environ.setdefault('YMIR_MODELS_DIR','')
+    os.environ.setdefault('YMIR_MODELS_DIR',cfg.ymir.output.models_dir)
     os.environ.setdefault('COCO_EVAL_TMP_FILE', '')
     os.environ.setdefault('PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION', 'python')
     sys.exit(main(cfg))

@@ -1,7 +1,5 @@
 import logging
 import os
-import os.path as osp
-import shutil
 import subprocess
 import sys
 
@@ -11,8 +9,8 @@ from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
 
-from mmdet.utils.util_ymir import (YmirStage, YmirYolov5, convert_ymir_to_yolov5, download_weight_file, get_merged_config,
-                               get_weight_file, get_ymir_process)
+from mmdet.utils.util_ymir import (YmirStage, get_merged_config,
+                                   get_ymir_process)
 
 
 def start() -> int:
@@ -47,11 +45,6 @@ def _run_training(cfg: edict) -> None:
 
 
 def _run_mining(cfg: edict()) -> None:
-    logging.info('convert ymir dataset to yolov5 dataset')
-    out_dir = osp.join(cfg.ymir.output.root_dir, 'yolov5_dataset')
-    convert_ymir_to_yolov5(cfg, out_dir)
-    monitor.write_monitor_logger(percent=get_ymir_process(stage=YmirStage.PREPROCESS, p=1.0))
-
     command = 'python3 mining/mining_cald.py'
     logging.info(f'mining: {command}')
     subprocess.run(command.split(), check=True)
@@ -59,12 +52,6 @@ def _run_mining(cfg: edict()) -> None:
 
 
 def _run_infer(cfg: edict) -> None:
-    # generate data.yaml for infer
-    logging.info('convert ymir dataset to yolov5 dataset')
-    out_dir = osp.join(cfg.ymir.output.root_dir, 'yolov5_dataset')
-    convert_ymir_to_yolov5(cfg, out_dir)
-    monitor.write_monitor_logger(percent=get_ymir_process(stage=YmirStage.PREPROCESS, p=1.0))
-
     N = dr.items_count(env.DatasetType.CANDIDATE)
     infer_result = dict()
     model = YmirYolov5(cfg)
