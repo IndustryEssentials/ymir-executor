@@ -4,9 +4,6 @@ ARG CUDNN="8"
 
 # cuda11.1 + pytorch 1.9.0 not work!!!
 FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-runtime
-ARG USER_GID=1000
-ARG USER_UID=1000
-ARG USER=ymir
 
 ARG SERVER_MODE=prod
 
@@ -42,10 +39,5 @@ COPY ymir_start.py /workspace/ymir_start.py
 
 # set up python path
 ENV PYTHONPATH=.
-
-# Create non-root user and chown /workspace
-RUN groupadd --gid $USER_GID $USER \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USER --create-home \
-    && chown ${USER_GID}:${USER_GID} /workspace
 
 CMD bash /usr/bin/start.sh
