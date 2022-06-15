@@ -61,13 +61,10 @@ def get_merged_config() -> edict:
     merged_cfg.ymir = env.get_current_env()
     return merged_cfg
 
-def get_weight_file(cfg: edict, try_download: bool = True) -> str:
+def get_weight_file(cfg: edict) -> str:
     """
     return the weight file path by priority
-
-    1. find weight file in cfg.param.model_params_path or cfg.param.model_params_path
-    2. if try_download and no weight file offered
-            for training task, yolov5 will download it from github.
+    find weight file in cfg.param.model_params_path or cfg.param.model_params_path
     """
     if cfg.ymir.run_training:
         model_params_path = cfg.param.pretrained_model_paths
@@ -120,10 +117,11 @@ class YmirYolov5():
     def init_detector(self, device: torch.device) -> DetectMultiBackend:
         weights = get_weight_file(self.cfg)
 
+        data_yaml = osp.join(self.cfg.ymir.output.root_dir, 'data.yaml')
         model = DetectMultiBackend(weights=weights,
                                    device=device,
                                    dnn=False,  # not use opencv dnn for onnx inference
-                                   data='data.yaml')  # dataset.yaml path
+                                   data=data_yaml)  # dataset.yaml path
 
         return model
 
@@ -183,11 +181,10 @@ class YmirYolov5():
         return anns
 
 
-def convert_ymir_to_yolov5(cfg: edict, output_root_dir: str) -> None:
+def convert_ymir_to_yolov5(cfg: edict) -> None:
     """
     convert ymir format dataset to yolov5 format
     generate data.yaml for training/mining/infer
-    output_root_dir: the output root dir
     """
     data = dict(path=cfg.ymir.input.root_dir,
                 train=cfg.ymir.input.training_index_file,
@@ -196,7 +193,7 @@ def convert_ymir_to_yolov5(cfg: edict, output_root_dir: str) -> None:
                 nc=len(cfg.param.class_names),
                 names=cfg.param.class_names)
 
-    with open(osp.join(output_root_dir, 'data.yaml'), 'w') as fw:
+    with open(osp.join(cfg.ymir.output.root_dir, 'data.yaml'), 'w') as fw:
         fw.write(yaml.safe_dump(data))
 
 

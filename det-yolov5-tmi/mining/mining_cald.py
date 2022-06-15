@@ -15,7 +15,7 @@ from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
 
 from mining.data_augment import cutout, horizontal_flip, intersect, resize, rotate
-from utils.ymir_yolov5 import BBOX, CV_IMAGE, YmirYolov5, YmirStage, get_ymir_process
+from utils.ymir_yolov5 import BBOX, CV_IMAGE, YmirYolov5, YmirStage, get_ymir_process, get_merged_config
 
 
 def split_result(result: NDArray) -> Tuple[BBOX, NDArray, NDArray]:
@@ -133,7 +133,8 @@ def get_ious(boxes1: BBOX, boxes2: BBOX) -> NDArray:
 
 
 def main():
-    miner = MiningCald()
+    cfg = get_merged_config()
+    miner = MiningCald(cfg)
     mining_result = miner.mining()
     rw.write_mining_result(mining_result=mining_result)
 
