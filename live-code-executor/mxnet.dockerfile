@@ -10,6 +10,8 @@ ARG USER=ymir
 ARG MXNET="1.9.1"
 ENV LANG=C.UTF-8
 
+ARG SERVER_MODE=prod
+
 # install linux package, needs to fix GPG error first.
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC && \
     apt-get update && \
@@ -19,7 +21,14 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC &&
 
 # Install python package
 # view https://mxnet.apache.org/versions/1.9.1/get_started for detail
-RUN pip3 install mxnet-cu112==${MXNET} loguru ymir-exc
+RUN pip3 install mxnet-cu112==${MXNET} loguru
+
+# install ymir-exc sdk
+RUN if [ "${SERVER_MODE}" = "dev" ]; then \
+    pip install --force-reinstall -U "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"; \
+  else \
+    pip install ymir-exc; \
+  fi
 
 # copy template training/mining/infer config file
 RUN mkdir -p /img-man
