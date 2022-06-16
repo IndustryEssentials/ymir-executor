@@ -6,7 +6,7 @@ ARG SYSTEM="ubuntu18.04"
 FROM nvidia/cuda:${CUDA}-cudnn${CUDNN}-${BUILD}-${SYSTEM}
 ARG MXNET="1.9.1"
 ARG DEBIAN_FRONTEND="noninteractive"
-ARG MINICONDA_URL="https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-py39_4.11.0-Linux-x86_64.sh"
+ARG MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-py39_4.11.0-Linux-x86_64.sh"
 
 ENV LANG=C.UTF-8
 ENV PATH /opt/conda/bin:$PATH
