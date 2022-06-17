@@ -38,4 +38,4 @@ ENV PYTHONPATH=.
 
 WORKDIR /app
 RUN echo "python3 /app/start.py" > /usr/bin/start.sh
-CMD python3 /app/start.py
+CMD bash /usr/bin/start.sh
