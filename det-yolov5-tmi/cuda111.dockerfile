@@ -4,6 +4,7 @@ ARG CUDNN="8"
 
 # cuda11.1 + pytorch 1.9.0 + cudnn8 not work!!!
 FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-runtime
+ARG SERVER_MODE=prod
 
 ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
 ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
@@ -16,18 +17,26 @@ RUN	apt-get update && apt-get install -y gnupg2 git libglib2.0-0 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy file from host to docker
+# install ymir-exc sdk
+RUN if [ "${SERVER_MODE}" = "dev" ]; then \
+        pip install --force-reinstall -U "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"; \
+    else \
+        pip install ymir-exc; \
+    fi
+
+# Copy file from host to docker and install requirements
 ADD ./det-yolov5-tmi /app
-RUN mkdir /img-man && mv /app/*-template.yaml /img-man/
-RUN pip install ymir-exc && pip install -r /app/requirements.txt
+RUN mkdir /img-man && mv /app/*-template.yaml /img-man/ \
+    && pip install -r /app/requirements.txt
 
 # Download pretrained weight and font file
-RUN cd /app && bash data/scripts/download_weights.sh
-RUN mkdir -p /root/.config/Ultralytics && \
-    wget https://ultralytics.com/assets/Arial.ttf -O /root/.config/Ultralytics/Arial.ttf
+RUN cd /app && bash data/scripts/download_weights.sh \
+    && mkdir -p /root/.config/Ultralytics \
+    && wget https://ultralytics.com/assets/Arial.ttf -O /root/.config/Ultralytics/Arial.ttf
 
 # Make PYTHONPATH find local package
 ENV PYTHONPATH=.
 
 WORKDIR /app
-CMD python3 /app/start.py
+RUN echo "python3 /app/start.py" > /usr/bin/start.sh
+CMD bash /usr/bin/start.sh

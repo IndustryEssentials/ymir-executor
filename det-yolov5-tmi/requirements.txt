@@ -37,6 +37,6 @@ onnx-simplifier>=0.3.6  # ONNX simplifier
 thop  # FLOPs computation
 
 # Ymir  ---------------------------------------
-imagesize # fast obtain image size without load image
-nptyping # numpy type hint
-easydict
+imagesize>=1.3.0 # fast obtain image size without load image
+nptyping>=2.1.1 # numpy type hint
+easydict>=1.9
