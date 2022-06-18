@@ -10,7 +10,7 @@ from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
 
 from mmdet.utils.util_ymir import (YmirStage, get_merged_config,
-                                   get_ymir_process)
+                                   get_ymir_process, YmirModel)
 
 
 def start() -> int:
@@ -54,7 +54,7 @@ def _run_mining(cfg: edict()) -> None:
 def _run_infer(cfg: edict) -> None:
     N = dr.items_count(env.DatasetType.CANDIDATE)
     infer_result = dict()
-    model = YmirYolov5(cfg)
+    model = YmirModel(cfg)
     idx = -1
 
     monitor_gap = max(1, N // 100)
