@@ -5,6 +5,8 @@ ARG CUDNN="8"
 # cuda11.1 + pytorch 1.9.0 not work!!!
 FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-runtime
 
+ARG SERVER_MODE=prod
+
 ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
 ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
 ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
@@ -21,7 +23,11 @@ RUN pip install -U pip && \
     pip install loguru
 
 # install ymir-exc sdk
-RUN pip install ymir-exc
+RUN if [ "${SERVER_MODE}" = "dev" ]; then \
+    pip install --force-reinstall -U "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"; \
+  else \
+    pip install ymir-exc; \
+  fi
 
 # copy template training/mining/infer config file
 RUN mkdir -p /img-man
