@@ -146,7 +146,7 @@ class YmirDataset(CocoDataset):
         else:
             lines=[]
         for line in lines:
-            obj=[int(x) for x in line.strip().split(',')]
+            obj=[int(x) for x in line.strip().split(',')[0:5]]
             # YMIR category id starts from 0, coco from 1
             category_id, xmin, ymin, xmax, ymax = obj
             bbox = [xmin, ymin, xmax, ymax]
