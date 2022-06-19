@@ -17,7 +17,7 @@ from mmdet.apis import init_random_seed, set_random_seed, train_detector
 from mmdet.datasets import build_dataset
 from mmdet.models import build_detector
 from mmdet.utils import collect_env, get_root_logger, setup_multi_processes
-from mmdet.utils.util_ymir import modify_mmdet_config
+from mmdet.utils.util_ymir import modify_mmdet_config, get_merged_config
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
@@ -96,11 +96,12 @@ def parse_args():
 
 def main():
     args = parse_args()
-
+    ymir_cfg = get_merged_config()
     cfg = Config.fromfile(args.config)
+    print(cfg)
     # modify mmdet config from file
-    cfg = modify_mmdet_config(cfg)
-    
+    cfg = modify_mmdet_config(mmdet_cfg=cfg, ymir_cfg=ymir_cfg)
+
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
 

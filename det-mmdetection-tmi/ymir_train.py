@@ -23,16 +23,16 @@ def main(cfg: edict) -> int:
     if num_classes==0:
         raise Exception('not find class_names in config!')
 
-    weight_file = get_weight_file(cfg)
-    if not weight_file:
-        weight_file = download_weight_file(model)
+    # weight_file = get_weight_file(cfg)
+    # if not weight_file:
+    #     weight_file = download_weight_file(model)
 
     ### user define config
-    learning_rate = cfg.param.learning_rate
-    epochs = cfg.param.max_epochs
+    # learning_rate = cfg.param.learning_rate
+    # epochs = cfg.param.max_epochs
 
-    samples_per_gpu = cfg.param.samples_per_gpu
-    workers_per_gpu = min(4, max(1, samples_per_gpu//2))
+    # samples_per_gpu = cfg.param.samples_per_gpu
+    # workers_per_gpu = min(4, max(1, samples_per_gpu//2))
 
     ### mmcv args config
     config_file = cfg.param.get("config_file")
@@ -59,7 +59,7 @@ def main(cfg: edict) -> int:
 
     if args_options:
         cmd +=f" {args_options}"
-    
+
     if cfg_options:
         cmd +=f" --cfg-options {cfg_options}"
 

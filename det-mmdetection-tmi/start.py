@@ -10,7 +10,8 @@ from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
 
 from mmdet.utils.util_ymir import (YmirStage, get_merged_config,
-                                   get_ymir_process, YmirModel)
+                                   get_ymir_process)
+from ymir_infer import YmirModel
 
 
 def start() -> int:

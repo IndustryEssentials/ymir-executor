@@ -11,7 +11,6 @@ from urllib.parse import urlparse
 
 import mmcv
 from mmcv import Config
-from mmdet.apis import init_detector, inference_detector
 from easydict import EasyDict as edict
 from nptyping import NDArray, Shape, UInt8
 from torch.hub import HASH_REGEX, _get_torch_home, download_url_to_file
@@ -76,7 +75,7 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
     workers_per_gpu = ymir_cfg.param.workers_per_gpu
     mmdet_cfg.data.samples_per_gpu = samples_per_gpu
     mmdet_cfg.data.workers_per_gpu = workers_per_gpu
-    
+
     for split in ['train','val','test']:
         ymir_dataset_cfg=dict(type='YmirDataset',
             ann_file=ymir_ann_files[split],
@@ -105,12 +104,12 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
     mmdet_model_cfg.num_classes = len(ymir_cfg.param.class_names)
 
     ### epochs, checkpoint, tensorboard
-    mmdet_model_cfg.runner.max_epochs = ymir_cfg.param.max_epochs
-    mmdet_model_cfg.checkpoint_config['out_dir'] = ymir_cfg.ymir.output.models_dir
+    mmdet_cfg.runner.max_epochs = ymir_cfg.param.max_epochs
+    mmdet_cfg.checkpoint_config['out_dir'] = ymir_cfg.ymir.output.models_dir
     tensorboard_logger = dict(type='TensorboardLoggerHook',
         log_dir = ymir_cfg.ymir.output.tensorboard_dir)
-    mmdet_model_cfg.log_config['hooks'].append(tensorboard_logger)
-    return mmdet_cfg    
+    mmdet_cfg.log_config['hooks'].append(tensorboard_logger)
+    return mmdet_cfg
 
 def get_weight_file(cfg: edict) -> str:
     """
@@ -200,17 +199,3 @@ def update_training_result_file(key_score):
     rw.write_training_result(model_names=[model_weight_file, osp.basename(model_config_file)],
                              mAP=key_score,
                              classAPs=results_per_category)
-
-class YmirModel:
-    def __init__(self, cfg:edict):
-        self.cfg = cfg 
-
-        # Specify the path to model config and checkpoint file
-        config_file = 'configs/faster_rcnn/faster_rcnn_r50_fpn_1x_coco.py'
-        checkpoint_file = 'checkpoints/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth'
-
-        # build the model from a config file and a checkpoint file
-        self.model = init_detector(config_file, checkpoint_file, device='cuda:0')
-
-    def infer(self, img):
-        return inference_detector(self.model, img)
