@@ -10,6 +10,8 @@ from typing import Any, List, Tuple
 from urllib.parse import urlparse
 
 import mmcv
+from mmcv import Config
+from mmdet.apis import init_detector, inference_detector
 from easydict import EasyDict as edict
 from nptyping import NDArray, Shape, UInt8
 from torch.hub import HASH_REGEX, _get_torch_home, download_url_to_file
@@ -58,6 +60,57 @@ def get_merged_config() -> edict:
     merged_cfg.ymir = env.get_current_env()
     return merged_cfg
 
+def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
+    """
+    - modify dataset config
+    - modify model output channel
+    """
+    ### modify dataset config
+    ymir_ann_files = dict(
+        train=ymir_cfg.ymir.input.training_index_file,
+        val=ymir_cfg.ymir.input.val_index_file,
+        test=ymir_cfg.ymir.input.candidate_index_file
+    )
+
+    samples_per_gpu = ymir_cfg.param.samples_per_gpu
+    workers_per_gpu = ymir_cfg.param.workers_per_gpu
+    mmdet_cfg.data.samples_per_gpu = samples_per_gpu
+    mmdet_cfg.data.workers_per_gpu = workers_per_gpu
+    
+    for split in ['train','val','test']:
+        ymir_dataset_cfg=dict(type='YmirDataset',
+            ann_file=ymir_ann_files[split],
+            img_prefix=ymir_cfg.ymir.input.assets_dir,
+            ann_prefix=ymir_cfg.ymir.input.annotations_dir,
+            classes=ymir_cfg.param.class_names,
+            data_root=ymir_cfg.ymir.input.root_dir,
+            filter_empty_gt=False
+            )
+        ### modify dataset config
+        mmdet_dataset_cfg = mmdet_cfg.data[split]
+        if isinstance(mmdet_dataset_cfg, (list, tuple)):
+            for x in mmdet_dataset_cfg:
+                x.update(ymir_dataset_cfg)
+        else:
+            src_dataset_type = mmdet_dataset_cfg.type
+            if src_dataset_type in ['CocoDataset']:
+                mmdet_dataset_cfg.update(ymir_dataset_cfg)
+            elif src_dataset_type in ['MultiImageMixDataset','RepeatDataset']:
+                mmdet_dataset_cfg.dataset.update(ymir_dataset_cfg)
+            else:
+                raise Exception(f'unsupported source dataset type {src_dataset_type}')
+
+    ### modify model output channel
+    mmdet_model_cfg = mmdet_cfg.model.bbox_head
+    mmdet_model_cfg.num_classes = len(ymir_cfg.param.class_names)
+
+    ### epochs, checkpoint, tensorboard
+    mmdet_model_cfg.runner.max_epochs = ymir_cfg.param.max_epochs
+    mmdet_model_cfg.checkpoint_config['out_dir'] = ymir_cfg.ymir.output.models_dir
+    tensorboard_logger = dict(type='TensorboardLoggerHook',
+        log_dir = ymir_cfg.ymir.output.tensorboard_dir)
+    mmdet_model_cfg.log_config['hooks'].append(tensorboard_logger)
+    return mmdet_cfg    
 
 def get_weight_file(cfg: edict) -> str:
     """
@@ -147,3 +200,17 @@ def update_training_result_file(key_score):
     rw.write_training_result(model_names=[model_weight_file, osp.basename(model_config_file)],
                              mAP=key_score,
                              classAPs=results_per_category)
+
+class YmirModel:
+    def __init__(self, cfg:edict):
+        self.cfg = cfg 
+
+        # Specify the path to model config and checkpoint file
+        config_file = 'configs/faster_rcnn/faster_rcnn_r50_fpn_1x_coco.py'
+        checkpoint_file = 'checkpoints/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth'
+
+        # build the model from a config file and a checkpoint file
+        self.model = init_detector(config_file, checkpoint_file, device='cuda:0')
+
+    def infer(self, img):
+        return inference_detector(self.model, img)

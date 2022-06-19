@@ -18,6 +18,7 @@ from threading import Thread
 from zipfile import ZipFile
 
 import cv2
+import imagesize
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -28,9 +29,8 @@ from tqdm import tqdm
 
 from utils.augmentations import Albumentations, augment_hsv, copy_paste, letterbox, mixup, random_perspective
 from utils.general import (DATASETS_DIR, LOGGER, NUM_THREADS, check_dataset, check_requirements, check_yaml, clean_str,
-                           segments2boxes, xyn2xy, xywh2xyxy, xywhn2xyxy, xyxy2xywhn)
+                           segments2boxes, xyn2xy, xywh2xyxy, xywhn2xyxy, xyxy2xywhn, ymir_xyxy2xywh)
 from utils.torch_utils import torch_distributed_zero_first
-
 # Parameters
 HELP_URL = 'https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data'
 IMG_FORMATS = ['bmp', 'dng', 'jpeg', 'jpg', 'mpo', 'png', 'tif', 'tiff', 'webp']  # include image suffixes
@@ -369,10 +369,8 @@ class LoadStreams:
         return len(self.sources)  # 1E12 frames = 32 streams at 30 FPS for 30 years
 
 
-def img2label_paths(img_paths):
-    # Define label paths as a function of image paths
-    sa, sb = os.sep + 'images' + os.sep, os.sep + 'labels' + os.sep  # /images/, /labels/ substrings
-    return [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
+def img2label_paths(img_paths, img2label_map={}):
+    return [img2label_map[img] for img in img_paths]
 
 
 class LoadImagesAndLabels(Dataset):
@@ -394,19 +392,19 @@ class LoadImagesAndLabels(Dataset):
 
         try:
             f = []  # image files
+            img2label_map = dict()  # map image files to label files
             for p in path if isinstance(path, list) else [path]:
                 p = Path(p)  # os-agnostic
-                if p.is_dir():  # dir
-                    f += glob.glob(str(p / '**' / '*.*'), recursive=True)
-                    # f = list(p.rglob('*.*'))  # pathlib
-                elif p.is_file():  # file
+                if p.is_file():  # ymir index file
                     with open(p) as t:
                         t = t.read().strip().splitlines()
-                        parent = str(p.parent) + os.sep
-                        f += [x.replace('./', parent) if x.startswith('./') else x for x in t]  # local to global path
-                        # f += [p.parent / x.lstrip(os.sep) for x in t]  # local to global path (pathlib)
+                        for x in t:
+                            # x = f'{image_path}\t{label_path}\n'
+                            image_path, label_path = x.split()
+                            f.append(image_path)
+                            img2label_map[image_path] = label_path
                 else:
-                    raise Exception(f'{prefix}{p} does not exist')
+                    raise Exception(f'{prefix}{p} is not valid ymir index file')
             self.img_files = sorted(x.replace('/', os.sep) for x in f if x.split('.')[-1].lower() in IMG_FORMATS)
             # self.img_files = sorted([x for x in f if x.suffix[1:].lower() in IMG_FORMATS])  # pathlib
             assert self.img_files, f'{prefix}No images found'
@@ -414,7 +412,7 @@ class LoadImagesAndLabels(Dataset):
             raise Exception(f'{prefix}Error loading data from {path}: {e}\nSee {HELP_URL}')
 
         # Check cache
-        self.label_files = img2label_paths(self.img_files)  # labels
+        self.label_files = img2label_paths(self.img_files, img2label_map)  # labels
         cache_path = (p if p.is_file() else Path(self.label_files[0]).parent).with_suffix('.cache')
         try:
             cache, exists = np.load(cache_path, allow_pickle=True).item(), True  # load dict
@@ -438,7 +436,7 @@ class LoadImagesAndLabels(Dataset):
         self.labels = list(labels)
         self.shapes = np.array(shapes, dtype=np.float64)
         self.img_files = list(cache.keys())  # update
-        self.label_files = img2label_paths(cache.keys())  # update
+        self.label_files = img2label_paths(cache.keys(), img2label_map)  # update
         n = len(shapes)  # number of images
         bi = np.floor(np.arange(n) / batch_size).astype(np.int)  # batch index
         nb = bi[-1] + 1  # number of batches
@@ -841,7 +839,7 @@ def extract_boxes(path=DATASETS_DIR / 'coco128'):  # from utils.datasets import 
             lb_file = Path(img2label_paths([str(im_file)])[0])
             if Path(lb_file).exists():
                 with open(lb_file) as f:
-                    lb = np.array([x.split() for x in f.read().strip().splitlines()], dtype=np.float32)  # labels
+                    lb = np.array([x.split(',') for x in f.read().strip().splitlines()], dtype=np.float32)  # labels
 
                 for j, x in enumerate(lb):
                     c = int(x[0])  # class
@@ -905,14 +903,16 @@ def verify_image_label(args):
         if os.path.isfile(lb_file):
             nf = 1  # label found
             with open(lb_file) as f:
-                lb = [x.split() for x in f.read().strip().splitlines() if len(x)]
-                if any([len(x) > 8 for x in lb]):  # is segment
-                    classes = np.array([x[0] for x in lb], dtype=np.float32)
-                    segments = [np.array(x[1:], dtype=np.float32).reshape(-1, 2) for x in lb]  # (cls, xy1...)
-                    lb = np.concatenate((classes.reshape(-1, 1), segments2boxes(segments)), 1)  # (cls, xywh)
-                lb = np.array(lb, dtype=np.float32)
+                lb = [x.split(',') for x in f.read().strip().splitlines() if len(x)]
+
             nl = len(lb)
             if nl:
+                classes = np.array([x[0] for x in lb], dtype=np.float32)
+                width, height = imagesize.get(im_file)
+                ymir_xyxy = np.array([x[1:] for x in lb], dtype=np.float32)
+                lb = np.concatenate(
+                    (classes.reshape(-1, 1), ymir_xyxy2xywh(ymir_xyxy, width, height)), 1)  # (cls, xywh)
+
                 assert lb.shape[1] == 5, f'labels require 5 columns, {lb.shape[1]} columns detected'
                 assert (lb >= 0).all(), f'negative label values {lb[lb < 0]}'
                 assert (lb[:, 1:] <= 1).all(), f'non-normalized or out of bounds coordinates {lb[:, 1:][lb[:, 1:] > 1]}'

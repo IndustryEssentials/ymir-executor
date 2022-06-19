@@ -1,5 +1,7 @@
 import logging
 import os
+import os.path as osp
+import shutil
 import subprocess
 import sys
 
@@ -9,8 +11,8 @@ from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
 
-from mmdet.utils.util_ymir import (YmirStage, get_merged_config,
-                                   get_ymir_process, YmirModel)
+from utils.ymir_yolov5 import (YmirStage, YmirYolov5, convert_ymir_to_yolov5, download_weight_file, get_merged_config,
+                               get_weight_file, get_ymir_process)
 
 
 def start() -> int:
@@ -37,14 +39,53 @@ def _run_training(cfg: edict) -> None:
     2. training model
     3. save model weight/hyperparameter/... to design directory
     """
-    command = 'python3 ymir_train.py'
+    # 1. convert dataset
+    out_dir = cfg.ymir.output.root_dir
+    convert_ymir_to_yolov5(cfg)
+    logging.info(f'generate {out_dir}/data.yaml')
+    monitor.write_monitor_logger(percent=get_ymir_process(stage=YmirStage.PREPROCESS, p=1.0))
+
+    # 2. training model
+    epochs = cfg.param.epochs
+    batch_size = cfg.param.batch_size
+    model = cfg.param.model
+    img_size = cfg.param.img_size
+    weights = get_weight_file(cfg)
+    if not weights:
+        # download pretrained weight
+        weights = download_weight_file(model)
+
+    models_dir = cfg.ymir.output.models_dir
+    command = f'python3 train.py --epochs {epochs} ' + \
+        f'--batch-size {batch_size} --data {out_dir}/data.yaml --project /out ' + \
+        f'--cfg models/{model}.yaml --name models --weights {weights} ' + \
+        f'--img-size {img_size} --hyp data/hyps/hyp.scratch-low.yaml ' + \
+        '--exist-ok'
     logging.info(f'start training: {command}')
+
     subprocess.run(command.split(), check=True)
+    monitor.write_monitor_logger(percent=get_ymir_process(stage=YmirStage.TASK, p=1.0))
+
+    # 3. convert to onnx and save model weight to design directory
+    opset = cfg.param.opset
+    command = f'python3 export.py --weights {models_dir}/best.pt --opset {opset} --include onnx'
+    logging.info(f'export onnx weight: {command}')
+    subprocess.run(command.split(), check=True)
+
+    # save hyperparameter
+    shutil.copy(f'models/{model}.yaml', f'{models_dir}/{model}.yaml')
+
     # if task done, write 100% percent log
     monitor.write_monitor_logger(percent=1.0)
 
 
 def _run_mining(cfg: edict()) -> None:
+    # generate data.yaml for mining
+    out_dir = cfg.ymir.output.root_dir
+    convert_ymir_to_yolov5(cfg)
+    logging.info(f'generate {out_dir}/data.yaml')
+    monitor.write_monitor_logger(percent=get_ymir_process(stage=YmirStage.PREPROCESS, p=1.0))
+
     command = 'python3 mining/mining_cald.py'
     logging.info(f'mining: {command}')
     subprocess.run(command.split(), check=True)
@@ -52,9 +93,15 @@ def _run_mining(cfg: edict()) -> None:
 
 
 def _run_infer(cfg: edict) -> None:
+    # generate data.yaml for infer
+    out_dir = cfg.ymir.output.root_dir
+    convert_ymir_to_yolov5(cfg)
+    logging.info(f'generate {out_dir}/data.yaml')
+    monitor.write_monitor_logger(percent=get_ymir_process(stage=YmirStage.PREPROCESS, p=1.0))
+
     N = dr.items_count(env.DatasetType.CANDIDATE)
     infer_result = dict()
-    model = YmirModel(cfg)
+    model = YmirYolov5(cfg)
     idx = -1
 
     monitor_gap = max(1, N // 100)
