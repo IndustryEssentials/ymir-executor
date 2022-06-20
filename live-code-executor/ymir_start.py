@@ -23,9 +23,9 @@ def main():
     git_branch = executor_config.get('git_branch', '')
 
     if not git_branch:
-        cmd = f'git clone {git_url} /app'
+        cmd = f'git clone {git_url} --depth 1 /app'
     else:
-        cmd = f'git clone {git_url} -b {git_branch} /app'
+        cmd = f'git clone {git_url} --depth 1 -b {git_branch} /app'
     logger.info(f'clone code: {cmd}')
     subprocess.run(cmd.split(), check=True)
 
