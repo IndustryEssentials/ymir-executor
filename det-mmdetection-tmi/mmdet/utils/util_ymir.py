@@ -117,22 +117,23 @@ def get_weight_file(cfg: edict) -> str:
     find weight file in cfg.param.model_params_path or cfg.param.model_params_path
     """
     if cfg.ymir.run_training:
-        model_params_path = cfg.param.pretrained_model_paths
+        model_params_path: List = cfg.param.pretrained_model_paths
     else:
-        model_params_path = cfg.param.model_params_path
+        model_params_path: List = cfg.param.model_params_path
 
     model_dir = osp.join(cfg.ymir.input.root_dir,
                          cfg.ymir.input.models_dir)
     model_params_path = [
-        p for p in model_params_path if osp.exists(osp.join(model_dir, p))]
+        osp.join(model_dir, p) for p in model_params_path if osp.exists(osp.join(model_dir, p)) and p.endswith('.pth')]
 
-    # choose weight file by priority, best.pt > xxx.pt
-    if 'best.pt' in model_params_path:
-        return osp.join(model_dir, 'best.pt')
-    else:
-        for f in model_params_path:
-            if f.endswith('.pt'):
-                return osp.join(model_dir, f)
+    # choose weight file by priority, best_xxx.pth > latest.pth > epoch_xxx.pth
+    best_pth_files = [f for f in model_params_path if f.startswith('best_')]
+    if len(best_pth_files) > 0:
+        return get_newest_file(best_pth_files)
+
+    epoch_pth_files = [f for f in model_params_path if f.startswith('epoch_')]
+    if len(epoch_pth_files) > 0:
+        return get_newest_file(epoch_pth_files)
 
     return ""
 

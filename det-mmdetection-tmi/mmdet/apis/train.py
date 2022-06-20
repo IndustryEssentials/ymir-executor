@@ -188,6 +188,7 @@ def train_detector(model,
             dist=distributed,
             shuffle=False)
         eval_cfg = cfg.get('evaluation', {})
+        eval_cfg['classwise'] = True # Whether to evaluating the AP for each class
         eval_cfg['by_epoch'] = cfg.runner['type'] != 'IterBasedRunner'
         eval_hook = DistEvalHook if distributed else EvalHook
         # In this PR (https://github.com/open-mmlab/mmcv/pull/1193), the
