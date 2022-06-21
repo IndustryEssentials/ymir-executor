@@ -8,8 +8,10 @@ from mmcv.runner import DistEvalHook as BaseDistEvalHook
 from mmcv.runner import EvalHook as BaseEvalHook
 from torch.nn.modules.batchnorm import _BatchNorm
 from ymir_exc import monitor
-from mmdet.utils.util_ymir import update_training_result_file
-import os.path as osp
+
+from mmdet.utils.util_ymir import (YmirStage, get_ymir_process,
+                                   update_training_result_file)
+
 
 def _calc_dynamic_intervals(start_interval, dynamic_interval_list):
     assert mmcv.is_list_of(dynamic_interval_list, tuple)
@@ -47,7 +49,8 @@ class EvalHook(BaseEvalHook):
 
     def after_train_epoch(self, runner):
         """Report the training process for ymir"""
-        percent=0.95*(runner.epoch/runner.max_epochs)
+        percent = get_ymir_process(
+            stage=YmirStage.TASK, p=runner.epoch/runner.max_epochs)
         monitor.write_monitor_logger(percent=percent)
         super().after_train_epoch(runner)
 
@@ -101,7 +104,8 @@ class DistEvalHook(BaseDistEvalHook):
 
     def after_train_epoch(self, runner):
         """Report the training process for ymir"""
-        percent=0.1+0.8*(runner.epoch/runner.max_epochs)
+        percent = get_ymir_process(
+            stage=YmirStage.TASK, p=runner.epoch/runner.max_epochs)
         monitor.write_monitor_logger(percent=percent)
         super().after_train_epoch(runner)
 
