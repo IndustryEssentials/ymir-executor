@@ -1,0 +1,7 @@
+samples_per_gpu: 2
+workers_per_gpu: 2
+max_epochs: 300
+config_file: 'configs/yolox/yolox_nano_8x8_300e_coco.py'
+args: ''
+cfg_options: ''
+port: 12345

@@ -19,7 +19,6 @@ def main(cfg: edict) -> int:
 
     classes = cfg.param.class_names
     num_classes = len(classes)
-    model = cfg.param.model
     if num_classes==0:
         raise Exception('not find class_names in config!')
 
@@ -36,7 +35,7 @@ def main(cfg: edict) -> int:
 
     ### mmcv args config
     config_file = cfg.param.get("config_file")
-    args_options = cfg.param.get("base_args",None)
+    args_options = cfg.param.get("args",None)
     cfg_options = cfg.param.get("cfg_options",None)
 
     monitor.write_monitor_logger(percent=get_ymir_process(YmirStage.PREPROCESS, p=0.2))
@@ -52,7 +51,7 @@ def main(cfg: edict) -> int:
             f"--work-dir {work_dir} --gpu-id {gpu_id}"
     else:
         os.environ.setdefault('CUDA_VISIBLE_DEVICES', gpu_id)
-        port = cfg.param.get('PORT')
+        port = cfg.param.get('port')
         os.environ.setdefault('PORT', port)
         cmd = f"./tools/dist_train.sh {config_file} {num_gpus} " + \
             f"--work-dir {work_dir}"

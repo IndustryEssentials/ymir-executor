@@ -104,7 +104,8 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
     mmdet_model_cfg.num_classes = len(ymir_cfg.param.class_names)
 
     ### epochs, checkpoint, tensorboard
-    mmdet_cfg.runner.max_epochs = ymir_cfg.param.max_epochs
+    if ymir_cfg.param.get('max_epochs',None):
+        mmdet_cfg.runner.max_epochs = ymir_cfg.param.max_epochs
     mmdet_cfg.checkpoint_config['out_dir'] = ymir_cfg.ymir.output.models_dir
     tensorboard_logger = dict(type='TensorboardLoggerHook',
         log_dir = ymir_cfg.ymir.output.tensorboard_dir)
@@ -186,17 +187,7 @@ def update_training_result_file(key_score):
             f'please set valid environment variable YMIR_MODELS_DIR, invalid directory {work_dir}')
 
     # assert only one model config file in work_dir
-    model_config_file = glob.glob(osp.join(work_dir, '*.py'))[0]
-    weight_files = glob.glob(osp.join(work_dir, 'best_bbox_mAP_epoch_*.pth'))
-    if len(weight_files) == 0:
-        weight_files = glob.glob(osp.join(work_dir, 'epoch_*.pth'))
-
-    if len(weight_files) == 0:
-        raise Exception(f'no weight file found in {work_dir}')
-
-    # sort the weight files by time, use the latest file.
-    weight_files.sort(key=lambda fn: osp.getmtime(fn))
-    model_weight_file = osp.basename(weight_files[-1])
-    rw.write_training_result(model_names=[model_weight_file, osp.basename(model_config_file)],
+    result_files = glob.glob(osp.join(work_dir, '*'))
+    rw.write_training_result(model_names=[osp.basename(f) for f in result_files],
                              mAP=key_score,
                              classAPs=results_per_category)

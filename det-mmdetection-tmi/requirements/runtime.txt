@@ -4,3 +4,7 @@ pycocotools
 six
 terminaltables
 easydict
+nptyping
+imagesize>=1.3.0
+future
+tensorboard>=2.5.0
