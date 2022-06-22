@@ -70,6 +70,8 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
         test=ymir_cfg.ymir.input.candidate_index_file
     )
 
+    # validation may augment the image and use more gpu
+    # so set smaller samples_per_gpu for validation
     samples_per_gpu = ymir_cfg.param.samples_per_gpu
     workers_per_gpu = ymir_cfg.param.workers_per_gpu
     mmdet_cfg.data.samples_per_gpu = samples_per_gpu
@@ -82,7 +84,11 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
                                 ann_prefix=ymir_cfg.ymir.input.annotations_dir,
                                 classes=ymir_cfg.param.class_names,
                                 data_root=ymir_cfg.ymir.input.root_dir,
-                                filter_empty_gt=False
+                                filter_empty_gt=False,
+                                samples_per_gpu=samples_per_gpu if split == 'train' else max(
+                                    1, samples_per_gpu//2),
+                                workers_per_gpu=workers_per_gpu if split == 'train' else max(
+                                    1, workers_per_gpu//2)
                                 )
         # modify dataset config for `split`
         mmdet_dataset_cfg = mmdet_cfg.data.get(split, None)
@@ -113,6 +119,12 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
     tensorboard_logger = dict(type='TensorboardLoggerHook',
                               log_dir=ymir_cfg.ymir.output.tensorboard_dir)
     mmdet_cfg.log_config['hooks'].append(tensorboard_logger)
+
+    # modify evaluation and interval
+    interval = max(1, mmdet_cfg.runner.max_epoch//30)
+    mmdet_cfg.evaluation.interval = interval
+    # Whether to evaluating the AP for each class
+    mmdet_cfg.evaluation.classwise = True
     return mmdet_cfg
 
 
@@ -128,17 +140,18 @@ def get_weight_file(cfg: edict) -> str:
 
     model_dir = cfg.ymir.input.models_dir
     model_params_path = [
-        osp.join(model_dir, p) for p in model_params_path if osp.exists(osp.join(model_dir, p)) and p.endswith(('.pth','.pt'))]
+        osp.join(model_dir, p) for p in model_params_path if osp.exists(osp.join(model_dir, p)) and p.endswith(('.pth', '.pt'))]
 
     # choose weight file by priority, best_xxx.pth > latest.pth > epoch_xxx.pth
-    best_pth_files = [f for f in model_params_path if osp.basename(f).startswith('best_')]
+    best_pth_files = [
+        f for f in model_params_path if osp.basename(f).startswith('best_')]
     if len(best_pth_files) > 0:
         return max(best_pth_files, key=os.path.getctime)
 
-    epoch_pth_files = [f for f in model_params_path if osp.basename(f).startswith('epoch_')]
+    epoch_pth_files = [
+        f for f in model_params_path if osp.basename(f).startswith('epoch_')]
     if len(epoch_pth_files) > 0:
         return max(epoch_pth_files, key=os.path.getctime)
-
 
     return ""
 
