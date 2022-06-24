@@ -20,15 +20,18 @@
 
 - 可以通过`git_url`, `git_branch`从网上clone代码到镜像并运行
 
-    - 参考[live-code](https://github.com/IndustryEssentials/ymir-remote-git)
+- 参考 [live-code](https://github.com/IndustryEssentials/ymir-remote-git)
 
 ## det-mmdetection-tmi
 
 - mmdetection 训练、挖掘及推理镜像，目前还没开发完
 
-# 如何制作自己的ymir-executor
+
+## 如何制作自己的ymir-executor
 
 - [ymir-executor 制作指南](https://github.com/IndustryEssentials/ymir/blob/dev/docs/ymir-dataset-zh-CN.md)
+
+---
 
 # FAQ
 
