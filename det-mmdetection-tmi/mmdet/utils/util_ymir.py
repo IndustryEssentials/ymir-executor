@@ -2,6 +2,7 @@
 utils function for ymir and yolov5
 """
 import glob
+import logging
 import os
 import os.path as osp
 from enum import IntEnum
@@ -157,6 +158,7 @@ def get_weight_file(cfg: edict) -> str:
 
 
 def update_training_result_file(key_score):
+    logging.info(f'key_score is {key_score}')
     COCO_EVAL_TMP_FILE = os.getenv('COCO_EVAL_TMP_FILE')
     if COCO_EVAL_TMP_FILE is None:
         raise Exception(
