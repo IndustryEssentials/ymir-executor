@@ -23,11 +23,11 @@ def main():
     git_branch = executor_config.get('git_branch', '')
 
     if not git_branch:
-        cmd = f'git clone {git_url} /app'
+        cmd = f'git clone {git_url} --depth 1 /app'
     else:
-        cmd = f'git clone {git_url} -b {git_branch} /app'
+        cmd = f'git clone {git_url} --depth 1 -b {git_branch} /app'
     logger.info(f'clone code: {cmd}')
-    subprocess.check_output(cmd.split())
+    subprocess.run(cmd.split(), check=True)
 
     # step 2. read /app/extra-requirements.txt and install it.
     pypi_file = '/app/extra-requirements.txt'
@@ -38,14 +38,14 @@ def main():
         cmd += ' -i {pypi_mirror}' if pypi_mirror else ''
 
         logger.info(f'install python package: {cmd}')
-        subprocess.check_output(cmd.split())
+        subprocess.run(cmd.split(), check=True)
     else:
         logger.info('no python package needs to install')
 
     # step 3. run /app/start.py
     cmd = 'python3 start.py'
     logger.info(f'run task: {cmd}')
-    subprocess.check_output(cmd.split(), cwd='/app')
+    subprocess.run(cmd.split(), check=True, cwd='/app')
 
     logger.info('live code executor run successfully')
     return 0
