@@ -40,7 +40,7 @@ def _convert_annotations(index_file_path: str, dst_annotations_dir: str) -> None
         output_list = []
 
         for each_line in txt_content:
-            each_line = [int(each) for each in each_line.split(",")]
+            each_line = [int(each) for each in each_line.split(",")[0:5]]
 
             cls, xmin, ymin, xmax, ymax, *_ = each_line
             xmin = max(0, xmin)
