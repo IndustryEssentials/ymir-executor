@@ -13,7 +13,7 @@ ENV PATH /opt/conda/bin:$PATH
 # install linux package, needs to fix GPG error first.
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC && \
     apt-get update && \
-    apt-get install -y git wget curl zip libglib2.0-0 libgl1-mesa-glx && \
+    apt-get install -y git gcc wget curl zip libglib2.0-0 libgl1-mesa-glx && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     wget "${MINICONDA_URL}" -O miniconda.sh -q && \
