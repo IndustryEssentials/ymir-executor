@@ -1,6 +1,7 @@
 """
 utils function for ymir and yolov5
 """
+import glob
 import os.path as osp
 import shutil
 from enum import IntEnum
@@ -61,6 +62,7 @@ def get_merged_config() -> edict:
     # the ymir path information
     merged_cfg.ymir = env.get_current_env()
     return merged_cfg
+
 
 def get_weight_file(cfg: edict) -> str:
     """
@@ -202,31 +204,29 @@ def convert_ymir_to_yolov5(cfg: edict) -> None:
         fw.write(yaml.safe_dump(data))
 
 
-def write_ymir_training_result(cfg: edict, results: Tuple, maps: NDArray, rewrite=False) -> int:
+def write_ymir_training_result(cfg: edict,
+                               map50: float,
+                               epoch: int,
+                               weight_file: str) -> int:
     """
     cfg: ymir config
     results: (mp, mr, map50, map, loss)
     maps: map@0.5:0.95 for all classes
-    rewrite: set true to ensure write the best result
+    epoch: stage
+    weight_file: saved weight files, empty weight_file will save all files
     """
-    if not rewrite:
-        training_result_file = cfg.ymir.output.training_result_file
-        if osp.exists(training_result_file):
-            return 0
-
     model = cfg.param.model
-    class_names = cfg.param.class_names
-    mp = results[0]  # mean of precision
-    mr = results[1]  # mean of recall
-    map50 = results[2]  # mean of ap@0.5
-    map = results[3]  # mean of ap@0.5:0.95
-
     # use `rw.write_training_result` to save training result
-    rw.write_training_result(model_names=[f'{model}.yaml', 'best.pt', 'last.pt', 'best.onnx'],
-                             mAP=float(map),
-                             mAP50=float(map50),
-                             precision=float(mp),
-                             recall=float(mr),
-                             classAPs={class_name: v
-                                       for class_name, v in zip(class_names, maps.tolist())})
+    if weight_file:
+        rw.write_model_stage(stage_name=f"{model}_{epoch}",
+                             files=[weight_file],
+                             mAP=float(map50))
+    else:
+        # save other files with
+        files = [osp.basename(f) for f in glob.glob(osp.join(cfg.ymir.output.models_dir, '*'))
+                 if not f.endswith('.pt')] + ['last.pt', 'best.pt']
+
+        rw.write_model_stage(stage_name=f"{model}_last_and_best",
+                             files=files,
+                             mAP=float(map50))
     return 0

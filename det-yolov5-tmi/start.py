@@ -50,6 +50,8 @@ def _run_training(cfg: edict) -> None:
     batch_size = cfg.param.batch_size
     model = cfg.param.model
     img_size = cfg.param.img_size
+    save_period = cfg.param.save_period
+    args_options = cfg.param.args_options
     weights = get_weight_file(cfg)
     if not weights:
         # download pretrained weight
@@ -59,8 +61,11 @@ def _run_training(cfg: edict) -> None:
     command = f'python3 train.py --epochs {epochs} ' + \
         f'--batch-size {batch_size} --data {out_dir}/data.yaml --project /out ' + \
         f'--cfg models/{model}.yaml --name models --weights {weights} ' + \
-        f'--img-size {img_size} --hyp data/hyps/hyp.scratch-low.yaml ' + \
-        '--exist-ok'
+        f'--img-size {img_size} ' + \
+        f'--save-period {save_period}'
+    if args_options:
+        command += f" {args_options}"
+
     logging.info(f'start training: {command}')
 
     subprocess.run(command.split(), check=True)
