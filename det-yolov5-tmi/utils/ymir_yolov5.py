@@ -219,7 +219,7 @@ def write_ymir_training_result(cfg: edict,
     # use `rw.write_training_result` to save training result
     if weight_file:
         rw.write_model_stage(stage_name=f"{model}_{epoch}",
-                             files=[weight_file],
+                             files=[osp.basename(weight_file)],
                              mAP=float(map50))
     else:
         # save other files with
