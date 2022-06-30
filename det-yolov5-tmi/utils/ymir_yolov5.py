@@ -70,7 +70,7 @@ def get_weight_file(cfg: edict) -> str:
     find weight file in cfg.param.model_params_path or cfg.param.model_params_path
     """
     if cfg.ymir.run_training:
-        model_params_path = cfg.param.pretrained_model_paths
+        model_params_path = cfg.param.get('pretrained_model_params',[])
     else:
         model_params_path = cfg.param.model_params_path
 
