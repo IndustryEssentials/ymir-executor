@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
+FROM nvidia/cuda:11.2.1-cudnn8-devel-ubuntu18.04
 ARG PIP_SOURCE=https://pypi.mirrors.ustc.edu.cn/simple
 WORKDIR /darknet
 RUN sed -i 's#http://archive.ubuntu.com#https://mirrors.ustc.edu.cn#g' /etc/apt/sources.list
@@ -12,7 +12,8 @@ RUN wget https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_o
 RUN rm /usr/bin/python3
 RUN ln -s /usr/bin/python3.7 /usr/bin/python3
 RUN python3 get-pip.py
-RUN pip3 install -i ${PIP_SOURCE} mxnet-cu101==1.5.1 numpy opencv-python pyyaml watchdog tensorboardX six
+RUN pip3 install -i ${PIP_SOURCE} mxnet-cu112==1.9.1 numpy opencv-python pyyaml watchdog tensorboardX six
+
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y libopencv-dev
 COPY . /darknet
