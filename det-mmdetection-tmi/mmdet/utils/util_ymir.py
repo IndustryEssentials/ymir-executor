@@ -3,6 +3,7 @@ utils function for ymir and yolov5
 """
 import glob
 import logging
+import yaml
 import os
 import os.path as osp
 from enum import IntEnum
@@ -85,11 +86,7 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
                                 ann_prefix=ymir_cfg.ymir.input.annotations_dir,
                                 classes=ymir_cfg.param.class_names,
                                 data_root=ymir_cfg.ymir.input.root_dir,
-                                filter_empty_gt=False,
-                                samples_per_gpu=samples_per_gpu if split == 'train' else max(
-                                    1, samples_per_gpu//2),
-                                workers_per_gpu=workers_per_gpu if split == 'train' else max(
-                                    1, workers_per_gpu//2)
+                                filter_empty_gt=False
                                 )
         # modify dataset config for `split`
         mmdet_dataset_cfg = mmdet_cfg.data.get(split, None)
@@ -101,7 +98,7 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
                 x.update(ymir_dataset_cfg)
         else:
             src_dataset_type = mmdet_dataset_cfg.type
-            if src_dataset_type in ['CocoDataset']:
+            if src_dataset_type in ['CocoDataset', 'YmirDataset']:
                 mmdet_dataset_cfg.update(ymir_dataset_cfg)
             elif src_dataset_type in ['MultiImageMixDataset', 'RepeatDataset']:
                 mmdet_dataset_cfg.dataset.update(ymir_dataset_cfg)
@@ -119,13 +116,17 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
     mmdet_cfg.checkpoint_config['out_dir'] = ymir_cfg.ymir.output.models_dir
     tensorboard_logger = dict(type='TensorboardLoggerHook',
                               log_dir=ymir_cfg.ymir.output.tensorboard_dir)
-    mmdet_cfg.log_config['hooks'].append(tensorboard_logger)
+    if len(mmdet_cfg.log_config['hooks']) <= 1:
+        mmdet_cfg.log_config['hooks'].append(tensorboard_logger)
+    else:
+        mmdet_cfg.log_config['hooks'][1].update(tensorboard_logger)
 
     # modify evaluation and interval
-    interval = max(1, mmdet_cfg.runner.max_epoch//30)
+    interval = max(1, mmdet_cfg.runner.max_epochs//30)
     mmdet_cfg.evaluation.interval = interval
+    mmdet_cfg.evaluation.metric = ymir_cfg.param.get('metric', 'bbox')
     # Whether to evaluating the AP for each class
-    mmdet_cfg.evaluation.classwise = True
+    # mmdet_cfg.evaluation.classwise = True
     return mmdet_cfg
 
 
@@ -150,21 +151,23 @@ def get_weight_file(cfg: edict) -> str:
         return max(best_pth_files, key=os.path.getctime)
 
     epoch_pth_files = [
-        f for f in model_params_path if osp.basename(f).startswith('epoch_')]
+        f for f in model_params_path if osp.basename(f).startswith(('epoch_', 'iter_'))]
     if len(epoch_pth_files) > 0:
         return max(epoch_pth_files, key=os.path.getctime)
 
     return ""
 
 
-def update_training_result_file(key_score):
-    logging.info(f'key_score is {key_score}')
+def update_training_result_file(last=False, key_score=None):
+    if key_score:
+        logging.info(f'key_score is {key_score}')
     COCO_EVAL_TMP_FILE = os.getenv('COCO_EVAL_TMP_FILE')
     if COCO_EVAL_TMP_FILE is None:
         raise Exception(
             'please set valid environment variable COCO_EVAL_TMP_FILE to write result into json file')
 
-    results_per_category = mmcv.load(COCO_EVAL_TMP_FILE)
+    eval_result = mmcv.load(COCO_EVAL_TMP_FILE)
+    map = eval_result['bbox_mAP_50']
 
     work_dir = os.getenv('YMIR_MODELS_DIR')
     if work_dir is None or not osp.isdir(work_dir):
@@ -172,7 +175,33 @@ def update_training_result_file(key_score):
             f'please set valid environment variable YMIR_MODELS_DIR, invalid directory {work_dir}')
 
     # assert only one model config file in work_dir
-    result_files = glob.glob(osp.join(work_dir, '*'))
-    rw.write_training_result(model_names=[osp.basename(f) for f in result_files],
-                             mAP=key_score,
-                             classAPs=results_per_category)
+    result_files = [osp.basename(f) for f in glob.glob(
+        osp.join(work_dir, '*')) if osp.basename(f) != 'result.yaml']
+
+    if last:
+        # save all output file
+        rw.write_model_stage(files=result_files,
+                             mAP=float(map),
+                             stage_name='last')
+    else:
+        # save newest weight file in format epoch_xxx.pth or iter_xxx.pth
+        weight_files = [osp.join(work_dir, f) for f in result_files if f.startswith(
+            ('iter_', 'epoch_')) and f.endswith('.pth')]
+
+        if len(weight_files) > 0:
+            newest_weight_file = osp.basename(
+                max(weight_files, key=os.path.getctime))
+
+            stage_name = osp.splitext(newest_weight_file)[0]
+            training_result_file = osp.join(work_dir, 'result.yaml')
+            if osp.exists(training_result_file):
+                with open(training_result_file, 'r') as f:
+                    training_result = yaml.safe_load(f)
+                    model_stages = training_result.get('model_stages', {})
+            else:
+                model_stages = {}
+
+            if stage_name not in model_stages:
+                rw.write_model_stage(files=[newest_weight_file],
+                                     mAP=float(map),
+                                     stage_name=stage_name)

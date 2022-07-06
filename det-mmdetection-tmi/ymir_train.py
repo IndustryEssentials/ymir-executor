@@ -8,7 +8,7 @@ from easydict import EasyDict as edict
 from ymir_exc import monitor
 
 from mmdet.utils.util_ymir import (YmirStage, get_merged_config,
-                                   get_ymir_process)
+                                   get_ymir_process, update_training_result_file)
 
 
 def main(cfg: edict) -> int:
@@ -35,15 +35,15 @@ def main(cfg: edict) -> int:
     if num_gpus == 0:
         # view https://mmdetection.readthedocs.io/en/stable/1_exist_data_model.html#training-on-cpu
         os.environ.setdefault('CUDA_VISIBLE_DEVICES', "-1")
-        cmd = f"python tools/train.py {config_file} " + \
+        cmd = f"python3 tools/train.py {config_file} " + \
             f"--work-dir {work_dir}"
     elif num_gpus == 1:
-        cmd = f"python tools/train.py {config_file} " + \
+        cmd = f"python3 tools/train.py {config_file} " + \
             f"--work-dir {work_dir} --gpu-id {gpu_id}"
     else:
         os.environ.setdefault('CUDA_VISIBLE_DEVICES', gpu_id)
         port = cfg.param.get('port')
-        os.environ.setdefault('PORT', port)
+        os.environ.setdefault('PORT', str(port))
         cmd = f"./tools/dist_train.sh {config_file} {num_gpus} " + \
             f"--work-dir {work_dir}"
 
@@ -55,6 +55,9 @@ def main(cfg: edict) -> int:
 
     logging.info(f"training command: {cmd}")
     subprocess.run(cmd.split(), check=True)
+
+    # save the last checkpoint
+    update_training_result_file(last=True)
     logging.info(f"training finished")
     return 0
 

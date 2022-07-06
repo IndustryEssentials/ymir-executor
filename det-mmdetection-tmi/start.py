@@ -16,17 +16,16 @@ from mmdet.utils.util_ymir import (YmirStage, get_merged_config,
 from ymir_infer import YmirModel, mmdet_result_to_ymir
 
 
-def start() -> int:
-    cfg = get_merged_config()
-
+def start(cfg: edict) -> int:
     logging.info(f'merged config: {cfg}')
 
     if cfg.ymir.run_training:
         _run_training(cfg)
-    elif cfg.ymir.run_mining:
-        _run_mining(cfg)
-    elif cfg.ymir.run_infer:
-        _run_infer(cfg)
+    elif cfg.ymir.run_mining or cfg.ymir.run_infer:
+        if cfg.ymir.run_mining:
+            _run_mining(cfg)
+        if cfg.ymir.run_infer:
+            _run_infer(cfg)
     else:
         logging.warning('no task running')
 
@@ -43,18 +42,6 @@ def _run_training(cfg: edict) -> None:
     command = 'python3 ymir_train.py'
     logging.info(f'start training: {command}')
     subprocess.run(command.split(), check=True)
-
-    work_dir = cfg.ymir.output.models_dir
-    result_files = glob.glob(os.path.join(work_dir, '*'))
-
-    training_result_file = cfg.ymir.output.training_result_file
-    with open(training_result_file, 'r') as fp:
-        best_result = yaml.safe_load(fp)
-
-    # save the last checkpoint
-    rw.write_training_result(model_names=[os.path.basename(f) for f in result_files],
-                             mAP=best_result['map'],
-                             classAPs=best_result['class_aps'])
 
     # if task done, write 100% percent log
     monitor.write_monitor_logger(percent=1.0)
@@ -95,5 +82,9 @@ if __name__ == '__main__':
                         datefmt='%Y%m%d-%H:%M:%S',
                         level=logging.INFO)
 
+    cfg = get_merged_config()
+    os.environ.setdefault('YMIR_MODELS_DIR', cfg.ymir.output.models_dir)
+    os.environ.setdefault('COCO_EVAL_TMP_FILE', os.path.join(
+        cfg.ymir.output.root_dir, 'eval_tmp.json'))
     os.environ.setdefault('PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION', 'python')
-    sys.exit(start())
+    sys.exit(start(cfg))

@@ -49,14 +49,26 @@ class EvalHook(BaseEvalHook):
 
     def after_train_epoch(self, runner):
         """Report the training process for ymir"""
-        percent = get_ymir_process(
-            stage=YmirStage.TASK, p=runner.epoch/runner.max_epochs)
-        monitor.write_monitor_logger(percent=percent)
+        if self.by_epoch:
+            monitor_interval = max(1, runner.max_epochs//1000)
+            if runner.epoch % monitor_interval == 0:
+                percent = get_ymir_process(
+                    stage=YmirStage.TASK, p=runner.epoch/runner.max_epochs)
+                monitor.write_monitor_logger(percent=percent)
         super().after_train_epoch(runner)
 
     def before_train_iter(self, runner):
         self._decide_interval(runner)
         super().before_train_iter(runner)
+
+    def after_train_iter(self, runner):
+        if not self.by_epoch:
+            monitor_interval = max(1, runner.max_iters//1000)
+            if runner.iter % monitor_interval == 0:
+                percent = get_ymir_process(
+                    stage=YmirStage.TASK, p=runner.iter/runner.max_iters)
+                monitor.write_monitor_logger(percent=percent)
+        super().after_train_iter(runner)
 
     def _do_evaluate(self, runner):
         """perform evaluation and save ckpt."""
@@ -67,14 +79,15 @@ class EvalHook(BaseEvalHook):
         results = single_gpu_test(runner.model, self.dataloader, show=False)
         runner.log_buffer.output['eval_iter_num'] = len(self.dataloader)
         key_score = self.evaluate(runner, results)
+        update_training_result_file(last=False, key_score=key_score)
         # the key_score may be `None` so it needs to skip the action to save
         # the best checkpoint
         if self.save_best and key_score:
             self._save_ckpt(runner, key_score)
-            best_score = runner.meta['hook_msgs'].get(
-                'best_score', self.init_value_map[self.rule])
-            if self.compare_func(key_score, best_score):
-                update_training_result_file(key_score)
+            # best_score = runner.meta['hook_msgs'].get(
+            #     'best_score', self.init_value_map[self.rule])
+            # if self.compare_func(key_score, best_score):
+            #     update_training_result_file(key_score)
 
 
 # Note: Considering that MMCV's EvalHook updated its interface in V1.3.16,
@@ -104,14 +117,26 @@ class DistEvalHook(BaseDistEvalHook):
 
     def after_train_epoch(self, runner):
         """Report the training process for ymir"""
-        percent = get_ymir_process(
-            stage=YmirStage.TASK, p=runner.epoch/runner.max_epochs)
-        monitor.write_monitor_logger(percent=percent)
+        if self.by_epoch and runner.rank == 0:
+            monitor_interval = max(1, runner.max_epochs//1000)
+            if runner.epoch % monitor_interval == 0:
+                percent = get_ymir_process(
+                    stage=YmirStage.TASK, p=runner.epoch/runner.max_epochs)
+                monitor.write_monitor_logger(percent=percent)
         super().after_train_epoch(runner)
 
     def before_train_iter(self, runner):
         self._decide_interval(runner)
         super().before_train_iter(runner)
+
+    def after_train_iter(self, runner):
+        if not self.by_epoch and runner.rank == 0:
+            monitor_interval = max(1, runner.max_iters//1000)
+            if runner.iter % monitor_interval == 0:
+                percent = get_ymir_process(
+                    stage=YmirStage.TASK, p=runner.iter/runner.max_iters)
+                monitor.write_monitor_logger(percent=percent)
+        super().after_train_iter(runner)
 
     def _do_evaluate(self, runner):
         """perform evaluation and save ckpt."""
@@ -145,13 +170,14 @@ class DistEvalHook(BaseDistEvalHook):
             print('\n')
             runner.log_buffer.output['eval_iter_num'] = len(self.dataloader)
             key_score = self.evaluate(runner, results)
-
+            update_training_result_file(last=False, key_score=key_score)
             # the key_score may be `None` so it needs to skip
             # the action to save the best checkpoint
             if self.save_best and key_score:
                 self._save_ckpt(runner, key_score)
 
-                best_score = runner.meta['hook_msgs'].get(
-                    'best_score', self.init_value_map[self.rule])
-                if self.compare_func(key_score, best_score):
-                    update_training_result_file(key_score)
+                # best_score = runner.meta['hook_msgs'].get(
+                #     'best_score', self.init_value_map[self.rule])
+                # if self.compare_func(key_score, best_score):
+                #     update_training_result_file(key_score)
+

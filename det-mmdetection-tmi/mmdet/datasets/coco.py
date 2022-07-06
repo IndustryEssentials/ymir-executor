@@ -562,15 +562,6 @@ class CocoDataset(CustomDataset):
                         results_per_category.append(
                             (f'{nm["name"]}', f'{float(ap):0.3f}'))
 
-
-                    COCO_EVAL_TMP_FILE = os.getenv('COCO_EVAL_TMP_FILE')
-                    if COCO_EVAL_TMP_FILE is not None:
-                        mmcv.dump({name:value for name,value in results_per_category}, COCO_EVAL_TMP_FILE, file_format='json')
-                    else:
-                        raise Exception('please set valid environment variable COCO_EVAL_TMP_FILE to write result into json file')
-
-                    print_log(f'\n write eval result to {COCO_EVAL_TMP_FILE}', logger=logger)
-
                     num_columns = min(6, len(results_per_category) * 2)
                     results_flatten = list(
                         itertools.chain(*results_per_category))
@@ -601,4 +592,12 @@ class CocoDataset(CustomDataset):
                     f'{ap[4]:.3f} {ap[5]:.3f}')
         if tmp_dir is not None:
             tmp_dir.cleanup()
+
+        COCO_EVAL_TMP_FILE = os.getenv('COCO_EVAL_TMP_FILE')
+        if COCO_EVAL_TMP_FILE is not None:
+            mmcv.dump(eval_results, COCO_EVAL_TMP_FILE, file_format='json')
+        else:
+            raise Exception('please set valid environment variable COCO_EVAL_TMP_FILE to write result into json file')
+
+        print_log(f'\n write eval result to {COCO_EVAL_TMP_FILE}', logger=logger)
         return eval_results

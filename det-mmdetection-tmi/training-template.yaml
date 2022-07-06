@@ -4,4 +4,5 @@ max_epochs: 300
 config_file: 'configs/yolox/yolox_nano_8x8_300e_coco.py'
 args_options: ''
 cfg_options: ''
+metric: 'bbox_mAP_50'
 port: 12345
