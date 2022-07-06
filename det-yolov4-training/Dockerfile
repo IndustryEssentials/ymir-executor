@@ -1,7 +1,7 @@
 FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 ARG PIP_SOURCE=https://pypi.mirrors.ustc.edu.cn/simple
 WORKDIR /darknet
-RUN apt-get update
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC && apt-get update
 RUN apt install -y software-properties-common wget
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update
