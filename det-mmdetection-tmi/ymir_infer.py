@@ -1,4 +1,5 @@
 import argparse
+import os.path as osp
 from typing import Any, List
 
 import numpy as np
@@ -49,13 +50,27 @@ def mmdet_result_to_ymir(results: List[DETECTION_RESULT],
             ann_list.append(ann)
     return ann_list
 
+def get_config_file(cfg):
+    if cfg.ymir.run_training:
+        model_params_path: List = cfg.param.pretrained_model_params
+    else:
+        model_params_path: List = cfg.param.model_params_path
+
+    model_dir = cfg.ymir.input.models_dir
+    config_files = [
+        osp.join(model_dir, p) for p in model_params_path if osp.exists(osp.join(model_dir, p)) and p.endswith(('.py'))]
+
+    if len(config_files) > 0:
+        return config_files[0]
+    else:
+        return None
 
 class YmirModel:
     def __init__(self, cfg: edict):
         self.cfg = cfg
 
         # Specify the path to model config and checkpoint file
-        config_file = cfg.param.config_file
+        config_file = get_config_file(cfg)
         checkpoint_file = get_weight_file(cfg)
         cfg_options = parse_option(
             cfg.param.cfg_options) if cfg.param.cfg_options else None
@@ -69,3 +84,6 @@ class YmirModel:
 
     def infer(self, img):
         return inference_detector(self.model, img)
+
+    def mining(self):
+        pass

@@ -44,7 +44,7 @@ def main(cfg: edict) -> int:
         os.environ.setdefault('CUDA_VISIBLE_DEVICES', gpu_id)
         port = cfg.param.get('port')
         os.environ.setdefault('PORT', str(port))
-        cmd = f"./tools/dist_train.sh {config_file} {num_gpus} " + \
+        cmd = f"bash ./tools/dist_train.sh {config_file} {num_gpus} " + \
             f"--work-dir {work_dir}"
 
     if args_options:

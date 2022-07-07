@@ -136,7 +136,7 @@ def get_weight_file(cfg: edict) -> str:
     find weight file in cfg.param.model_params_path or cfg.param.model_params_path
     """
     if cfg.ymir.run_training:
-        model_params_path: List = cfg.param.pretrained_model_paths
+        model_params_path: List = cfg.param.pretrained_model_params
     else:
         model_params_path: List = cfg.param.model_params_path
 
@@ -167,7 +167,8 @@ def update_training_result_file(last=False, key_score=None):
             'please set valid environment variable COCO_EVAL_TMP_FILE to write result into json file')
 
     eval_result = mmcv.load(COCO_EVAL_TMP_FILE)
-    map = eval_result['bbox_mAP_50']
+    # eval_result may be empty dict {}.
+    map = eval_result.get('bbox_mAP_50',0)
 
     work_dir = os.getenv('YMIR_MODELS_DIR')
     if work_dir is None or not osp.isdir(work_dir):
