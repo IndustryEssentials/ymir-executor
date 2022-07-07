@@ -6,7 +6,8 @@ ARG CUDNN="8"
 FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-runtime
 
 ARG SERVER_MODE=prod
-
+ARG OPENCV="4.1.2.30"
+ARG NUMPY="1.20.0"
 ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
 ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
 ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
@@ -20,7 +21,7 @@ RUN apt-get update && apt-get install -y git curl wget zip gcc \
 
 # Install python package
 RUN pip install -U pip && \
-    pip install loguru
+    pip install loguru opencv-python==${OPENCV} numpy=${NUMPY}
 
 # install ymir-exc sdk
 RUN if [ "${SERVER_MODE}" = "dev" ]; then \
