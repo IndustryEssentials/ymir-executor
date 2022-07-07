@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y git curl wget zip gcc \
 
 # Install python package
 RUN pip install -U pip && \
-    pip install loguru
+    pip install loguru opencv
 
 # install ymir-exc sdk
 RUN if [ "${SERVER_MODE}" = "dev" ]; then \
