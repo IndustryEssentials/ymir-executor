@@ -5,6 +5,7 @@ ARG SYSTEM="ubuntu18.04"
 
 FROM nvidia/cuda:${CUDA}-cudnn${CUDNN}-${BUILD}-${SYSTEM}
 ARG MXNET="1.9.1"
+ARG OPENCV="4.1.2.30"
 ARG DEBIAN_FRONTEND="noninteractive"
 ARG MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-py39_4.11.0-Linux-x86_64.sh"
 
@@ -29,8 +30,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC &&
 
 # Install python package
 # view https://mxnet.apache.org/versions/1.9.1/get_started for detail
-RUN pip3 install mxnet-cu112==${MXNET} loguru opencv-python==4.1.2.30
-
+RUN pip3 install mxnet-cu112==${MXNET} loguru opencv-python==${OPENCV}
 # install ymir-exc sdk
 RUN if [ "${SERVER_MODE}" = "dev" ]; then \
         pip install --force-reinstall -U "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"; \
