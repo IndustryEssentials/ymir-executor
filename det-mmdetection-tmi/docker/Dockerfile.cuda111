@@ -11,7 +11,8 @@ ARG SERVER_MODE=prod
 ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
 ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
 ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
-
+ENV FORCE_CUDA="1"
+ENV PYTHONPATH=.
 # Set timezone
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && echo 'Asia/Shanghai' >/etc/timezone
@@ -34,7 +35,6 @@ RUN pip install --no-cache-dir --upgrade pip wheel setuptools && \
 # Install det-mmdetection-tmi
 COPY . /app/
 WORKDIR /app
-ENV FORCE_CUDA="1"
 RUN pip install --no-cache-dir -r requirements/runtime.txt \
     && pip install --no-cache-dir -e . \
     && mkdir /img-man \
