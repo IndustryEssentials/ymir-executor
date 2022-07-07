@@ -40,7 +40,7 @@ def _convert_annotations(index_file_path: str, dst_annotations_dir: str) -> None
         output_list = []
 
         for each_line in txt_content:
-            each_line = [int(each) for each in each_line.split(",")]
+            each_line = [int(each) for each in each_line.split(",")[0:5]]
 
             cls, xmin, ymin, xmax, ymax, *_ = each_line
             xmin = max(0, xmin)
@@ -81,7 +81,7 @@ def _create_image_index_file(src_index_path: str, dst_index_path: str) -> None:
 
 
 if __name__ == "__main__":
-    _create_image_index_file(src_index_path='/in/train-index.tsv', dst_index_path='/in/train-index-assets.tsv')
-    _create_image_index_file(src_index_path='/in/val-index.tsv', dst_index_path='/in/val-index-assets.tsv')
-    _convert_annotations(index_file_path='/in/train-index.tsv', dst_annotations_dir='/in/tmp_labels')
-    _convert_annotations(index_file_path='/in/val-index.tsv', dst_annotations_dir='/in/tmp_labels')
+    _create_image_index_file(src_index_path='/in/train-index.tsv', dst_index_path='/out/train-index-assets.tsv')
+    _create_image_index_file(src_index_path='/in/val-index.tsv', dst_index_path='/out/val-index-assets.tsv')
+    _convert_annotations(index_file_path='/in/train-index.tsv', dst_annotations_dir='/out/tmp_labels')
+    _convert_annotations(index_file_path='/in/val-index.tsv', dst_annotations_dir='/out/tmp_labels')

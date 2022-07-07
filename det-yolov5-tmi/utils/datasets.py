@@ -903,7 +903,7 @@ def verify_image_label(args):
         if os.path.isfile(lb_file):
             nf = 1  # label found
             with open(lb_file) as f:
-                lb = [x.split(',') for x in f.read().strip().splitlines() if len(x)]
+                lb = [x.split(',')[0:5] for x in f.read().strip().splitlines() if len(x)]
 
             nl = len(lb)
             if nl:

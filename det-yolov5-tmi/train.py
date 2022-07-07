@@ -413,12 +413,12 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
 
                 # Save last, best and delete
                 torch.save(ckpt, last)
-                write_ymir_training_result(ymir_cfg, results, maps, rewrite=False)
                 if best_fitness == fi:
                     torch.save(ckpt, best)
-                    write_ymir_training_result(ymir_cfg, results, maps, rewrite=True)
                 if (epoch > 0) and (opt.save_period > 0) and (epoch % opt.save_period == 0):
                     torch.save(ckpt, w / f'epoch{epoch}.pt')
+                    weight_file = str(w / f'epoch{epoch}.pt')
+                    write_ymir_training_result(ymir_cfg, map50=results[2], epoch=epoch, weight_file=weight_file)
                 del ckpt
                 callbacks.run('on_model_save', last, epoch, final_epoch, best_fitness, fi)
 
@@ -465,6 +465,8 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}")
 
     torch.cuda.empty_cache()
+    # save the best and last weight file with other files in models_dir
+    write_ymir_training_result(ymir_cfg, map50=best_fitness, epoch=epochs, weight_file='')
     return results
 
 
