@@ -58,7 +58,6 @@ def main(cfg: edict) -> int:
 
     # save the last checkpoint
     update_training_result_file(last=True)
-    logging.info(f"training finished")
     return 0
 
 

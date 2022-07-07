@@ -1,15 +1,22 @@
 import argparse
 import os.path as osp
+import sys
+import warnings
 from typing import Any, List
 
+import cv2
 import numpy as np
 from easydict import EasyDict as edict
 from mmcv import DictAction
 from nptyping import NDArray, Shape
-from ymir_exc import result_writer as rw
+from tqdm import tqdm
 
 from mmdet.apis import inference_detector, init_detector
-from mmdet.utils.util_ymir import get_weight_file
+from mmdet.utils.util_ymir import (YmirStage, get_merged_config,
+                                   get_weight_file, get_ymir_process)
+from ymir_exc import dataset_reader as dr
+from ymir_exc import env, monitor
+from ymir_exc import result_writer as rw
 
 DETECTION_RESULT = NDArray[Shape['*,5'], Any]
 
@@ -50,6 +57,7 @@ def mmdet_result_to_ymir(results: List[DETECTION_RESULT],
             ann_list.append(ann)
     return ann_list
 
+
 def get_config_file(cfg):
     if cfg.ymir.run_training:
         model_params_path: List = cfg.param.pretrained_model_params
@@ -61,9 +69,13 @@ def get_config_file(cfg):
         osp.join(model_dir, p) for p in model_params_path if osp.exists(osp.join(model_dir, p)) and p.endswith(('.py'))]
 
     if len(config_files) > 0:
+        if len(config_files) > 1:
+            warnings.warn(f'multiple config file found! use {config_files[0]}')
         return config_files[0]
     else:
-        return None
+        raise Exception(
+            f'no config_file found in {model_dir} and {model_params_path}')
+
 
 class YmirModel:
     def __init__(self, cfg: edict):
@@ -72,8 +84,8 @@ class YmirModel:
         # Specify the path to model config and checkpoint file
         config_file = get_config_file(cfg)
         checkpoint_file = get_weight_file(cfg)
-        cfg_options = parse_option(
-            cfg.param.cfg_options) if cfg.param.cfg_options else None
+        options = cfg.param.get('cfg_options', None)
+        cfg_options = parse_option(options) if options else None
 
         # current infer can only use one gpu!!!
         gpu_ids = cfg.param.gpu_id
@@ -85,5 +97,32 @@ class YmirModel:
     def infer(self, img):
         return inference_detector(self.model, img)
 
-    def mining(self):
-        pass
+
+def main():
+    cfg = get_merged_config()
+
+    N = dr.items_count(env.DatasetType.CANDIDATE)
+    infer_result = dict()
+    model = YmirModel(cfg)
+    idx = -1
+
+    # write infer result
+    monitor_gap = max(1, N // 100)
+    for asset_path, _ in tqdm(dr.item_paths(dataset_type=env.DatasetType.CANDIDATE)):
+        img = cv2.imread(asset_path)
+        result = model.infer(img)
+        infer_result[asset_path] = mmdet_result_to_ymir(
+            result, cfg.param.class_names)
+        idx += 1
+
+        if idx % monitor_gap == 0:
+            percent = get_ymir_process(stage=YmirStage.TASK, p=idx / N)
+            monitor.write_monitor_logger(percent=percent)
+
+    rw.write_infer_result(infer_result=infer_result)
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
