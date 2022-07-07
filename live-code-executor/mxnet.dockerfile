@@ -29,7 +29,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC &&
 
 # Install python package
 # view https://mxnet.apache.org/versions/1.9.1/get_started for detail
-RUN pip3 install mxnet-cu112==${MXNET} loguru opencv-python
+RUN pip3 install mxnet-cu112==${MXNET} loguru opencv-python==4.1.2.30
 
 # install ymir-exc sdk
 RUN if [ "${SERVER_MODE}" = "dev" ]; then \
