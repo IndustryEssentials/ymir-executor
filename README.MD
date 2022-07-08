@@ -2,7 +2,16 @@
 
 ## det-yolov4-training
 
-- yolov4的训练镜像，采用mxnet与darknet框架，默认cuda版本为`10.1`，无法直接在高版本显卡如GTX3080/GTX3090上运行，需要修改dockerfile将cuda版本提升为11.1以上，并修改其它依赖。
+- yolov4的训练镜像，采用mxnet与darknet框架，默认的 `Dockerfile` cuda版本为`10.1`，无法直接在高版本显卡如GTX3080/GTX3090上运行，需要修改dockerfile将cuda版本提升为11.1以上，参考 `cuda112.dockerfile` 进行构建。
+
+  ```
+  cd det-yolov4-training
+  # cuda101-yolov4-training
+  docker build -t ymir-executor/yolov4:cuda101-training -f Dockerfile .
+
+  # cuda112-yolov4-training
+  docker build -t ymir-executor/yolov4:cuda112-training -f cuda112.dockerfile .
+  ```
 
 ## det-yolov4-mining
 
