@@ -108,11 +108,15 @@ def main():
 
     # write infer result
     monitor_gap = max(1, N // 100)
+    conf_threshold = float(cfg.param.conf_threshold)
     for asset_path, _ in tqdm(dr.item_paths(dataset_type=env.DatasetType.CANDIDATE)):
         img = cv2.imread(asset_path)
         result = model.infer(img)
-        infer_result[asset_path] = mmdet_result_to_ymir(
+        raw_anns = mmdet_result_to_ymir(
             result, cfg.param.class_names)
+
+        infer_result[asset_path] = [
+            ann for ann in raw_anns if ann.score >= conf_threshold]
         idx += 1
 
         if idx % monitor_gap == 0:

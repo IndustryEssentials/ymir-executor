@@ -203,6 +203,7 @@ def update_training_result_file(last: bool = False, key_score=None):
                 model_stages = {}
 
             if stage_name not in model_stages:
-                rw.write_model_stage(files=[newest_weight_file],
+                config_files = [f for f in result_files if f.endswith('.py')]
+                rw.write_model_stage(files=[newest_weight_file] + config_files,
                                      mAP=float(map),
                                      stage_name=stage_name)
