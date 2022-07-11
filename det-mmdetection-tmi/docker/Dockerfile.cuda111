@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y build-essential ffmpeg libsm6 libxext6 
 # Install ymir-exc sdk and MMCV
 RUN pip install --no-cache-dir --upgrade pip wheel setuptools && \
     if [ "${SERVER_MODE}" = "dev" ]; then \
-        pip install --force-reinstall -U "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"; \
+        pip install "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"; \
     else \
         pip install ymir-exc; \
     fi \
@@ -36,7 +36,6 @@ RUN pip install --no-cache-dir --upgrade pip wheel setuptools && \
 COPY . /app/
 WORKDIR /app
 RUN pip install --no-cache-dir -r requirements/runtime.txt \
-    && pip install --no-cache-dir -e . \
     && mkdir /img-man \
     && mv *-template.yaml /img-man \
     && echo "cd /app && python3 start.py" > /usr/bin/start.sh
