@@ -307,7 +307,7 @@ class YmirMining(YmirModel):
         """
         results = self.infer(img)
 
-        xyxy_conf_idx_list=[]
+        xyxy_conf_idx_list = []
         for idx, result in enumerate(results):
             for line in result:
                 if any(np.isinf(line)):

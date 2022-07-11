@@ -180,4 +180,3 @@ class DistEvalHook(BaseDistEvalHook):
                 #     'best_score', self.init_value_map[self.rule])
                 # if self.compare_func(key_score, best_score):
                 #     update_training_result_file(key_score)
-

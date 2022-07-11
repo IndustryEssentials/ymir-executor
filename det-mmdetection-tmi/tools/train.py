@@ -19,6 +19,7 @@ from mmdet.models import build_detector
 from mmdet.utils import collect_env, get_root_logger, setup_multi_processes
 from mmdet.utils.util_ymir import modify_mmdet_config, get_merged_config
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
     parser.add_argument('config', help='train config file path')

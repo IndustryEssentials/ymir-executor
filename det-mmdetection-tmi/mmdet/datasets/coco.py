@@ -597,7 +597,9 @@ class CocoDataset(CustomDataset):
         if COCO_EVAL_TMP_FILE is not None:
             mmcv.dump(eval_results, COCO_EVAL_TMP_FILE, file_format='json')
         else:
-            raise Exception('please set valid environment variable COCO_EVAL_TMP_FILE to write result into json file')
+            raise Exception(
+                'please set valid environment variable COCO_EVAL_TMP_FILE to write result into json file')
 
-        print_log(f'\n write eval result to {COCO_EVAL_TMP_FILE}', logger=logger)
+        print_log(
+            f'\n write eval result to {COCO_EVAL_TMP_FILE}', logger=logger)
         return eval_results

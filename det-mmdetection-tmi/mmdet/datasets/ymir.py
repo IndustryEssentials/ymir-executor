@@ -1,7 +1,6 @@
 # Copyright (c) OpenMMLab voc.py. All rights reserved.
 # wangjiaxin 2022-04-25
 
-from collections import OrderedDict
 import os.path as osp
 
 # from PIL import Image
@@ -12,21 +11,23 @@ from .builder import DATASETS
 from .api_wrappers import COCO
 from .coco import CocoDataset
 
+
 @DATASETS.register_module()
 class YmirDataset(CocoDataset):
     """
-    converted dataset by ymir system 1.0.0
+    converted dataset by ymir system 1.0.0 +
     /in/assets: image files directory
     /in/annotations: annotation files directory
     /in/train-index.tsv: image_file \t annotation_file
     /in/val-index.tsv: image_file \t annotation_file
     """
+
     def __init__(self,
                  min_size=0,
                  ann_prefix='annotations',
                  **kwargs):
-        self.min_size=min_size
-        self.ann_prefix=ann_prefix
+        self.min_size = min_size
+        self.ann_prefix = ann_prefix
         super(YmirDataset, self).__init__(**kwargs)
 
     def load_annotations(self, ann_file):
@@ -43,16 +44,16 @@ class YmirDataset(CocoDataset):
         categories = []
         # category_id is from 1 for coco, not 0
         for i, name in enumerate(self.CLASSES):
-            categories.append({'supercategory':'none',
+            categories.append({'supercategory': 'none',
                               'id': i+1,
-                              'name': name})
+                               'name': name})
 
         annotations = []
         instance_counter = 1
         image_counter = 1
 
-        with open(ann_file,'r') as fp:
-            lines=fp.readlines()
+        with open(ann_file, 'r') as fp:
+            lines = fp.readlines()
 
         for line in lines:
             # split any white space
@@ -76,22 +77,22 @@ class YmirDataset(CocoDataset):
                 anns = []
 
             for ann in anns:
-                ann['image_id']=image_counter
-                ann['id']=instance_counter
+                ann['image_id'] = image_counter
+                ann['id'] = instance_counter
                 annotations.append(ann)
-                instance_counter+=1
+                instance_counter += 1
 
-            image_counter+=1
+            image_counter += 1
 
-        ### pycocotool coco init
+        # pycocotool coco init
         self.coco = COCO()
-        self.coco.dataset['type']='instances'
-        self.coco.dataset['categories']=categories
-        self.coco.dataset['images']=images
-        self.coco.dataset['annotations']=annotations
+        self.coco.dataset['type'] = 'instances'
+        self.coco.dataset['categories'] = categories
+        self.coco.dataset['images'] = images
+        self.coco.dataset['annotations'] = annotations
         self.coco.createIndex()
 
-        ### mmdetection coco init
+        # mmdetection coco init
         # avoid the filter problem in CocoDataset, view coco_api.py for detail
         self.coco.img_ann_map = self.coco.imgToAnns
         self.coco.cat_img_map = self.coco.catToImgs
@@ -103,7 +104,7 @@ class YmirDataset(CocoDataset):
         self.img_ids = self.coco.get_img_ids()
         # self.img_ids = list(self.coco.imgs.keys())
         assert len(self.img_ids) > 0, 'image number must > 0'
-        N=len(self.img_ids)
+        N = len(self.img_ids)
         print(f'load {N} image from YMIR dataset')
 
         data_infos = []
@@ -119,11 +120,11 @@ class YmirDataset(CocoDataset):
         return data_infos
 
     def dump(self, ann_file):
-        with open(ann_file,'w') as fp:
+        with open(ann_file, 'w') as fp:
             json.dump(self.coco.dataset, fp)
 
-    def get_ann_path_from_img_path(self,img_path):
-        img_id=osp.splitext(osp.basename(img_path))[0]
+    def get_ann_path_from_img_path(self, img_path):
+        img_id = osp.splitext(osp.basename(img_path))[0]
         return osp.join(self.data_root, self.ann_prefix, img_id+'.txt')
 
     def get_txt_ann_info(self, txt_path):
@@ -141,16 +142,16 @@ class YmirDataset(CocoDataset):
         # txt_path = self.get_ann_path_from_img_path(img_path)
         anns = []
         if osp.exists(txt_path):
-            with open(txt_path,'r') as fp:
-                lines=fp.readlines()
+            with open(txt_path, 'r') as fp:
+                lines = fp.readlines()
         else:
-            lines=[]
+            lines = []
         for line in lines:
-            obj=[int(x) for x in line.strip().split(',')[0:5]]
+            obj = [int(x) for x in line.strip().split(',')[0:5]]
             # YMIR category id starts from 0, coco from 1
             category_id, xmin, ymin, xmax, ymax = obj
             bbox = [xmin, ymin, xmax, ymax]
-            h,w=ymax-ymin,xmax-xmin
+            h, w = ymax-ymin, xmax-xmin
             ignore = 0
             if self.min_size:
                 assert not self.test_mode
@@ -160,12 +161,13 @@ class YmirDataset(CocoDataset):
                     ignore = 1
 
             ann = dict(
-                segmentation=[[xmin, ymin, xmax, ymin, xmax, ymax, xmin, ymax]],
+                segmentation=[
+                    [xmin, ymin, xmax, ymin, xmax, ymax, xmin, ymax]],
                 area=w*h,
                 iscrowd=0,
                 image_id=None,
                 bbox=[xmin, ymin, w, h],
-                category_id=category_id+1, # category id is from 1 for coco
+                category_id=category_id+1,  # category id is from 1 for coco
                 id=None,
                 ignore=ignore
             )
@@ -188,7 +190,7 @@ class YmirDataset(CocoDataset):
         txt_path = self.data_infos[idx]['ann_path']
         txt_path = osp.join(self.data_root, self.ann_prefix, txt_path)
         if osp.exists(txt_path):
-            with open(txt_path,'r') as fp:
+            with open(txt_path, 'r') as fp:
                 lines = fp.readlines()
         else:
             lines = []

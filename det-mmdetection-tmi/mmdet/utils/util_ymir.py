@@ -158,7 +158,7 @@ def get_weight_file(cfg: edict) -> str:
     return ""
 
 
-def update_training_result_file(last=False, key_score=None):
+def update_training_result_file(last: bool = False, key_score=None):
     if key_score:
         logging.info(f'key_score is {key_score}')
     COCO_EVAL_TMP_FILE = os.getenv('COCO_EVAL_TMP_FILE')
@@ -168,7 +168,7 @@ def update_training_result_file(last=False, key_score=None):
 
     eval_result = mmcv.load(COCO_EVAL_TMP_FILE)
     # eval_result may be empty dict {}.
-    map = eval_result.get('bbox_mAP_50',0)
+    map = eval_result.get('bbox_mAP_50', 0)
 
     work_dir = os.getenv('YMIR_MODELS_DIR')
     if work_dir is None or not osp.isdir(work_dir):

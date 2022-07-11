@@ -32,7 +32,8 @@ def _run_training() -> None:
 
     # if task done, write 100% percent log
     monitor.write_monitor_logger(percent=1.0)
-    logging.info(f"training finished")
+    logging.info("training finished")
+
 
 def _run_mining() -> None:
     command = 'python3 ymir_mining.py'
@@ -40,7 +41,8 @@ def _run_mining() -> None:
     subprocess.run(command.split(), check=True)
 
     monitor.write_monitor_logger(percent=1.0)
-    logging.info(f"mining finished")
+    logging.info("mining finished")
+
 
 def _run_infer() -> None:
     command = 'python3 ymir_infer.py'
@@ -48,7 +50,8 @@ def _run_infer() -> None:
     subprocess.run(command.split(), check=True)
 
     monitor.write_monitor_logger(percent=1.0)
-    logging.info(f"infer finished")
+    logging.info("infer finished")
+
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout,
