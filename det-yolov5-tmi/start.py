@@ -51,17 +51,43 @@ def _run_training(cfg: edict) -> None:
     img_size = cfg.param.img_size
     save_period = cfg.param.save_period
     args_options = cfg.param.args_options
+    gpu_id = str(cfg.param.gpu_id)
+    gpu_count = len(gpu_id.split(',')) if gpu_id else 0
+    port = int(cfg.param.port)
+    sync_bn = cfg.param.sync_bn
     weights = get_weight_file(cfg)
     if not weights:
         # download pretrained weight
         weights = download_weight_file(model)
 
     models_dir = cfg.ymir.output.models_dir
-    command = f'python3 train.py --epochs {epochs} ' + \
-        f'--batch-size {batch_size} --data {out_dir}/data.yaml --project /out ' + \
-        f'--cfg models/{model}.yaml --name models --weights {weights} ' + \
-        f'--img-size {img_size} ' + \
-        f'--save-period {save_period}'
+
+    if gpu_count == 0:
+        command = f'python3 train.py --epochs {epochs} ' + \
+            f'--batch-size {batch_size} --data {out_dir}/data.yaml --project /out ' + \
+            f'--cfg models/{model}.yaml --name models --weights {weights} ' + \
+            f'--img-size {img_size} ' + \
+            f'--save-period {save_period} ' + \
+            f'--devices cpu'
+    elif gpu_count == 1:
+        command = f'python3 train.py --epochs {epochs} ' + \
+            f'--batch-size {batch_size} --data {out_dir}/data.yaml --project /out ' + \
+            f'--cfg models/{model}.yaml --name models --weights {weights} ' + \
+            f'--img-size {img_size} ' + \
+            f'--save-period {save_period} ' + \
+            f'--devices {gpu_id}'
+    else:
+        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} ' + \
+            f'--master_port {port} train.py --epochs {epochs} ' + \
+            f'--batch-size {batch_size} --data {out_dir}/data.yaml --project /out ' + \
+            f'--cfg models/{model}.yaml --name models --weights {weights} ' + \
+            f'--img-size {img_size} ' + \
+            f'--save-period {save_period} ' + \
+            f'--devices {gpu_id}'
+
+        if sync_bn:
+            command += " --sync-bn"
+
     if args_options:
         command += f" {args_options}"
 

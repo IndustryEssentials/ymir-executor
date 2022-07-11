@@ -14,3 +14,5 @@ img_size: 640
 opset: 11
 args_options: '--exist-ok'
 save_period: 10
+port: 29500 # work for multi-gpu only
+sync_bn: False # work for multi-gpu only
