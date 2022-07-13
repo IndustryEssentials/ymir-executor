@@ -20,14 +20,21 @@ def main():
     show_ymir_info(executor_config)
 
     git_url = executor_config['git_url']
-    git_branch = executor_config.get('git_branch', '')
+    # commit id, tag or branch
+    git_id = executor_config.get('git_branch', '')
 
-    if not git_branch:
-        cmd = f'git clone {git_url} --depth 1 /app'
-    else:
-        cmd = f'git clone {git_url} --depth 1 -b {git_branch} /app'
-    logger.info(f'clone code: {cmd}')
+    cmd = f'git clone {git_url} /app'
     subprocess.run(cmd.split(), check=True)
+
+    if not git_id:
+        result = subprocess.run('git rev-parse HEAD', check=True, shell=True,
+        capture_output=True, encoding='utf-8', cwd='/app')
+        # remove '\n'
+        git_id = result.stdout.strip()
+    else:
+        subprocess.run(f'git checkout {git_id}', check=True, shell=True, cwd='/app')
+
+    logger.info(f'clone code with {git_id}: {cmd}')
 
     # step 2. read /app/extra-requirements.txt and install it.
     pypi_file = '/app/extra-requirements.txt'
