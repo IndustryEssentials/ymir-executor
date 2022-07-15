@@ -54,7 +54,7 @@ def _run_training(cfg: edict) -> None:
     gpu_id = str(cfg.param.gpu_id)
     gpu_count = len(gpu_id.split(',')) if gpu_id else 0
     port = int(cfg.param.port)
-    sync_bn = cfg.param.sync_bn
+    sync_bn = cfg.param.get('sync_bn', False)
     weights = get_weight_file(cfg)
     if not weights:
         # download pretrained weight
@@ -68,14 +68,14 @@ def _run_training(cfg: edict) -> None:
             f'--cfg models/{model}.yaml --name models --weights {weights} ' + \
             f'--img-size {img_size} ' + \
             f'--save-period {save_period} ' + \
-            f'--devices cpu'
+            f'--device cpu'
     elif gpu_count == 1:
         command = f'python3 train.py --epochs {epochs} ' + \
             f'--batch-size {batch_size} --data {out_dir}/data.yaml --project /out ' + \
             f'--cfg models/{model}.yaml --name models --weights {weights} ' + \
             f'--img-size {img_size} ' + \
             f'--save-period {save_period} ' + \
-            f'--devices {gpu_id}'
+            f'--device {gpu_id}'
     else:
         command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} ' + \
             f'--master_port {port} train.py --epochs {epochs} ' + \
@@ -83,7 +83,7 @@ def _run_training(cfg: edict) -> None:
             f'--cfg models/{model}.yaml --name models --weights {weights} ' + \
             f'--img-size {img_size} ' + \
             f'--save-period {save_period} ' + \
-            f'--devices {gpu_id}'
+            f'--device {gpu_id}'
 
         if sync_bn:
             command += " --sync-bn"
