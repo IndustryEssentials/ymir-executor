@@ -53,7 +53,7 @@ def _run_training(cfg: edict) -> None:
     args_options = cfg.param.args_options
     gpu_id = str(cfg.param.gpu_id)
     gpu_count = len(gpu_id.split(',')) if gpu_id else 0
-    port = int(cfg.param.port)
+    port = int(cfg.param.get('port', 29500))
     sync_bn = cfg.param.get('sync_bn', False)
     weights = get_weight_file(cfg)
     if not weights:
