@@ -28,9 +28,9 @@ def main(cfg: edict) -> int:
     args_options = cfg.param.get("args_options", None)
     cfg_options = cfg.param.get("cfg_options", None)
 
-    if args_options.find('--resume-from') == -1 and \
-            cfg_options.find('load_from') == -1 and \
-            cfg_options.find('resume_from') == -1:
+    if (args_options is None or args_options.find('--resume-from') == -1) and \
+            (cfg_options is None or (cfg_options.find('load_from') == -1 and
+                                     cfg_options.find('resume_from') == -1)):
 
         weight_file = get_weight_file(cfg)
         if weight_file:
