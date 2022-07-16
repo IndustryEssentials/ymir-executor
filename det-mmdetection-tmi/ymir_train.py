@@ -7,8 +7,8 @@ import sys
 from easydict import EasyDict as edict
 from ymir_exc import monitor
 
-from mmdet.utils.util_ymir import (YmirStage, get_merged_config,
-                                   get_ymir_process, update_training_result_file)
+from mmdet.utils.util_ymir import (YmirStage, get_merged_config, get_weight_file,
+                                   get_ymir_process, write_ymir_training_result)
 
 
 def main(cfg: edict) -> int:
@@ -27,6 +27,19 @@ def main(cfg: edict) -> int:
     config_file = cfg.param.get("config_file")
     args_options = cfg.param.get("args_options", None)
     cfg_options = cfg.param.get("cfg_options", None)
+
+    if args_options.find('--resume-from') == -1 and \
+            cfg_options.find('load_from') == -1 and \
+            cfg_options.find('resume_from') == -1:
+
+        weight_file = get_weight_file(cfg)
+        if weight_file:
+            if cfg_options:
+                cfg_options += f' load_from={weight_file}'
+            else:
+                cfg_options = f'load_from={weight_file}'
+        else:
+            logging.warning('no weight file used for training!')
 
     monitor.write_monitor_logger(
         percent=get_ymir_process(YmirStage.PREPROCESS, p=0.2))
@@ -57,7 +70,7 @@ def main(cfg: edict) -> int:
     subprocess.run(cmd.split(), check=True)
 
     # save the last checkpoint
-    update_training_result_file(last=True)
+    write_ymir_training_result(last=True)
     return 0
 
 

@@ -10,7 +10,7 @@ from torch.nn.modules.batchnorm import _BatchNorm
 from ymir_exc import monitor
 
 from mmdet.utils.util_ymir import (YmirStage, get_ymir_process,
-                                   update_training_result_file)
+                                   write_ymir_training_result)
 
 
 def _calc_dynamic_intervals(start_interval, dynamic_interval_list):
@@ -79,7 +79,7 @@ class EvalHook(BaseEvalHook):
         results = single_gpu_test(runner.model, self.dataloader, show=False)
         runner.log_buffer.output['eval_iter_num'] = len(self.dataloader)
         key_score = self.evaluate(runner, results)
-        update_training_result_file(last=False, key_score=key_score)
+        write_ymir_training_result(last=False, key_score=key_score)
         # the key_score may be `None` so it needs to skip the action to save
         # the best checkpoint
         if self.save_best and key_score:
@@ -87,7 +87,7 @@ class EvalHook(BaseEvalHook):
             # best_score = runner.meta['hook_msgs'].get(
             #     'best_score', self.init_value_map[self.rule])
             # if self.compare_func(key_score, best_score):
-            #     update_training_result_file(key_score)
+            #     write_ymir_training_result(key_score)
 
 
 # Note: Considering that MMCV's EvalHook updated its interface in V1.3.16,
@@ -170,7 +170,7 @@ class DistEvalHook(BaseDistEvalHook):
             print('\n')
             runner.log_buffer.output['eval_iter_num'] = len(self.dataloader)
             key_score = self.evaluate(runner, results)
-            update_training_result_file(last=False, key_score=key_score)
+            write_ymir_training_result(last=False, key_score=key_score)
             # the key_score may be `None` so it needs to skip
             # the action to save the best checkpoint
             if self.save_best and key_score:
@@ -179,4 +179,4 @@ class DistEvalHook(BaseDistEvalHook):
                 # best_score = runner.meta['hook_msgs'].get(
                 #     'best_score', self.init_value_map[self.rule])
                 # if self.compare_func(key_score, best_score):
-                #     update_training_result_file(key_score)
+                #     write_ymir_training_result(key_score)

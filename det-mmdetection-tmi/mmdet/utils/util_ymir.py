@@ -158,7 +158,7 @@ def get_weight_file(cfg: edict) -> str:
     return ""
 
 
-def update_training_result_file(last: bool = False, key_score=None):
+def write_ymir_training_result(last: bool = False, key_score=None):
     if key_score:
         logging.info(f'key_score is {key_score}')
     COCO_EVAL_TMP_FILE = os.getenv('COCO_EVAL_TMP_FILE')
