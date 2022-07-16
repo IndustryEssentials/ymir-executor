@@ -28,6 +28,7 @@ def main(cfg: edict) -> int:
     args_options = cfg.param.get("args_options", None)
     cfg_options = cfg.param.get("cfg_options", None)
 
+    # auto load offered weight file if not set by user!
     if (args_options is None or args_options.find('--resume-from') == -1) and \
             (cfg_options is None or (cfg_options.find('load_from') == -1 and
                                      cfg_options.find('resume_from') == -1)):
