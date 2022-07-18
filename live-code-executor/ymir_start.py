@@ -23,18 +23,26 @@ def main():
     # commit id, tag or branch
     git_id = executor_config.get('git_branch', '')
 
-    cmd = f'git clone {git_url} /app'
+    # https://github.blog/2020-12-21-get-up-to-speed-with-partial-clone-and-shallow-clone/
+    cmd = f'git clone --filter=blob:none {git_url} /app'
+    logger.info(f'running: {cmd}')
     subprocess.run(cmd.split(), check=True)
 
     if not git_id:
-        result = subprocess.run('git rev-parse HEAD', check=True, shell=True,
-        capture_output=True, encoding='utf-8', cwd='/app')
-        # remove '\n'
-        git_id = result.stdout.strip()
+        # logger.warning(f'no commid_id/tag/branch offered for {git_url}')
+        raise Exception(f'no commid_id/tag/branch offered for {git_url}')
     else:
-        subprocess.run(f'git checkout {git_id}', check=True, shell=True, cwd='/app')
+        cmd = f'git checkout {git_id}'
+        logger.info(f'running: {cmd}')
+        subprocess.run(cmd.split(), check=True, cwd='/app')
 
-    logger.info(f'clone code with {git_id}: {cmd}')
+    result = subprocess.run('git rev-parse HEAD', check=True, shell=True,
+                            capture_output=True, encoding='utf-8', cwd='/app')
+
+    commit_id = result.stdout.strip()  # remove '\n'
+    subprocess.run(f'echo {commit_id} > /out/models/git_commit_id.txt', check=True, shell=True)
+    logger.info(f'clone code {git_url} with commit id {commit_id}')
+
 
     # step 2. read /app/extra-requirements.txt and install it.
     pypi_file = '/app/extra-requirements.txt'
