@@ -21,13 +21,13 @@ RUN	apt-get update && apt-get install -y gnupg2 git libglib2.0-0 \
 
 # install ymir-exc sdk
 RUN if [ "${SERVER_MODE}" = "dev" ]; then \
-        pip install --force-reinstall -U "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"; \
+        pip install "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"; \
     else \
         pip install ymir-exc; \
     fi
 
 # Copy file from host to docker and install requirements
-ADD ./det-yolov5-tmi /app
+COPY . /app
 RUN mkdir /img-man && mv /app/*-template.yaml /img-man/ \
     && pip install -r /app/requirements.txt
 
