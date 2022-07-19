@@ -4,11 +4,13 @@ ARG CUDNN="7"
 
 FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-runtime
 ARG SERVER_MODE=prod
+ARG YMIR="1.1.0"
 
 ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
 ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
 ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 ENV LANG=C.UTF-8
+ENV YMIR_VERSION=${YMIR}
 
 # Install linux package
 RUN	apt-get update && apt-get install -y gnupg2 git libglib2.0-0 \

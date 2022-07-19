@@ -6,6 +6,7 @@ import sys
 from typing import Dict, List, Tuple
 
 import cv2
+from easydict import EasyDict as edict
 import numpy as np
 from nptyping import NDArray
 from scipy.stats import entropy
@@ -32,6 +33,21 @@ def split_result(result: NDArray) -> Tuple[BBOX, NDArray, NDArray]:
 
 
 class MiningCald(YmirYolov5):
+    def __init__(self, cfg: edict):
+        super().__init__(cfg)
+
+        if cfg.ymir.run_mining and cfg.ymir.run_infer:
+            mining_task_idx = 0
+            # infer_task_idx = 1
+            task_num = 2
+        else:
+            mining_task_idx = 0
+            # infer_task_idx = 0
+            task_num = 1
+
+        self.task_idx = mining_task_idx
+        self.task_num = task_num
+
     def mining(self) -> List:
         N = dr.items_count(env.DatasetType.CANDIDATE)
         monitor_gap = max(1, N // 100)
@@ -86,7 +102,8 @@ class MiningCald(YmirYolov5):
             idx += 1
 
             if idx % monitor_gap == 0:
-                percent = get_ymir_process(stage=YmirStage.TASK, p=idx / N)
+                percent = get_ymir_process(stage=YmirStage.TASK, p=idx / N,
+                                           task_idx=self.task_idx, task_num=self.task_num)
                 monitor.write_monitor_logger(percent=percent)
 
         return mining_result
