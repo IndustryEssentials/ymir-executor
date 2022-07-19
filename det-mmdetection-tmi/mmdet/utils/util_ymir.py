@@ -134,7 +134,7 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
     interval = max(1, mmdet_cfg.runner.max_epochs//30)
     mmdet_cfg.evaluation.interval = interval
     mmdet_cfg.evaluation.metric = ymir_cfg.param.get('metric', 'bbox')
-    # Whether to evaluating the AP for each class
+    # TODO Whether to evaluating the AP for each class
     # mmdet_cfg.evaluation.classwise = True
     return mmdet_cfg
 
@@ -142,7 +142,7 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
 def get_weight_file(cfg: edict) -> str:
     """
     return the weight file path by priority
-    find weight file in cfg.param.model_params_path or cfg.param.model_params_path
+    find weight file in cfg.param.pretrained_model_params or cfg.param.model_params_path
     """
     if cfg.ymir.run_training:
         model_params_path: List = cfg.param.pretrained_model_params
