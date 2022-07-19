@@ -20,14 +20,21 @@ def main():
     show_ymir_info(executor_config)
 
     git_url = executor_config['git_url']
-    git_branch = executor_config.get('git_branch', '')
+    # commit id, tag or branch
+    git_revision = executor_config.get('git_branch', '')
 
-    if not git_branch:
-        cmd = f'git clone {git_url} --depth 1 /app'
-    else:
-        cmd = f'git clone {git_url} --depth 1 -b {git_branch} /app'
-    logger.info(f'clone code: {cmd}')
+    # https://github.blog/2020-12-21-get-up-to-speed-with-partial-clone-and-shallow-clone/
+    cmd = f'git clone --filter=blob:none {git_url} /app'
+    logger.info(f'running: {cmd}')
     subprocess.run(cmd.split(), check=True)
+
+    if not git_revision:
+        # logger.warning(f'no commid_id/tag/branch offered for {git_url}')
+        raise Exception(f'no commid_id/tag/branch offered for {git_url}')
+
+    cmd = f'git checkout {git_revision}'
+    logger.info(f'running: {cmd}')
+    subprocess.run(cmd.split(), check=True, cwd='/app')
 
     # step 2. read /app/extra-requirements.txt and install it.
     pypi_file = '/app/extra-requirements.txt'
