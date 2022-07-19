@@ -32,7 +32,13 @@ BBOX = NDArray[Shape['*,4'], Any]
 CV_IMAGE = NDArray[Shape['*,*,3'], UInt8]
 
 
-def get_ymir_process(stage: YmirStage, p: float) -> float:
+def get_ymir_process(stage: YmirStage, p: float, task_idx: int=0, task_num: int=1) -> float:
+    """
+    stage: pre-process/task/post-process
+    p: percent for stage
+    task_idx: index for multiple tasks like mining (task_idx=0) and infer (task_idx=1)
+    task_num: the total number of multiple tasks.
+    """
     # const value for ymir process
     PREPROCESS_PERCENT = 0.1
     TASK_PERCENT = 0.8
@@ -41,12 +47,14 @@ def get_ymir_process(stage: YmirStage, p: float) -> float:
     if p < 0 or p > 1.0:
         raise Exception(f'p not in [0,1], p={p}')
 
+    init = task_idx * 1.0 / task_num
+    ratio = 1.0 / task_num
     if stage == YmirStage.PREPROCESS:
-        return PREPROCESS_PERCENT * p
+        return init + PREPROCESS_PERCENT * p * ratio
     elif stage == YmirStage.TASK:
-        return PREPROCESS_PERCENT + TASK_PERCENT * p
+        return init + (PREPROCESS_PERCENT + TASK_PERCENT * p) * ratio
     elif stage == YmirStage.POSTPROCESS:
-        return PREPROCESS_PERCENT + TASK_PERCENT + POSTPROCESS_PERCENT * p
+        return init + (PREPROCESS_PERCENT + TASK_PERCENT + POSTPROCESS_PERCENT * p) * ratio
     else:
         raise NotImplementedError(f'unknown stage {stage}')
 
@@ -101,6 +109,18 @@ class YmirYolov5():
 
     def __init__(self, cfg: edict):
         self.cfg = cfg
+        if cfg.ymir.run_mining and cfg.ymir.run_infer:
+            # mining_task_idx = 0
+            infer_task_idx = 1
+            task_num = 2
+        else:
+            # mining_task_idx = 0
+            infer_task_idx = 0
+            task_num = 1
+
+        self.task_idx=infer_task_idx
+        self.task_num=task_num
+
         device = select_device(cfg.param.get('gpu_id', 'cpu'))
 
         self.model = self.init_detector(device)
