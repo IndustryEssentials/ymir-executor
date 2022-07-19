@@ -81,6 +81,18 @@ class YmirModel:
     def __init__(self, cfg: edict):
         self.cfg = cfg
 
+        if cfg.ymir.run_mining and cfg.ymir.run_infer:
+            # mining_task_idx = 0
+            infer_task_idx = 1
+            task_num = 2
+        else:
+            # mining_task_idx = 0
+            infer_task_idx = 0
+            task_num = 1
+
+        self.task_idx=infer_task_idx
+        self.task_num=task_num
+
         # Specify the path to model config and checkpoint file
         config_file = get_config_file(cfg)
         checkpoint_file = get_weight_file(cfg)
@@ -120,11 +132,14 @@ def main():
         idx += 1
 
         if idx % monitor_gap == 0:
-            percent = get_ymir_process(stage=YmirStage.TASK, p=idx / N)
+            percent = get_ymir_process(
+                stage=YmirStage.TASK, p=idx / N, task_idx=model.task_idx, task_num=model.task_num)
             monitor.write_monitor_logger(percent=percent)
 
     rw.write_infer_result(infer_result=infer_result)
-
+    percent = get_ymir_process(stage=YmirStage.POSTPROCESS,
+                               p=1, task_idx=model.task_idx, task_num=model.task_num)
+    monitor.write_monitor_logger(percent=percent)
     return 0
 
 

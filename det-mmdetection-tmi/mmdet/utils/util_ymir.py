@@ -7,12 +7,13 @@ import yaml
 import os
 import os.path as osp
 from enum import IntEnum
-from typing import Any, List
+from typing import Any, List, Optional
 
 import mmcv
 from easydict import EasyDict as edict
 from mmcv import Config
 from nptyping import NDArray, Shape, UInt8
+from packaging.version import Version
 from ymir_exc import env
 from ymir_exc import result_writer as rw
 
@@ -27,7 +28,13 @@ BBOX = NDArray[Shape['*,4'], Any]
 CV_IMAGE = NDArray[Shape['*,*,3'], UInt8]
 
 
-def get_ymir_process(stage: YmirStage, p: float = 0.0) -> float:
+def get_ymir_process(stage: YmirStage, p: float, task_idx: int = 0, task_num: int = 1) -> float:
+    """
+    stage: pre-process/task/post-process
+    p: percent for stage
+    task_idx: index for multiple tasks like mining (task_idx=0) and infer (task_idx=1)
+    task_num: the total number of multiple tasks.
+    """
     # const value for ymir process
     PREPROCESS_PERCENT = 0.1
     TASK_PERCENT = 0.8
@@ -36,12 +43,14 @@ def get_ymir_process(stage: YmirStage, p: float = 0.0) -> float:
     if p < 0 or p > 1.0:
         raise Exception(f'p not in [0,1], p={p}')
 
+    init = task_idx * 1.0 / task_num
+    ratio = 1.0 / task_num
     if stage == YmirStage.PREPROCESS:
-        return PREPROCESS_PERCENT * p
+        return init + PREPROCESS_PERCENT * p * ratio
     elif stage == YmirStage.TASK:
-        return PREPROCESS_PERCENT + TASK_PERCENT * p
+        return init + (PREPROCESS_PERCENT + TASK_PERCENT * p) * ratio
     elif stage == YmirStage.POSTPROCESS:
-        return PREPROCESS_PERCENT + TASK_PERCENT + POSTPROCESS_PERCENT * p
+        return init + (PREPROCESS_PERCENT + TASK_PERCENT + POSTPROCESS_PERCENT * p) * ratio
     else:
         raise NotImplementedError(f'unknown stage {stage}')
 
@@ -158,7 +167,15 @@ def get_weight_file(cfg: edict) -> str:
     return ""
 
 
-def write_ymir_training_result(last: bool = False, key_score=None):
+def write_ymir_training_result(last: bool = False, key_score: Optional[float] = None):
+    YMIR_VERSION = os.environ.get('YMIR_VERSION', '1.2.0')
+    if Version(YMIR_VERSION) >= Version('1.2.0'):
+        write_latest_ymir_training_result(last, key_score)
+    else:
+        write_ancient_ymir_training_result(key_score)
+
+
+def write_latest_ymir_training_result(last: bool = False, key_score: Optional[float] = None):
     if key_score:
         logging.info(f'key_score is {key_score}')
     COCO_EVAL_TMP_FILE = os.getenv('COCO_EVAL_TMP_FILE')
@@ -170,14 +187,14 @@ def write_ymir_training_result(last: bool = False, key_score=None):
     # eval_result may be empty dict {}.
     map = eval_result.get('bbox_mAP_50', 0)
 
-    work_dir = os.getenv('YMIR_MODELS_DIR')
-    if work_dir is None or not osp.isdir(work_dir):
+    WORK_DIR = os.getenv('YMIR_MODELS_DIR')
+    if WORK_DIR is None or not osp.isdir(WORK_DIR):
         raise Exception(
-            f'please set valid environment variable YMIR_MODELS_DIR, invalid directory {work_dir}')
+            f'please set valid environment variable YMIR_MODELS_DIR, invalid directory {WORK_DIR}')
 
     # assert only one model config file in work_dir
     result_files = [osp.basename(f) for f in glob.glob(
-        osp.join(work_dir, '*')) if osp.basename(f) != 'result.yaml']
+        osp.join(WORK_DIR, '*')) if osp.basename(f) != 'result.yaml']
 
     if last:
         # save all output file
@@ -186,7 +203,7 @@ def write_ymir_training_result(last: bool = False, key_score=None):
                              stage_name='last')
     else:
         # save newest weight file in format epoch_xxx.pth or iter_xxx.pth
-        weight_files = [osp.join(work_dir, f) for f in result_files if f.startswith(
+        weight_files = [osp.join(WORK_DIR, f) for f in result_files if f.startswith(
             ('iter_', 'epoch_')) and f.endswith('.pth')]
 
         if len(weight_files) > 0:
@@ -194,7 +211,7 @@ def write_ymir_training_result(last: bool = False, key_score=None):
                 max(weight_files, key=os.path.getctime))
 
             stage_name = osp.splitext(newest_weight_file)[0]
-            training_result_file = osp.join(work_dir, 'result.yaml')
+            training_result_file = osp.join(WORK_DIR, 'result.yaml')
             if osp.exists(training_result_file):
                 with open(training_result_file, 'r') as f:
                     training_result = yaml.safe_load(f)
@@ -207,3 +224,39 @@ def write_ymir_training_result(last: bool = False, key_score=None):
                 rw.write_model_stage(files=[newest_weight_file] + config_files,
                                      mAP=float(map),
                                      stage_name=stage_name)
+
+
+def write_ancient_ymir_training_result(key_score: Optional[float] = None):
+    if key_score:
+        logging.info(f'key_score is {key_score}')
+
+    COCO_EVAL_TMP_FILE = os.getenv('COCO_EVAL_TMP_FILE')
+    if COCO_EVAL_TMP_FILE is None:
+        raise Exception(
+            'please set valid environment variable COCO_EVAL_TMP_FILE to write result into json file')
+
+    eval_result = mmcv.load(COCO_EVAL_TMP_FILE)
+    # eval_result may be empty dict {}.
+    map = eval_result.get('bbox_mAP_50', 0)
+
+    WORK_DIR = os.getenv('YMIR_MODELS_DIR')
+    if WORK_DIR is None or not osp.isdir(WORK_DIR):
+        raise Exception(
+            f'please set valid environment variable YMIR_MODELS_DIR, invalid directory {WORK_DIR}')
+
+    # assert only one model config file in work_dir
+    result_files = [osp.basename(f) for f in glob.glob(
+        osp.join(WORK_DIR, '*')) if osp.basename(f) != 'result.yaml']
+
+    training_result_file = osp.join(WORK_DIR, 'result.yaml')
+    if osp.exists(training_result_file):
+        with open(training_result_file, 'r') as f:
+            training_result = yaml.safe_load(f)
+
+        training_result['model'] = result_files
+        training_result['map'] = max(map, training_result['map'])
+    else:
+        training_result = dict(model=result_files, map=map)
+
+    with open(training_result_file, 'w') as f:
+        yaml.safe_dump(training_result, f)

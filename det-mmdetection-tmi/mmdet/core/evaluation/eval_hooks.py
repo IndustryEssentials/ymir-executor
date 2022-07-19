@@ -84,6 +84,8 @@ class EvalHook(BaseEvalHook):
         # the best checkpoint
         if self.save_best and key_score:
             self._save_ckpt(runner, key_score)
+
+            # TODO obtain best_score from runner
             # best_score = runner.meta['hook_msgs'].get(
             #     'best_score', self.init_value_map[self.rule])
             # if self.compare_func(key_score, best_score):
@@ -176,6 +178,7 @@ class DistEvalHook(BaseDistEvalHook):
             if self.save_best and key_score:
                 self._save_ckpt(runner, key_score)
 
+                # TODO obtain best_score from runner
                 # best_score = runner.meta['hook_msgs'].get(
                 #     'best_score', self.init_value_map[self.rule])
                 # if self.compare_func(key_score, best_score):

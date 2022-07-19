@@ -39,17 +39,12 @@ def _run_mining() -> None:
     command = 'python3 ymir_mining.py'
     logging.info(f'start mining: {command}')
     subprocess.run(command.split(), check=True)
-
-    monitor.write_monitor_logger(percent=1.0)
     logging.info("mining finished")
-
 
 def _run_infer() -> None:
     command = 'python3 ymir_infer.py'
     logging.info(f'start infer: {command}')
     subprocess.run(command.split(), check=True)
-
-    monitor.write_monitor_logger(percent=1.0)
     logging.info("infer finished")
 
 

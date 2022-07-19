@@ -2,8 +2,6 @@
 # wangjiaxin 2022-04-25
 
 import os.path as osp
-
-# from PIL import Image
 import imagesize
 
 import json
@@ -58,10 +56,6 @@ class YmirDataset(CocoDataset):
         for line in lines:
             # split any white space
             img_path, ann_path = line.strip().split()
-            img_path = osp.join(self.data_root, self.img_prefix, img_path)
-            ann_path = osp.join(self.data_root, self.ann_prefix, ann_path)
-            # img = Image.open(img_path)
-            # width, height = img.size
             width, height = imagesize.get(img_path)
             images.append(
                 dict(id=image_counter,
@@ -104,8 +98,7 @@ class YmirDataset(CocoDataset):
         self.img_ids = self.coco.get_img_ids()
         # self.img_ids = list(self.coco.imgs.keys())
         assert len(self.img_ids) > 0, 'image number must > 0'
-        N = len(self.img_ids)
-        print(f'load {N} image from YMIR dataset')
+        print(f'load {len(self.img_ids)} image from YMIR dataset')
 
         data_infos = []
         total_ann_ids = []
@@ -136,10 +129,6 @@ class YmirDataset(CocoDataset):
         Returns:
             dict: Annotation info of specified index.
         """
-
-        # img_id = self.data_infos[idx]['id']
-        # txt_path = osp.splitext(img_path)[0]+'.txt'
-        # txt_path = self.get_ann_path_from_img_path(img_path)
         anns = []
         if osp.exists(txt_path):
             with open(txt_path, 'r') as fp:
@@ -150,13 +139,10 @@ class YmirDataset(CocoDataset):
             obj = [int(x) for x in line.strip().split(',')[0:5]]
             # YMIR category id starts from 0, coco from 1
             category_id, xmin, ymin, xmax, ymax = obj
-            bbox = [xmin, ymin, xmax, ymax]
             h, w = ymax-ymin, xmax-xmin
             ignore = 0
             if self.min_size:
                 assert not self.test_mode
-                w = bbox[2] - bbox[0]
-                h = bbox[3] - bbox[1]
                 if w < self.min_size or h < self.min_size:
                     ignore = 1
 
@@ -185,10 +171,7 @@ class YmirDataset(CocoDataset):
         """
 
         cat_ids = []
-        # img_path = self.data_infos[idx]['file_name']
-        # txt_path = self.get_ann_path_from_img_path(img_path)
         txt_path = self.data_infos[idx]['ann_path']
-        txt_path = osp.join(self.data_root, self.ann_prefix, txt_path)
         if osp.exists(txt_path):
             with open(txt_path, 'r') as fp:
                 lines = fp.readlines()
