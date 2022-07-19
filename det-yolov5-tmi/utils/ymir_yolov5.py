@@ -5,7 +5,7 @@ import glob
 import os.path as osp
 import shutil
 from enum import IntEnum
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import torch
@@ -70,7 +70,7 @@ def get_weight_file(cfg: edict) -> str:
     find weight file in cfg.param.model_params_path or cfg.param.model_params_path
     """
     if cfg.ymir.run_training:
-        model_params_path = cfg.param.get('pretrained_model_params',[])
+        model_params_path = cfg.param.get('pretrained_model_params', [])
     else:
         model_params_path = cfg.param.model_params_path
 
@@ -209,9 +209,9 @@ def write_ymir_training_result(cfg: edict,
                                epoch: int,
                                weight_file: str) -> int:
     """
+    for ymir>=1.2.0
     cfg: ymir config
-    results: (mp, mr, map50, map, loss)
-    maps: map@0.5:0.95 for all classes
+    map50: map50
     epoch: stage
     weight_file: saved weight files, empty weight_file will save all files
     """
@@ -229,4 +229,60 @@ def write_ymir_training_result(cfg: edict,
         rw.write_model_stage(stage_name=f"{model}_last_and_best",
                              files=files,
                              mAP=float(map50))
+    return 0
+
+
+def write_training_result(model: List[str], map: float, class_aps: Dict[str, float], **kwargs: dict) -> None:
+    """
+    for 1.0.0 <= ymir <=1.1.0
+    """
+    training_result = {
+        'model': model,
+        'map': map,
+        'class_aps': class_aps,
+    }
+    training_result.update(kwargs)
+
+    env_config = env.get_current_env()
+    with open(env_config.output.training_result_file, 'w') as f:
+        yaml.safe_dump(training_result, f)
+
+
+def write_old_ymir_training_result(cfg: edict, results: Tuple, maps: NDArray, rewrite=False) -> int:
+    """
+    for 1.0.0 <= ymir <=1.1.0
+    cfg: ymir config
+    results: (mp, mr, map50, map, loss)
+    maps: map@0.5:0.95 for all classes
+    rewrite: set true to ensure write the best result
+    """
+
+    if not rewrite:
+        training_result_file = cfg.ymir.output.training_result_file
+        if osp.exists(training_result_file):
+            with open(cfg.ymir.output.training_result_file, 'r') as f:
+                training_result = yaml.safe_load(stream=f)
+
+            files = [osp.basename(f) for f in glob.glob(osp.join(cfg.ymir.output.models_dir, '*'))]
+
+            training_result['model_names'] = files + ['best.onnx']
+            write_training_result(**training_result)
+
+        return 0
+
+    class_names = cfg.param.class_names
+    mp = results[0]  # mean of precision
+    mr = results[1]  # mean of recall
+    map50 = results[2]  # mean of ap@0.5
+    map = results[3]  # mean of ap@0.5:0.95
+
+    files = [osp.basename(f) for f in glob.glob(osp.join(cfg.ymir.output.models_dir, '*'))]
+    # use `rw.write_training_result` to save training result
+    write_training_result(model=files + ['best.onnx'],
+                          map=float(map),
+                          map50=float(map50),
+                          precision=float(mp),
+                          recall=float(mr),
+                          class_aps={class_name: v
+                                    for class_name, v in zip(class_names, maps.tolist())})
     return 0

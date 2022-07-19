@@ -5,11 +5,13 @@ ARG CUDNN="8"
 # cuda11.1 + pytorch 1.9.0 + cudnn8 not work!!!
 FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-runtime
 ARG SERVER_MODE=prod
+ARG YMIR="1.1.0"
 
 ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
 ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
 ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 ENV LANG=C.UTF-8
+ENV YMIR_VERSION=$YMIR
 
 # Install linux package
 RUN	apt-get update && apt-get install -y gnupg2 git libglib2.0-0 \
