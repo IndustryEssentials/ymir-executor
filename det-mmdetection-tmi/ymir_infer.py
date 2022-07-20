@@ -60,9 +60,9 @@ def mmdet_result_to_ymir(results: List[DETECTION_RESULT],
 
 def get_config_file(cfg):
     if cfg.ymir.run_training:
-        model_params_path: List = cfg.param.pretrained_model_params
+        model_params_path: List = cfg.param.get('pretrained_model_params',[])
     else:
-        model_params_path: List = cfg.param.model_params_path
+        model_params_path: List = cfg.param.get('model_params_path',[])
 
     model_dir = cfg.ymir.input.models_dir
     config_files = [

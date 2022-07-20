@@ -2,6 +2,7 @@ matplotlib
 numpy
 pycocotools
 six
+scipy
 terminaltables
 easydict
 nptyping
