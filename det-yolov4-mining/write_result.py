@@ -247,16 +247,12 @@ def _write_results(prediction, num_classes, input_dim, confidence=0.5, nms_conf=
 # """
 # yolov3 alexey
 def _prep_results(load_images, img_batch, output, input_dim):
-    im_dim_list = nd.array([(x.shape[1], x.shape[0]) for x in load_images])
-    im_dim_list = nd.tile(im_dim_list, 2)
-    im_dim_list = im_dim_list[output[:, 0], :]
-    scaling_factor = input_dim / im_dim_list
-    output[:, 3:7] /= scaling_factor
-    for i in range(output.shape[0]):
-        output[i, [3, 5]] = nd.clip(output[i, [3, 5]], a_min=0.0, a_max=im_dim_list[i][0].asscalar())
-        output[i, [4, 6]] = nd.clip(output[i, [4, 6]], a_min=0.0, a_max=im_dim_list[i][1].asscalar())
-
     output = output.asnumpy()
+    for i in range(output.shape[0]):
+        h, w = load_images[0].shape[0:2]
+        output[i, [3, 5]] = np.clip(output[i, [3, 5]]*w/input_dim, a_min=0.0, a_max=w)
+        output[i, [4, 6]] = np.clip(output[i, [4, 6]]*h/input_dim, a_min=0.0, a_max=h)
+
     boxes = []
     for i in range(len(load_images)):
         bboxs = []
