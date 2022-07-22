@@ -3,7 +3,9 @@ ARG CUDA="10.2"
 ARG CUDNN="7"
 
 FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-runtime
+# support SERVER_MODE=dev or prod
 ARG SERVER_MODE=prod
+# support YMIR=1.0.0, 1.1.0 or 1.2.0
 ARG YMIR="1.1.0"
 
 ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"

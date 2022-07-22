@@ -24,7 +24,6 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
-from packaging.version import Version
 import torch
 import torch.distributed as dist
 import torch.nn as nn
@@ -58,7 +57,7 @@ from utils.loss import ComputeLoss
 from utils.metrics import fitness
 from utils.plots import plot_evolve, plot_labels
 from utils.torch_utils import EarlyStopping, ModelEMA, de_parallel, select_device, torch_distributed_zero_first
-from utils.ymir_yolov5 import write_ymir_training_result, YmirStage, get_ymir_process, get_merged_config, write_old_ymir_training_result
+from utils.ymir_yolov5 import write_ymir_training_result, YmirStage, get_ymir_process, get_merged_config
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -76,12 +75,6 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
     ymir_cfg = opt.ymir_cfg
     opt.ymir_cfg = ''  # yaml cannot dump edict, remove it here
     log_dir = Path(ymir_cfg.ymir.output.tensorboard_dir)
-
-    YMIR_VERSION = os.environ.get('YMIR_VERSION', '1.2.0')
-    if Version(YMIR_VERSION) >= Version('1.2.0'):
-        latest_ymir = True
-    else:
-        latest_ymir = False
 
     # Directories
     w = save_dir  # weights dir
@@ -425,10 +418,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                 if (epoch > 0) and (opt.save_period > 0) and (epoch % opt.save_period == 0):
                     torch.save(ckpt, w / f'epoch{epoch}.pt')
                     weight_file = str(w / f'epoch{epoch}.pt')
-                    if latest_ymir:
-                        write_ymir_training_result(ymir_cfg, map50=results[2], epoch=epoch, weight_file=weight_file)
-                    else:
-                        write_old_ymir_training_result(ymir_cfg, results, maps, rewrite=True)
+                    write_ymir_training_result(ymir_cfg, map50=results[2], epoch=epoch, weight_file=weight_file)
                 del ckpt
                 callbacks.run('on_model_save', last, epoch, final_epoch, best_fitness, fi)
 
@@ -477,10 +467,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
     torch.cuda.empty_cache()
     # save the best and last weight file with other files in models_dir
     if RANK in [-1, 0]:
-        if latest_ymir:
-            write_ymir_training_result(ymir_cfg, map50=best_fitness, epoch=epochs, weight_file='')
-        else:
-            write_old_ymir_training_result(ymir_cfg, (), np.array([0]), rewrite=False)
+        write_ymir_training_result(ymir_cfg, map50=best_fitness, epoch=epochs, weight_file='')
     return results
 
 

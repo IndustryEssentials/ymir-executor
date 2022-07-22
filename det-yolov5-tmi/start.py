@@ -13,7 +13,7 @@ from ymir_exc import result_writer as rw
 
 from utils.ymir_yolov5 import (YmirStage, YmirYolov5, convert_ymir_to_yolov5,
                                download_weight_file, get_merged_config,
-                               get_weight_file, get_ymir_process)
+                               get_weight_file, get_ymir_process, write_ymir_training_result)
 
 
 def start() -> int:
@@ -25,6 +25,7 @@ def start() -> int:
         _run_training(cfg)
     else:
         if cfg.ymir.run_mining and cfg.ymir.run_infer:
+            # multiple task, run mining first, infer later
             mining_task_idx = 0
             infer_task_idx = 1
             task_num = 2
@@ -59,12 +60,20 @@ def _run_training(cfg: edict) -> None:
     batch_size = cfg.param.batch_size
     model = cfg.param.model
     img_size = cfg.param.img_size
-    save_period = cfg.param.save_period
+    save_period = max(1, min(epochs // 10, int(cfg.param.save_period)))
     args_options = cfg.param.args_options
     gpu_id = str(cfg.param.gpu_id)
     gpu_count = len(gpu_id.split(',')) if gpu_id else 0
     port = int(cfg.param.get('port', 29500))
     sync_bn = cfg.param.get('sync_bn', False)
+    if isinstance(sync_bn, str):
+        if sync_bn.lower() in ['f', 'false']:
+            sync_bn = False
+        elif sync_bn.lower() in ['t', 'true']:
+            sync_bn = True
+        else:
+            raise Exception(f'unknown bool str sync_bn = {sync_bn}')
+
     weights = get_weight_file(cfg)
     if not weights:
         # download pretrained weight
@@ -72,38 +81,35 @@ def _run_training(cfg: edict) -> None:
 
     models_dir = cfg.ymir.output.models_dir
 
+    commands = ['python3']
     if gpu_count == 0:
-        command = f'python3 train.py --epochs {epochs} ' + \
-            f'--batch-size {batch_size} --data {out_dir}/data.yaml --project /out ' + \
-            f'--cfg models/{model}.yaml --name models --weights {weights} ' + \
-            f'--img-size {img_size} ' + \
-            f'--save-period {save_period} ' + \
-            f'--device cpu'
+        device = 'cpu'
     elif gpu_count == 1:
-        command = f'python3 train.py --epochs {epochs} ' + \
-            f'--batch-size {batch_size} --data {out_dir}/data.yaml --project /out ' + \
-            f'--cfg models/{model}.yaml --name models --weights {weights} ' + \
-            f'--img-size {img_size} ' + \
-            f'--save-period {save_period} ' + \
-            f'--device {gpu_id}'
+        device = gpu_id
     else:
-        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} ' + \
-            f'--master_port {port} train.py --epochs {epochs} ' + \
-            f'--batch-size {batch_size} --data {out_dir}/data.yaml --project /out ' + \
-            f'--cfg models/{model}.yaml --name models --weights {weights} ' + \
-            f'--img-size {img_size} ' + \
-            f'--save-period {save_period} ' + \
-            f'--device {gpu_id}'
+        device = gpu_id
+        commands += f'-m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port}'.split()
 
-        if sync_bn:
-            command += " --sync-bn"
+    commands += ['train.py',
+                 '--epochs', str(epochs),
+                 '--batch-size', str(batch_size),
+                 '--data', f'{out_dir}/data.yaml',
+                 '--project', '/out',
+                 '--cfg', f'models/{model}.yaml',
+                 '--name', 'models', '--weights', weights,
+                 '--img-size', str(img_size),
+                 '--save-period', str(save_period),
+                 '--device', device]
+
+    if gpu_count > 1 and sync_bn:
+        commands.append("--sync-bn")
 
     if args_options:
-        command += f" {args_options}"
+        commands += args_options.split()
 
-    logging.info(f'start training: {command}')
+    logging.info(f'start training: {commands}')
 
-    subprocess.run(command.split(), check=True)
+    subprocess.run(commands, check=True)
     monitor.write_monitor_logger(percent=get_ymir_process(stage=YmirStage.TASK, p=1.0))
 
     # 3. convert to onnx and save model weight to design directory
@@ -114,7 +120,7 @@ def _run_training(cfg: edict) -> None:
 
     # save hyperparameter
     shutil.copy(f'models/{model}.yaml', f'{models_dir}/{model}.yaml')
-
+    write_ymir_training_result(cfg)
     # if task done, write 100% percent log
     monitor.write_monitor_logger(percent=1.0)
 

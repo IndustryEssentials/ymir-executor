@@ -1,7 +1,3 @@
-# dockerfile for China
-*.dockerfile.cn
-det-mmdetection-tmi/docker/*.cn
-
 *.png
 *.jpg
 *.img

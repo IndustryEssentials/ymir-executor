@@ -37,12 +37,11 @@ class MiningCald(YmirYolov5):
         super().__init__(cfg)
 
         if cfg.ymir.run_mining and cfg.ymir.run_infer:
+            # multiple task, run mining first, infer later
             mining_task_idx = 0
-            # infer_task_idx = 1
             task_num = 2
         else:
             mining_task_idx = 0
-            # infer_task_idx = 0
             task_num = 1
 
         self.task_idx = mining_task_idx
