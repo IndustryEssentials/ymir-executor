@@ -68,8 +68,9 @@ def get_merged_config() -> edict:
     return merged_cfg
 
 
-def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
+def _modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
     """
+    useful for training process
     - modify dataset config
     - modify model output channel
     - modify epochs, checkpoint, tensorboard config
@@ -170,12 +171,12 @@ def get_weight_file(cfg: edict) -> str:
 def write_ymir_training_result(last: bool = False, key_score: Optional[float] = None):
     YMIR_VERSION = os.environ.get('YMIR_VERSION', '1.2.0')
     if Version(YMIR_VERSION) >= Version('1.2.0'):
-        write_latest_ymir_training_result(last, key_score)
+        _write_latest_ymir_training_result(last, key_score)
     else:
-        write_ancient_ymir_training_result(key_score)
+        _write_ancient_ymir_training_result(key_score)
 
 
-def write_latest_ymir_training_result(last: bool = False, key_score: Optional[float] = None):
+def _write_latest_ymir_training_result(last: bool = False, key_score: Optional[float] = None):
     if key_score:
         logging.info(f'key_score is {key_score}')
     COCO_EVAL_TMP_FILE = os.getenv('COCO_EVAL_TMP_FILE')
@@ -226,7 +227,7 @@ def write_latest_ymir_training_result(last: bool = False, key_score: Optional[fl
                                      stage_name=stage_name)
 
 
-def write_ancient_ymir_training_result(key_score: Optional[float] = None):
+def _write_ancient_ymir_training_result(key_score: Optional[float] = None):
     if key_score:
         logging.info(f'key_score is {key_score}')
 
