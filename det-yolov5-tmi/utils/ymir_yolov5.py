@@ -232,12 +232,12 @@ def write_ymir_training_result(cfg: edict,
                                weight_file: str = "") -> int:
     YMIR_VERSION = os.getenv('YMIR_VERSION', '1.2.0')
     if Version(YMIR_VERSION) >= Version('1.2.0'):
-        write_latest_ymir_training_result(cfg, map50, epoch, weight_file)
+        _write_latest_ymir_training_result(cfg, map50, epoch, weight_file)
     else:
-        write_ancient_ymir_training_result(cfg, map50)
+        _write_ancient_ymir_training_result(cfg, map50)
 
 
-def write_latest_ymir_training_result(cfg: edict,
+def _write_latest_ymir_training_result(cfg: edict,
                                       map50: float,
                                       epoch: int,
                                       weight_file: str) -> int:
@@ -275,7 +275,7 @@ def write_latest_ymir_training_result(cfg: edict,
     return 0
 
 
-def write_ancient_ymir_training_result(cfg: edict, map50: float) -> None:
+def _write_ancient_ymir_training_result(cfg: edict, map50: float) -> None:
     """
     for 1.0.0 <= ymir <=1.1.0
     """
