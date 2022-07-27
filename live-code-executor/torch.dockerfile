@@ -21,11 +21,11 @@ RUN apt-get update && apt-get install -y git curl wget zip gcc \
 
 # Install python package
 RUN pip install -U pip && \
-    pip install loguru opencv-python==${OPENCV} numpy=${NUMPY}
+    pip install loguru opencv-python==${OPENCV} numpy==${NUMPY}
 
 # install ymir-exc sdk
 RUN if [ "${SERVER_MODE}" = "dev" ]; then \
-    pip install --force-reinstall -U "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"; \
+    pip install "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"; \
   else \
     pip install ymir-exc; \
   fi
