@@ -1,5 +1,13 @@
 # ymir-executor 使用文档
 
+## ymir-1.0.0 official image 
+
+- yolov4 
+
+- yolov5 
+
+- mmdetection 
+
 ## det-yolov4-training
 
 - yolov4的训练镜像，采用mxnet与darknet框架，默认的 `Dockerfile` cuda版本为`10.1`，无法直接在高版本显卡如GTX3080/GTX3090上运行，需要修改dockerfile将cuda版本提升为11.1以上，参考 `cuda112.dockerfile` 进行构建。
