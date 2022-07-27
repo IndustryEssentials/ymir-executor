@@ -3,6 +3,7 @@ import contextlib
 import io
 import itertools
 import logging
+import os
 import os.path as osp
 import tempfile
 import warnings
@@ -12,7 +13,6 @@ import mmcv
 import numpy as np
 from mmcv.utils import print_log
 from terminaltables import AsciiTable
-
 from mmdet.core import eval_recalls
 from .api_wrappers import COCO, COCOeval
 from .builder import DATASETS
@@ -592,4 +592,14 @@ class CocoDataset(CustomDataset):
                     f'{ap[4]:.3f} {ap[5]:.3f}')
         if tmp_dir is not None:
             tmp_dir.cleanup()
+
+        COCO_EVAL_TMP_FILE = os.getenv('COCO_EVAL_TMP_FILE')
+        if COCO_EVAL_TMP_FILE is not None:
+            mmcv.dump(eval_results, COCO_EVAL_TMP_FILE, file_format='json')
+        else:
+            raise Exception(
+                'please set valid environment variable COCO_EVAL_TMP_FILE to write result into json file')
+
+        print_log(
+            f'\n write eval result to {COCO_EVAL_TMP_FILE}', logger=logger)
         return eval_results
