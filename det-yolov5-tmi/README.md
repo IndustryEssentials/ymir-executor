@@ -1,6 +1,12 @@
 # yolov5-ymir readme
 - [yolov5 readme](./README_yolov5.md)
 
+```
+docker build -t ymir/ymir-executor:ymir1.1.0-cuda102-yolov5-tmi --build-arg SERVER_MODE=dev --build-arg YMIR=1.1.0 -f cuda102.dockerfile .
+
+docker build -t ymir/ymir-executor:ymir1.1.0-cuda111-yolov5-tmi --build-arg SERVER_MODE=dev --build-arg YMIR=1.1.0 -f cuda111.dockerfile .
+```
+
 ## change log
 
 - add `start.py` and `utils/ymir_yolov5.py` for train/infer/mining

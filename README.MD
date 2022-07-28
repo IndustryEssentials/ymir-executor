@@ -1,6 +1,8 @@
 # ymir-executor 使用文档
 
-## ymir-1.0.0 official image 
+- [ymir](https://github.com/IndustryEssentials/ymir)
+
+## ymir-1.1.0 official image 
 
 - yolov4 
 
@@ -8,9 +10,17 @@
 
 - mmdetection 
 
+- [detectron2](https://github.com/yzbx/ymir-detectron2)
+    
+    - ymir1.0.0的镜像与ymir1.1.0兼容
+
+    ```
+    docker pull youdaoyzbx/ymir-executor:ymir1.0.0-detectron2-tmi
+    ```
+
 ## det-yolov4-training
 
-- yolov4的训练镜像，采用mxnet与darknet框架，默认的 `Dockerfile` cuda版本为`10.1`，无法直接在高版本显卡如GTX3080/GTX3090上运行，需要修改dockerfile将cuda版本提升为11.1以上，参考 `cuda112.dockerfile` 进行构建。
+- yolov4的训练镜像，采用mxnet与darknet框架，默认的 `Dockerfile` cuda版本为`10.1`，无法在高版本显卡如GTX3080/GTX3090上运行，需要修改dockerfile将cuda版本提升为11.1以上，参考 `cuda112.dockerfile` 进行构建。
 
   ```
   cd det-yolov4-training
@@ -35,7 +45,7 @@ docker build -t ymir-executor/yolov4:cuda112-mi -f cuda112.dockerfile .
 
 ## det-yolov5-tmi
 
-- [修改说明](./det-yolov5-tmi/README_yolov5.md)
+- [change log](./det-yolov5-tmi/README.md)
 
 - yolov5训练、挖掘及推理镜像，镜像构建时会从github上下载权重, 如果访问github不稳定, 建议提前将模型权重下载并在构建时复制到镜像中.
 
@@ -62,7 +72,7 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 
 ## det-mmdetection-tmi
 
-- [修改说明](./det-mmdetection-tmi/README_ymir.md)
+- [change log](./det-mmdetection-tmi/README.md)
 
 ```
 cd det-mmdetection-tmi
@@ -71,10 +81,11 @@ docker build -t youdaoyzbx/ymir-executor:ymir1.1.0-mmdet-cu102-tmi -f docker/Doc
 docker build -t youdaoyzbx/ymir-executor:ymir1.1.0-mmdet-cu111-tmi -f docker/Dockerfile.cuda111 --build-arg SERVER_MODE=dev --build-arg YMIR=1.1.0 .
 ```
 
-
 ## 如何制作自己的ymir-executor
 
 - [ymir-executor 制作指南](https://github.com/IndustryEssentials/ymir/blob/dev/docs/ymir-dataset-zh-CN.md)
+
+- [ymir-executor-sdk](https://github.com/yzbx/ymir-executor-sdk) ymir镜像开发辅助库
 
 ## 如何导入预训练模型
 
@@ -101,9 +112,9 @@ docker build -t youdaoyzbx/ymir-executor:ymir1.1.0-mmdet-cu111-tmi -f docker/Doc
     - 回到项目根目录或docker file对应根目录，确保docker file 中`COPY/ADD`的文件与文件夹能够访问，以yolov5为例.
 
         ```
-        cd ymir-executor
+        cd ymir-executor/det-yolov5-tmi
 
-        docker build -t ymir-executor/yolov5 . -f det-yolov5-tmi/cuda111.dockerfile
+        docker build -t ymir-executor/yolov5:cuda111 . -f cuda111.dockerfile --build-arg SERVER_MODE=dev 
         ```
 
 ## 镜像运行完`/in`与`/out`目录中的文件被清理
