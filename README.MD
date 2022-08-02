@@ -4,11 +4,22 @@
 
 ## ymir-1.1.0 official image
 
-- yolov4
+- [yolov4](https://github.com/yzbx/ymir-executor-fork#det-yolov4-training)
 
-- yolov5
+    ```
+    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov4-cu111-tmi
+    ```
 
-- mmdetection
+- [yolov5](https://github.com/yzbx/ymir-executor-fork#det-yolov5-tmi)
+
+    ```
+    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov5-cu111-tmi
+    ```
+
+- [mmdetection](https://github.com/yzbx/ymir-executor-fork#det-mmdetection-tmi)
+    ```
+    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-mmdet-cu111-tmi
+    ```
 
 - [detectron2](https://github.com/yzbx/ymir-detectron2)
 
@@ -23,6 +34,7 @@
 - [yolov7](https://github.com/yzbx/ymir-yolov7)
 
     - [change log](https://github.com/yzbx/ymir-yolov7/blob/main/ymir/README.md)
+
     ```
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov7-cu111-tmi
     ```

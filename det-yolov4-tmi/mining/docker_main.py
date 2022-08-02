@@ -9,8 +9,8 @@ import monitor_process
 import write_result
 
 
-def _load_config() -> dict:
-    with open("/in/config.yaml", "r", encoding='utf8') as f:
+def _load_config(config_file) -> dict:
+    with open(config_file, "r", encoding='utf8') as f:
         config = yaml.safe_load(f)
 
     # set default task id
@@ -34,16 +34,17 @@ def _load_config() -> dict:
 
 
 if __name__ == '__main__':
-    config = _load_config()
+    config = _load_config("/in/config.yaml")
 
-    run_infer = int(config['run_infer'])
-    run_mining = int(config['run_mining'])
+    env_config = _load_config("/in/env.yaml")
+    run_infer = env_config['run_infer']=='true'
+    run_mining = env_config['run_mining']=='true'
 
     if not run_infer and not run_mining:
         raise ValueError('both run_infer and run_mining set to 0, abort')
 
-    monitor_process.run_mining = run_mining
-    monitor_process.run_infer = run_infer
+    monitor_process.run_mining = int(run_mining)
+    monitor_process.run_infer = int(run_infer)
 
     log_writer = LogWriter(monitor_path="/out/monitor.txt",
                            monitor_pure_path="/out/monitor-log.txt",

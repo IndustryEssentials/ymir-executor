@@ -4,7 +4,7 @@ image_width: 608
 learning_rate: 0.0013
 max_batches: 20000
 warmup_iterations: 1000
-batch: 64
+batch: 4
 subdivisions: 32
 shm_size: '16G'
 # class_names:

@@ -21,9 +21,10 @@ def _convert_annotations(index_file_path: str, dst_annotations_dir: str) -> None
         files = f.readlines()
         files = [each.strip() for each in files]
 
+    N = len(files)
     for i, each_img_anno_path in enumerate(files):
         if i % 1000 == 0:
-            print(f"converted {i} image annotations")
+            print(f"converted {i}/{N} image annotations")
 
         # each_imgpath: asset path
         # each_txtfile: annotation path
