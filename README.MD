@@ -2,20 +2,29 @@
 
 - [ymir](https://github.com/IndustryEssentials/ymir)
 
-## ymir-1.1.0 official image 
+## ymir-1.1.0 official image
 
-- yolov4 
+- yolov4
 
-- yolov5 
+- yolov5
 
-- mmdetection 
+- mmdetection
 
 - [detectron2](https://github.com/yzbx/ymir-detectron2)
-    
+
+    - [change log](https://github.com/yzbx/ymir-detectron2/blob/master/README.md)
+
     - ymir1.0.0的镜像与ymir1.1.0兼容
 
     ```
     docker pull youdaoyzbx/ymir-executor:ymir1.0.0-detectron2-tmi
+    ```
+
+- [yolov7](https://github.com/yzbx/ymir-yolov7)
+
+    - [change log](https://github.com/yzbx/ymir-yolov7/blob/main/ymir/README.md)
+    ```
+    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov7-cu111-tmi
     ```
 
 ## det-yolov4-training
@@ -114,7 +123,7 @@ docker build -t youdaoyzbx/ymir-executor:ymir1.1.0-mmdet-cu111-tmi -f docker/Doc
         ```
         cd ymir-executor/det-yolov5-tmi
 
-        docker build -t ymir-executor/yolov5:cuda111 . -f cuda111.dockerfile --build-arg SERVER_MODE=dev 
+        docker build -t ymir-executor/yolov5:cuda111 . -f cuda111.dockerfile --build-arg SERVER_MODE=dev
         ```
 
 ## 镜像运行完`/in`与`/out`目录中的文件被清理
