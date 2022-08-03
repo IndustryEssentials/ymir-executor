@@ -36,15 +36,16 @@ def _load_config(config_file) -> dict:
 if __name__ == '__main__':
     config = _load_config("/in/config.yaml")
 
-    env_config = _load_config("/in/env.yaml")
-    run_infer = env_config['run_infer']=='true'
-    run_mining = env_config['run_mining']=='true'
+    with open("/in/env.yaml", "r", encoding='utf8') as f:
+        env_config = yaml.safe_load(f)
+    run_infer = int(env_config['run_infer'])
+    run_mining = int(env_config['run_mining'])
 
     if not run_infer and not run_mining:
         raise ValueError('both run_infer and run_mining set to 0, abort')
 
-    monitor_process.run_mining = int(run_mining)
-    monitor_process.run_infer = int(run_infer)
+    monitor_process.run_mining = run_mining
+    monitor_process.run_infer = run_infer
 
     log_writer = LogWriter(monitor_path="/out/monitor.txt",
                            monitor_pure_path="/out/monitor-log.txt",

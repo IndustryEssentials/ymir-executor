@@ -3,13 +3,13 @@ utils function for ymir and yolov5
 """
 import glob
 import logging
-import yaml
 import os
 import os.path as osp
 from enum import IntEnum
 from typing import Any, List, Optional
 
 import mmcv
+import yaml
 from easydict import EasyDict as edict
 from mmcv import Config
 from nptyping import NDArray, Shape, UInt8

@@ -8,20 +8,19 @@ import shutil
 from enum import IntEnum
 from typing import Any, Dict, List, Tuple
 
-from easydict import EasyDict as edict
 import numpy as np
 import torch
 import yaml
-from nptyping import NDArray, Shape, UInt8
-from packaging.version import Version
-from ymir_exc import env
-from ymir_exc import result_writer as rw
-
+from easydict import EasyDict as edict
 from models.common import DetectMultiBackend
 from models.experimental import attempt_download
+from nptyping import NDArray, Shape, UInt8
+from packaging.version import Version
 from utils.augmentations import letterbox
 from utils.general import check_img_size, non_max_suppression, scale_coords
 from utils.torch_utils import select_device
+from ymir_exc import env
+from ymir_exc import result_writer as rw
 
 
 class YmirStage(IntEnum):
@@ -85,17 +84,16 @@ def get_weight_file(cfg: edict) -> str:
     else:
         model_params_path = cfg.param.model_params_path
 
-    model_dir = osp.join(cfg.ymir.input.root_dir,
-                         cfg.ymir.input.models_dir)
-    model_params_path = [p for p in model_params_path if osp.exists(osp.join(model_dir, p))]
+    model_dir = cfg.ymir.input.models_dir
+    model_params_path = [osp.join(model_dir, p) for p in model_params_path if osp.exists(osp.join(model_dir, p)) and p.endswith('.pt')]
 
     # choose weight file by priority, best.pt > xxx.pt
-    if 'best.pt' in model_params_path:
-        return osp.join(model_dir, 'best.pt')
-    else:
-        for f in model_params_path:
-            if f.endswith('.pt'):
-                return osp.join(model_dir, f)
+    for p in model_params_path:
+        if p.endswith('best.pt'):
+            return p
+
+    if len(model_params_path) > 0:
+        return max(model_params_path, key=osp.getctime)
 
     return ""
 
@@ -141,6 +139,9 @@ class YmirYolov5():
 
     def init_detector(self, device: torch.device) -> DetectMultiBackend:
         weights = get_weight_file(self.cfg)
+
+        if not weights:
+            raise Exception("no weights file specified!")
 
         data_yaml = osp.join(self.cfg.ymir.output.root_dir, 'data.yaml')
         model = DetectMultiBackend(weights=weights,
