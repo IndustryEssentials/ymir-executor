@@ -2,16 +2,18 @@
 utils function for ymir and yolov5
 """
 import glob
+import os
 import os.path as osp
 import shutil
 from enum import IntEnum
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple
 
+from easydict import EasyDict as edict
 import numpy as np
 import torch
 import yaml
-from easydict import EasyDict as edict
 from nptyping import NDArray, Shape, UInt8
+from packaging.version import Version
 from ymir_exc import env
 from ymir_exc import result_writer as rw
 
@@ -32,7 +34,13 @@ BBOX = NDArray[Shape['*,4'], Any]
 CV_IMAGE = NDArray[Shape['*,*,3'], UInt8]
 
 
-def get_ymir_process(stage: YmirStage, p: float) -> float:
+def get_ymir_process(stage: YmirStage, p: float, task_idx: int = 0, task_num: int = 1) -> float:
+    """
+    stage: pre-process/task/post-process
+    p: percent for stage
+    task_idx: index for multiple tasks like mining (task_idx=0) and infer (task_idx=1)
+    task_num: the total number of multiple tasks.
+    """
     # const value for ymir process
     PREPROCESS_PERCENT = 0.1
     TASK_PERCENT = 0.8
@@ -41,12 +49,15 @@ def get_ymir_process(stage: YmirStage, p: float) -> float:
     if p < 0 or p > 1.0:
         raise Exception(f'p not in [0,1], p={p}')
 
+    ratio = 1.0 / task_num
+    init = task_idx / task_num
+
     if stage == YmirStage.PREPROCESS:
-        return PREPROCESS_PERCENT * p
+        return init + PREPROCESS_PERCENT * p * ratio
     elif stage == YmirStage.TASK:
-        return PREPROCESS_PERCENT + TASK_PERCENT * p
+        return init + (PREPROCESS_PERCENT + TASK_PERCENT * p) * ratio
     elif stage == YmirStage.POSTPROCESS:
-        return PREPROCESS_PERCENT + TASK_PERCENT + POSTPROCESS_PERCENT * p
+        return init + (PREPROCESS_PERCENT + TASK_PERCENT + POSTPROCESS_PERCENT * p) * ratio
     else:
         raise NotImplementedError(f'unknown stage {stage}')
 
@@ -70,7 +81,7 @@ def get_weight_file(cfg: edict) -> str:
     find weight file in cfg.param.model_params_path or cfg.param.model_params_path
     """
     if cfg.ymir.run_training:
-        model_params_path = cfg.param.get('pretrained_model_params',[])
+        model_params_path = cfg.param.get('pretrained_model_params', [])
     else:
         model_params_path = cfg.param.model_params_path
 
@@ -101,6 +112,17 @@ class YmirYolov5():
 
     def __init__(self, cfg: edict):
         self.cfg = cfg
+        if cfg.ymir.run_mining and cfg.ymir.run_infer:
+            # multiple task, run mining first, infer later
+            infer_task_idx = 1
+            task_num = 2
+        else:
+            infer_task_idx = 0
+            task_num = 1
+
+        self.task_idx = infer_task_idx
+        self.task_num = task_num
+
         device = select_device(cfg.param.get('gpu_id', 'cpu'))
 
         self.model = self.init_detector(device)
@@ -205,15 +227,30 @@ def convert_ymir_to_yolov5(cfg: edict) -> None:
 
 
 def write_ymir_training_result(cfg: edict,
-                               map50: float,
-                               epoch: int,
-                               weight_file: str) -> int:
+                               map50: float = 0.0,
+                               epoch: int = 0,
+                               weight_file: str = "") -> int:
+    YMIR_VERSION = os.getenv('YMIR_VERSION', '1.2.0')
+    if Version(YMIR_VERSION) >= Version('1.2.0'):
+        _write_latest_ymir_training_result(cfg, map50, epoch, weight_file)
+    else:
+        _write_ancient_ymir_training_result(cfg, map50)
+
+
+def _write_latest_ymir_training_result(cfg: edict,
+                                      map50: float,
+                                      epoch: int,
+                                      weight_file: str) -> int:
     """
+    for ymir>=1.2.0
     cfg: ymir config
-    results: (mp, mr, map50, map, loss)
-    maps: map@0.5:0.95 for all classes
+    map50: map50
     epoch: stage
     weight_file: saved weight files, empty weight_file will save all files
+
+    1. save weight file for each epoch.
+    2. save weight file for last.pt, best.pt and other config file
+    3. save weight file for best.onnx, no valid map50, attach to stage f"{model}_last_and_best"
     """
     model = cfg.param.model
     # use `rw.write_training_result` to save training result
@@ -226,7 +263,38 @@ def write_ymir_training_result(cfg: edict,
         files = [osp.basename(f) for f in glob.glob(osp.join(cfg.ymir.output.models_dir, '*'))
                  if not f.endswith('.pt')] + ['last.pt', 'best.pt']
 
+        training_result_file = cfg.ymir.output.training_result_file
+        if osp.exists(training_result_file):
+            with open(cfg.ymir.output.training_result_file, 'r') as f:
+                training_result = yaml.safe_load(stream=f)
+
+            map50 = max(training_result.get('map',0.0), map50)
         rw.write_model_stage(stage_name=f"{model}_last_and_best",
                              files=files,
                              mAP=float(map50))
     return 0
+
+
+def _write_ancient_ymir_training_result(cfg: edict, map50: float) -> None:
+    """
+    for 1.0.0 <= ymir <=1.1.0
+    """
+
+    files = [osp.basename(f) for f in glob.glob(osp.join(cfg.ymir.output.models_dir, '*'))]
+    training_result_file = cfg.ymir.output.training_result_file
+    if osp.exists(training_result_file):
+        with open(cfg.ymir.output.training_result_file, 'r') as f:
+            training_result = yaml.safe_load(stream=f)
+
+        training_result['model'] = files
+        training_result['map'] = max(training_result.get('map', 0), map50)
+    else:
+        training_result = {
+            'model': files,
+            'map': map50,
+            'stage_name': f'{cfg.param.model}'
+        }
+
+    env_config = env.get_current_env()
+    with open(env_config.output.training_result_file, 'w') as f:
+        yaml.safe_dump(training_result, f)

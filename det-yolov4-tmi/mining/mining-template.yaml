@@ -13,7 +13,7 @@ model_type: detection
 strategy: aldd_yolo
 image_height: 608
 image_width: 608
-batch_size: 16
+batch_size: 4
 anchors: '12, 16, 19, 36, 40, 28, 36, 75, 76, 55, 72, 146, 142, 110, 192, 243, 459, 401'
 confidence_thresh: 0.1
 nms_thresh: 0.45

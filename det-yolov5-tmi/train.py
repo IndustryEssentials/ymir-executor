@@ -12,6 +12,7 @@ Usage:
     $ python path/to/train.py --data coco128.yaml --weights '' --cfg yolov5s.yaml --img 640  # from scratch
 """
 
+from ymir_exc import monitor
 import argparse
 import math
 import os
@@ -57,7 +58,6 @@ from utils.metrics import fitness
 from utils.plots import plot_evolve, plot_labels
 from utils.torch_utils import EarlyStopping, ModelEMA, de_parallel, select_device, torch_distributed_zero_first
 from utils.ymir_yolov5 import write_ymir_training_result, YmirStage, get_ymir_process, get_merged_config
-from ymir_exc import monitor
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -73,7 +73,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         Path(opt.save_dir), opt.epochs, opt.batch_size, opt.weights, opt.single_cls, opt.evolve, opt.data, opt.cfg, \
         opt.resume, opt.noval, opt.nosave, opt.workers, opt.freeze
     ymir_cfg = opt.ymir_cfg
-    opt.ymir_cfg = '' # yaml cannot dump edict, remove it here
+    opt.ymir_cfg = ''  # yaml cannot dump edict, remove it here
     log_dir = Path(ymir_cfg.ymir.output.tensorboard_dir)
 
     # Directories
@@ -184,7 +184,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
     if opt.cos_lr:
         lf = one_cycle(1, hyp['lrf'], epochs)  # cosine 1->hyp['lrf']
     else:
-        lf = lambda x: (1 - x / epochs) * (1.0 - hyp['lrf']) + hyp['lrf']  # linear
+        def lf(x): return (1 - x / epochs) * (1.0 - hyp['lrf']) + hyp['lrf']  # linear
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lf)  # plot_lr_scheduler(optimizer, scheduler, epochs)
 
     # EMA
@@ -296,7 +296,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
 
         # ymir monitor
         if epoch % monitor_gap == 0:
-            percent = get_ymir_process(stage=YmirStage.TASK, p=epoch/(epochs-start_epoch+1))
+            percent = get_ymir_process(stage=YmirStage.TASK, p=epoch / (epochs - start_epoch + 1))
             monitor.write_monitor_logger(percent=percent)
 
         # Update image weights (optional, single-GPU only)
@@ -426,7 +426,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
             if RANK == -1 and stopper(epoch=epoch, fitness=fi):
                 break
 
-            # Stop DDP TODO: known issues shttps://github.com/ultralytics/yolov5/pull/4576
+            # Stop DDP TODO: known issues https://github.com/ultralytics/yolov5/pull/4576
             # stop = stopper(epoch=epoch, fitness=fi)
             # if RANK == 0:
             #    dist.broadcast_object_list([stop], 0)  # broadcast 'stop' to all ranks
@@ -466,7 +466,8 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
 
     torch.cuda.empty_cache()
     # save the best and last weight file with other files in models_dir
-    write_ymir_training_result(ymir_cfg, map50=best_fitness, epoch=epochs, weight_file='')
+    if RANK in [-1, 0]:
+        write_ymir_training_result(ymir_cfg, map50=best_fitness, epoch=epochs, weight_file='')
     return results
 
 
@@ -540,7 +541,6 @@ def main(opt, callbacks=Callbacks()):
         opt.save_dir = str(increment_path(Path(opt.project) / opt.name, exist_ok=opt.exist_ok))
         ymir_cfg = get_merged_config()
         opt.ymir_cfg = ymir_cfg
-
 
     # DDP mode
     device = select_device(opt.device, batch_size=opt.batch_size)

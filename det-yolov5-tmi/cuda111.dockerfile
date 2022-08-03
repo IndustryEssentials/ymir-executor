@@ -4,12 +4,17 @@ ARG CUDNN="8"
 
 # cuda11.1 + pytorch 1.9.0 + cudnn8 not work!!!
 FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-runtime
+# support SERVER_MODE=dev or prod
 ARG SERVER_MODE=prod
+# support YMIR=1.0.0, 1.1.0 or 1.2.0
+ARG YMIR="1.1.0"
+
 
 ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
 ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
 ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 ENV LANG=C.UTF-8
+ENV YMIR_VERSION=$YMIR
 
 # Install linux package
 RUN	apt-get update && apt-get install -y gnupg2 git libglib2.0-0 \
@@ -19,13 +24,13 @@ RUN	apt-get update && apt-get install -y gnupg2 git libglib2.0-0 \
 
 # install ymir-exc sdk
 RUN if [ "${SERVER_MODE}" = "dev" ]; then \
-        pip install --force-reinstall -U "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"; \
+        pip install "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"; \
     else \
         pip install ymir-exc; \
     fi
 
 # Copy file from host to docker and install requirements
-ADD ./det-yolov5-tmi /app
+COPY . /app
 RUN mkdir /img-man && mv /app/*-template.yaml /img-man/ \
     && pip install -r /app/requirements.txt
 
