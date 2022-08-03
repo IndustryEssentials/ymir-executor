@@ -16,6 +16,7 @@ ENV LANG=C.UTF-8
 # install linux package
 RUN apt-get update && apt-get install -y git curl wget zip gcc \
     libglib2.0-0 libgl1-mesa-glx libsm6 libxext6 libxrender-dev \
+    build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

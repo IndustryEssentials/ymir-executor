@@ -131,7 +131,7 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
     ```
     cd ymir-executor/det-yolov5-tmi
 
-    docker build -t ymir-executor/yolov5:cuda111 . -f cuda111.dockerfile --build-arg SERVER_MODE=dev
+    docker build -t ymir-executor/yolov5:cuda111 . -f cuda111.dockerfile
     ```
 
 ## 镜像运行完`/in`与`/out`目录中的文件被清理
@@ -162,9 +162,16 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 
 ## 训练镜像如何调试
 
+- 一般性的错误在`ymir-workplace/ymir-data/logs`下查看
+
+```
+tail -f -n 100 ymir_controller.log
+tail -f -n 100 ymir_app.log
+```
+
 ![](./debug.png)
 
-- 先修改镜像`industryessentials/ymir-backend`，注释其中所有的`_cleanup(work_dir=work_dir)`，保存`/in`和`/out`目录
+- 先修改镜像`industryessentials/ymir-backend`，注释其中所有的`_cleanup(work_dir=work_dir)`，保存`/in`和`/out`目录下的文件
 
 - 再通过失败任务的tensorboard链接拿到任务id，如`t000000100000175245d1656933456`
 
@@ -173,6 +180,12 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
     ```
     # ls
     in  out  task_config.yaml
+
+    # ls out
+    monitor.txt ymir-executor-out.log
+
+    # ls in
+    assets config.yaml env.yaml ...
     ```
 
 - 挂载目录并运行镜像`<docker-image-name>`，注意需要将ymir部署目录挂载到镜像中

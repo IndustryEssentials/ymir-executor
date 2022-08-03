@@ -78,20 +78,6 @@ docker build -t ymir-executor/mmdet:cu102-tmi -f docker/Dockerfile.cuda102 .
 docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
 ```
 
-## live-code-executor
-
-- 可以通过`git_url`, `commit id` 或 `tag` 从网上clone代码到镜像并运行, 不推荐使用`branch`, 因为这样拉取的代码可能随时间变化, 实验结果不具备可重复性.
-
-- 参考 [live-code](https://github.com/IndustryEssentials/ymir-remote-git)
-
-```
-cd live-code-executor
-
-docker build -t ymir-executor/live-code:torch-tmi -f torch.dockerfile
-
-docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
-```
-
 ## how to custom ymir-executor
 
 - [custom ymir-executor](https://github.com/IndustryEssentials/ymir/blob/dev/docs/ymir-dataset-zh-CN.md)

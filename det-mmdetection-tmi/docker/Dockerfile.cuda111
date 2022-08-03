@@ -6,7 +6,6 @@ FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-runtime
 
 # mmcv>=1.3.17, <=1.5.0
 ARG MMCV="1.4.3"
-ARG SERVER_MODE=prod
 ARG YMIR="1.1.0"
 
 ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
@@ -25,13 +24,9 @@ RUN apt-get update && apt-get install -y build-essential ffmpeg libsm6 libxext6 
     && rm -rf /var/lib/apt/lists/*
 
 # Install ymir-exc sdk and MMCV
-RUN pip install --no-cache-dir --upgrade pip wheel setuptools && \
-    if [ "${SERVER_MODE}" = "dev" ]; then \
-        pip install "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"; \
-    else \
-        pip install ymir-exc; \
-    fi \
+RUN pip install --no-cache-dir --upgrade pip wheel setuptools \
     && pip install --no-cache-dir mmcv-full==${MMCV} -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.8.0/index.html \
+    && pip install "git+https://github.com/yzbx/ymir-executor-sdk.git@ymir1.0.0" \
     && conda clean --all
 
 # Install det-mmdetection-tmi

@@ -85,7 +85,8 @@ def get_weight_file(cfg: edict) -> str:
         model_params_path = cfg.param.model_params_path
 
     model_dir = cfg.ymir.input.models_dir
-    model_params_path = [osp.join(model_dir, p) for p in model_params_path if osp.exists(osp.join(model_dir, p)) and p.endswith('.pt')]
+    model_params_path = [osp.join(model_dir, p)
+                         for p in model_params_path if osp.exists(osp.join(model_dir, p)) and p.endswith('.pt')]
 
     # choose weight file by priority, best.pt > xxx.pt
     for p in model_params_path:
@@ -233,15 +234,15 @@ def write_ymir_training_result(cfg: edict,
                                weight_file: str = "") -> int:
     YMIR_VERSION = os.getenv('YMIR_VERSION', '1.2.0')
     if Version(YMIR_VERSION) >= Version('1.2.0'):
-        _write_latest_ymir_training_result(cfg, map50, epoch, weight_file)
+        _write_latest_ymir_training_result(cfg, float(map50), epoch, weight_file)
     else:
-        _write_ancient_ymir_training_result(cfg, map50)
+        _write_ancient_ymir_training_result(cfg, float(map50))
 
 
 def _write_latest_ymir_training_result(cfg: edict,
-                                      map50: float,
-                                      epoch: int,
-                                      weight_file: str) -> int:
+                                       map50: float,
+                                       epoch: int,
+                                       weight_file: str) -> int:
     """
     for ymir>=1.2.0
     cfg: ymir config
@@ -266,10 +267,10 @@ def _write_latest_ymir_training_result(cfg: edict,
 
         training_result_file = cfg.ymir.output.training_result_file
         if osp.exists(training_result_file):
-            with open(cfg.ymir.output.training_result_file, 'r') as f:
+            with open(training_result_file, 'r') as f:
                 training_result = yaml.safe_load(stream=f)
 
-            map50 = max(training_result.get('map',0.0), map50)
+            map50 = max(training_result.get('map', 0.0), map50)
         rw.write_model_stage(stage_name=f"{model}_last_and_best",
                              files=files,
                              mAP=float(map50))
@@ -284,18 +285,17 @@ def _write_ancient_ymir_training_result(cfg: edict, map50: float) -> None:
     files = [osp.basename(f) for f in glob.glob(osp.join(cfg.ymir.output.models_dir, '*'))]
     training_result_file = cfg.ymir.output.training_result_file
     if osp.exists(training_result_file):
-        with open(cfg.ymir.output.training_result_file, 'r') as f:
+        with open(training_result_file, 'r') as f:
             training_result = yaml.safe_load(stream=f)
 
         training_result['model'] = files
-        training_result['map'] = max(training_result.get('map', 0), map50)
+        training_result['map'] = max(float(training_result.get('map', 0)), map50)
     else:
         training_result = {
             'model': files,
-            'map': map50,
-            'stage_name': f'{cfg.param.model}'
+            'map': float(map50),
+            'stage_name': cfg.param.model
         }
 
-    env_config = env.get_current_env()
-    with open(env_config.output.training_result_file, 'w') as f:
+    with open(training_result_file, 'w') as f:
         yaml.safe_dump(training_result, f)
