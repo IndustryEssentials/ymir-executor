@@ -118,8 +118,6 @@ def _run_training(cfg: edict) -> None:
     logging.info(f'export onnx weight: {command}')
     subprocess.run(command.split(), check=True)
 
-    # save hyperparameter
-    shutil.copy(f'models/{model}.yaml', f'{models_dir}/{model}.yaml')
     write_ymir_training_result(cfg)
     # if task done, write 100% percent log
     monitor.write_monitor_logger(percent=1.0)
