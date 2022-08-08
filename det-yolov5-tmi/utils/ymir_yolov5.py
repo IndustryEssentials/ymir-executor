@@ -6,7 +6,7 @@ import os
 import os.path as osp
 import shutil
 from enum import IntEnum
-from typing import Any, Dict, List, Tuple
+from typing import Any, List
 
 import numpy as np
 import torch

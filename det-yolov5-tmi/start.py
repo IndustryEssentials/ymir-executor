@@ -1,19 +1,17 @@
 import logging
 import os
-import os.path as osp
-import shutil
 import subprocess
 import sys
 
 import cv2
 from easydict import EasyDict as edict
+from utils.ymir_yolov5 import (YmirStage, YmirYolov5, convert_ymir_to_yolov5,
+                               download_weight_file, get_merged_config,
+                               get_weight_file, get_ymir_process,
+                               write_ymir_training_result)
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
-
-from utils.ymir_yolov5 import (YmirStage, YmirYolov5, convert_ymir_to_yolov5,
-                               download_weight_file, get_merged_config,
-                               get_weight_file, get_ymir_process, write_ymir_training_result)
 
 
 def start() -> int:
