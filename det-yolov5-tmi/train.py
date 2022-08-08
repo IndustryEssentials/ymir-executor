@@ -206,7 +206,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         # Epochs
         start_epoch = ckpt['epoch'] + 1
         if resume:
-            assert start_epoch > 0, f'{weights} training to {epochs} epochs is finished, nothing to resume.'
+            assert start_epoch > 0, f'{weights} training from {start_epoch} to {epochs} epochs is finished, nothing to resume.'
         if epochs < start_epoch:
             LOGGER.info(f"{weights} has been trained for {ckpt['epoch']} epochs. Fine-tuning for {epochs} more epochs.")
             epochs += ckpt['epoch']  # finetune additional epochs
@@ -296,7 +296,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
 
         # ymir monitor
         if epoch % monitor_gap == 0:
-            percent = get_ymir_process(stage=YmirStage.TASK, p=epoch / (epochs - start_epoch + 1))
+            percent = get_ymir_process(stage=YmirStage.TASK, p=(epoch - start_epoch + 1) / (epochs - start_epoch + 1))
             monitor.write_monitor_logger(percent=percent)
 
         # Update image weights (optional, single-GPU only)
@@ -523,12 +523,17 @@ def main(opt, callbacks=Callbacks()):
         check_git_status()
         check_requirements(exclude=['thop'])
 
+    ymir_cfg = get_merged_config()
     # Resume
     if opt.resume and not check_wandb_resume(opt) and not opt.evolve:  # resume an interrupted run
-        ckpt = opt.resume if isinstance(opt.resume, str) else get_latest_run()  # specified or most recent path
+        ckpt = opt.resume if isinstance(opt.resume, str) else get_latest_run(ymir_cfg.ymir.input.root_dir)  # specified or most recent path
         assert os.path.isfile(ckpt), 'ERROR: --resume checkpoint does not exist'
-        with open(Path(ckpt).parent.parent / 'opt.yaml', errors='ignore') as f:
-            opt = argparse.Namespace(**yaml.safe_load(f))  # replace
+
+        opt_file = Path(ckpt).parent / 'opt.yaml'
+        if opt_file.exists():
+            with open(opt_file, errors='ignore') as f:
+                opt = argparse.Namespace(**yaml.safe_load(f))  # replace
+        os.makedirs(opt.save_dir, exist_ok=True)
         opt.cfg, opt.weights, opt.resume = '', ckpt, True  # reinstate
         LOGGER.info(f'Resuming training from {ckpt}')
     else:
@@ -539,8 +544,8 @@ def main(opt, callbacks=Callbacks()):
             if opt.project == str(ROOT / 'runs/train'):  # if default project name, rename to runs/evolve
                 opt.project = str(ROOT / 'runs/evolve')
         opt.save_dir = str(increment_path(Path(opt.project) / opt.name, exist_ok=opt.exist_ok))
-        ymir_cfg = get_merged_config()
-        opt.ymir_cfg = ymir_cfg
+
+    opt.ymir_cfg = ymir_cfg
 
     # DDP mode
     device = select_device(opt.device, batch_size=opt.batch_size)
