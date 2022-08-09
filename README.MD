@@ -2,6 +2,8 @@
 
 - [ymir](https://github.com/IndustryEssentials/ymir)
 
+- [wiki](https://github.com/yzbx/ymir-executor-fork/wiki)
+
 ## ymir-1.1.0 official image
 
 - [yolov4](https://github.com/yzbx/ymir-executor-fork#det-yolov4-training)
@@ -14,6 +16,8 @@
 
 - [yolov5](https://github.com/yzbx/ymir-executor-fork#det-yolov5-tmi)
 
+    - [change log](./det-yolov5-tmi/README.md)
+
     ```
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov5-cu111-tmi
 
@@ -21,6 +25,9 @@
     ```
 
 - [mmdetection](https://github.com/yzbx/ymir-executor-fork#det-mmdetection-tmi)
+
+    - [change log](./det-mmdetection-tmi/README.md)
+
     ```
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-mmdet-cu111-tmi
 
@@ -43,6 +50,22 @@
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov7-cu111-tmi
     ```
 
+- overview
+
+    | docker image | [finetune](https://github.com/yzbx/ymir-executor-fork/wiki/use-yolov5-to-finetune-or-training-model) | tensorboard | args | framework | onnx | pretrained weights |
+    | - | - | - | - | - | - | - |
+    | yolov4 | ? | ✔️ | ❌ | darknet + mxnet | ❌ | local |
+    | yolov5 | ✔️ | ✔️ | ✔️ | pytorch | ✔️ | local+online |
+    | yolov7 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
+    | mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
+    | detectron2 | ? | ✔️ | ✔️ | pytorch | ❌ | online |
+
+    - online pretrained weights may download through network
+
+    - local pretrained weights have copied to docker images when building image
+
+---
+
 ## det-yolov4-tmi
 
 - yolov4 training, mining and infer docker image, use `mxnet` and `darknet` framework
@@ -56,8 +79,6 @@
 
 ## det-yolov5-tmi
 
-- [change log](./det-yolov5-tmi/README.md)
-
 - yolov5 training, mining and infer docker image, use `pytorch` framework
 
 ```
@@ -68,8 +89,6 @@ docker build -t ymir-executor/yolov5:cuda111-tmi -f cuda111.dockerfile .
 ```
 
 ## det-mmdetection-tmi
-
-- [change log](./det-mmdetection-tmi/README.md)
 
 ```
 cd det-mmdetection-tmi
