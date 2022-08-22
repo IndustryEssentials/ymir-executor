@@ -5,10 +5,10 @@ import sys
 
 import cv2
 from easydict import EasyDict as edict
+from models.experimental import attempt_download
 from utils.ymir_yolov5 import (YmirStage, YmirYolov5, convert_ymir_to_yolov5,
-                               download_weight_file, get_merged_config,
-                               get_weight_file, get_ymir_process,
-                               write_ymir_training_result)
+                               get_merged_config, get_weight_file,
+                               get_ymir_process, write_ymir_training_result)
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
@@ -51,7 +51,8 @@ def _run_training(cfg: edict) -> None:
     out_dir = cfg.ymir.output.root_dir
     convert_ymir_to_yolov5(cfg)
     logging.info(f'generate {out_dir}/data.yaml')
-    monitor.write_monitor_logger(percent=get_ymir_process(stage=YmirStage.PREPROCESS, p=1.0))
+    monitor.write_monitor_logger(
+        percent=get_ymir_process(stage=YmirStage.PREPROCESS, p=1.0))
 
     # 2. training model
     epochs = cfg.param.epochs
@@ -75,7 +76,7 @@ def _run_training(cfg: edict) -> None:
     weights = get_weight_file(cfg)
     if not weights:
         # download pretrained weight
-        weights = download_weight_file(model)
+        weights = attempt_download(f'{model}.pt')
 
     models_dir = cfg.ymir.output.models_dir
 
@@ -86,18 +87,18 @@ def _run_training(cfg: edict) -> None:
         device = gpu_id
     else:
         device = gpu_id
-        commands += f'-m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port}'.split()
+        commands += f'-m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port}'.split(
+        )
 
-    commands += ['train.py',
-                 '--epochs', str(epochs),
-                 '--batch-size', str(batch_size),
-                 '--data', f'{out_dir}/data.yaml',
-                 '--project', '/out',
-                 '--cfg', f'models/{model}.yaml',
-                 '--name', 'models', '--weights', weights,
-                 '--img-size', str(img_size),
-                 '--save-period', str(save_period),
-                 '--device', device]
+    commands += [
+        'train.py', '--epochs',
+        str(epochs), '--batch-size',
+        str(batch_size), '--data', f'{out_dir}/data.yaml', '--project', '/out',
+        '--cfg', f'models/{model}.yaml', '--name', 'models', '--weights',
+        weights, '--img-size',
+        str(img_size), '--save-period',
+        str(save_period), '--device', device
+    ]
 
     if gpu_count > 1 and sync_bn:
         commands.append("--sync-bn")
@@ -108,7 +109,8 @@ def _run_training(cfg: edict) -> None:
     logging.info(f'start training: {commands}')
 
     subprocess.run(commands, check=True)
-    monitor.write_monitor_logger(percent=get_ymir_process(stage=YmirStage.TASK, p=1.0))
+    monitor.write_monitor_logger(
+        percent=get_ymir_process(stage=YmirStage.TASK, p=1.0))
 
     # 3. convert to onnx and save model weight to design directory
     opset = cfg.param.opset
@@ -126,14 +128,20 @@ def _run_mining(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
     out_dir = cfg.ymir.output.root_dir
     convert_ymir_to_yolov5(cfg)
     logging.info(f'generate {out_dir}/data.yaml')
-    monitor.write_monitor_logger(percent=get_ymir_process(
-        stage=YmirStage.PREPROCESS, p=1.0, task_idx=task_idx, task_num=task_num))
+    monitor.write_monitor_logger(
+        percent=get_ymir_process(stage=YmirStage.PREPROCESS,
+                                 p=1.0,
+                                 task_idx=task_idx,
+                                 task_num=task_num))
 
     command = 'python3 mining/mining_cald.py'
     logging.info(f'mining: {command}')
     subprocess.run(command.split(), check=True)
-    monitor.write_monitor_logger(percent=get_ymir_process(
-        stage=YmirStage.POSTPROCESS, p=1.0, task_idx=task_idx, task_num=task_num))
+    monitor.write_monitor_logger(
+        percent=get_ymir_process(stage=YmirStage.POSTPROCESS,
+                                 p=1.0,
+                                 task_idx=task_idx,
+                                 task_num=task_num))
 
 
 def _run_infer(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
@@ -141,8 +149,11 @@ def _run_infer(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
     out_dir = cfg.ymir.output.root_dir
     convert_ymir_to_yolov5(cfg)
     logging.info(f'generate {out_dir}/data.yaml')
-    monitor.write_monitor_logger(percent=get_ymir_process(
-        stage=YmirStage.PREPROCESS, p=1.0, task_idx=task_idx, task_num=task_num))
+    monitor.write_monitor_logger(
+        percent=get_ymir_process(stage=YmirStage.PREPROCESS,
+                                 p=1.0,
+                                 task_idx=task_idx,
+                                 task_num=task_num))
 
     N = dr.items_count(env.DatasetType.CANDIDATE)
     infer_result = dict()
@@ -157,12 +168,18 @@ def _run_infer(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
         idx += 1
 
         if idx % monitor_gap == 0:
-            percent = get_ymir_process(stage=YmirStage.TASK, p=idx / N, task_idx=task_idx, task_num=task_num)
+            percent = get_ymir_process(stage=YmirStage.TASK,
+                                       p=idx / N,
+                                       task_idx=task_idx,
+                                       task_num=task_num)
             monitor.write_monitor_logger(percent=percent)
 
     rw.write_infer_result(infer_result=infer_result)
-    monitor.write_monitor_logger(percent=get_ymir_process(
-        stage=YmirStage.PREPROCESS, p=1.0, task_idx=task_idx, task_num=task_num))
+    monitor.write_monitor_logger(
+        percent=get_ymir_process(stage=YmirStage.PREPROCESS,
+                                 p=1.0,
+                                 task_idx=task_idx,
+                                 task_num=task_num))
 
 
 if __name__ == '__main__':

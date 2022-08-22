@@ -13,11 +13,11 @@ import torch
 import yaml
 from easydict import EasyDict as edict
 from models.common import DetectMultiBackend
-from models.experimental import attempt_download
+from torch.nn.parallel import DistributedDataParallel as DDP
 from nptyping import NDArray, Shape, UInt8
 from packaging.version import Version
 from utils.augmentations import letterbox
-from utils.general import check_img_size, non_max_suppression, scale_coords
+from utils.general import check_img_size, non_max_suppression, scale_coords, check_version
 from utils.torch_utils import select_device
 from ymir_exc import env
 from ymir_exc import result_writer as rw
@@ -25,7 +25,7 @@ from ymir_exc import result_writer as rw
 
 class YmirStage(IntEnum):
     PREPROCESS = 1  # convert dataset
-    TASK = 2    # training/mining/infer
+    TASK = 2  # training/mining/infer
     POSTPROCESS = 3  # export model
 
 
@@ -85,8 +85,9 @@ def get_weight_file(cfg: edict) -> str:
         model_params_path = cfg.param.model_params_path
 
     model_dir = cfg.ymir.input.models_dir
-    model_params_path = [osp.join(model_dir, p)
-                         for p in model_params_path if osp.exists(osp.join(model_dir, p)) and p.endswith('.pt')]
+    model_params_path = [
+        osp.join(model_dir, p) for p in model_params_path if osp.exists(osp.join(model_dir, p)) and p.endswith('.pt')
+    ]
 
     # choose weight file by priority, best.pt > xxx.pt
     for p in model_params_path:
@@ -99,12 +100,7 @@ def get_weight_file(cfg: edict) -> str:
     return ""
 
 
-def download_weight_file(model_name):
-    weights = attempt_download(f'{model_name}.pt')
-    return weights
-
-
-class YmirYolov5():
+class YmirYolov5(object):
     """
     used for mining and inference to init detector and predict.
     """
@@ -145,11 +141,23 @@ class YmirYolov5():
             raise Exception("no weights file specified!")
 
         data_yaml = osp.join(self.cfg.ymir.output.root_dir, 'data.yaml')
-        model = DetectMultiBackend(weights=weights,
-                                   device=device,
-                                   dnn=False,  # not use opencv dnn for onnx inference
-                                   data=data_yaml)  # dataset.yaml path
+        model = DetectMultiBackend(
+            weights=weights,
+            device=device,
+            dnn=False,  # not use opencv dnn for onnx inference
+            data=data_yaml)  # dataset.yaml path
 
+        if ddp:
+            LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
+            RANK = int(os.getenv('RANK', -1))
+            # WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
+            cuda = device.type != 'cpu'
+            if cuda and RANK != -1:
+                if check_version(torch.__version__, '1.11.0'):
+                    model.model = DDP(model, device_ids=[LOCAL_RANK], output_device=LOCAL_RANK,
+                                      static_graph=True)  # type: ignore
+                else:
+                    model = DDP(model, device_ids=[LOCAL_RANK], output_device=LOCAL_RANK)  # type: ignore
         return model
 
     def predict(self, img: CV_IMAGE) -> NDArray:
@@ -200,23 +208,22 @@ class YmirYolov5():
 
         for i in range(result.shape[0]):
             xmin, ymin, xmax, ymax, conf, cls = result[i, :6].tolist()
-            ann = rw.Annotation(class_name=self.class_names[int(cls)], score=conf, box=rw.Box(
-                x=int(xmin), y=int(ymin), w=int(xmax - xmin), h=int(ymax - ymin)))
+            ann = rw.Annotation(class_name=self.class_names[int(cls)],
+                                score=conf,
+                                box=rw.Box(x=int(xmin), y=int(ymin), w=int(xmax - xmin), h=int(ymax - ymin)))
 
             anns.append(ann)
 
         return anns
 
 
-def convert_ymir_to_yolov5(cfg: edict) -> None:
+def convert_ymir_to_yolov5(cfg: edict):
     """
     convert ymir format dataset to yolov5 format
     generate data.yaml for training/mining/infer
     """
 
-    data = dict(path=cfg.ymir.output.root_dir,
-                nc=len(cfg.param.class_names),
-                names=cfg.param.class_names)
+    data = dict(path=cfg.ymir.output.root_dir, nc=len(cfg.param.class_names), names=cfg.param.class_names)
     for split, prefix in zip(['train', 'val', 'test'], ['training', 'val', 'candidate']):
         src_file = getattr(cfg.ymir.input, f'{prefix}_index_file')
         if osp.exists(src_file):
@@ -228,10 +235,7 @@ def convert_ymir_to_yolov5(cfg: edict) -> None:
         fw.write(yaml.safe_dump(data))
 
 
-def write_ymir_training_result(cfg: edict,
-                               map50: float = 0.0,
-                               epoch: int = 0,
-                               weight_file: str = "") -> int:
+def write_ymir_training_result(cfg: edict, map50: float = 0.0, epoch: int = 0, weight_file: str = ""):
     YMIR_VERSION = os.getenv('YMIR_VERSION', '1.2.0')
     if Version(YMIR_VERSION) >= Version('1.2.0'):
         _write_latest_ymir_training_result(cfg, float(map50), epoch, weight_file)
@@ -239,10 +243,7 @@ def write_ymir_training_result(cfg: edict,
         _write_ancient_ymir_training_result(cfg, float(map50))
 
 
-def _write_latest_ymir_training_result(cfg: edict,
-                                       map50: float,
-                                       epoch: int,
-                                       weight_file: str) -> int:
+def _write_latest_ymir_training_result(cfg: edict, map50: float, epoch: int, weight_file: str) -> int:
     """
     for ymir>=1.2.0
     cfg: ymir config
@@ -257,13 +258,12 @@ def _write_latest_ymir_training_result(cfg: edict,
     model = cfg.param.model
     # use `rw.write_training_result` to save training result
     if weight_file:
-        rw.write_model_stage(stage_name=f"{model}_{epoch}",
-                             files=[osp.basename(weight_file)],
-                             mAP=float(map50))
+        rw.write_model_stage(stage_name=f"{model}_{epoch}", files=[osp.basename(weight_file)], mAP=float(map50))
     else:
         # save other files with
-        files = [osp.basename(f) for f in glob.glob(osp.join(cfg.ymir.output.models_dir, '*'))
-                 if not f.endswith('.pt')] + ['last.pt', 'best.pt']
+        files = [
+            osp.basename(f) for f in glob.glob(osp.join(cfg.ymir.output.models_dir, '*')) if not f.endswith('.pt')
+        ] + ['last.pt', 'best.pt']
 
         training_result_file = cfg.ymir.output.training_result_file
         if osp.exists(training_result_file):
@@ -271,9 +271,7 @@ def _write_latest_ymir_training_result(cfg: edict,
                 training_result = yaml.safe_load(stream=f)
 
             map50 = max(training_result.get('map', 0.0), map50)
-        rw.write_model_stage(stage_name=f"{model}_last_and_best",
-                             files=files,
-                             mAP=float(map50))
+        rw.write_model_stage(stage_name=f"{model}_last_and_best", files=files, mAP=float(map50))
     return 0
 
 
@@ -291,11 +289,7 @@ def _write_ancient_ymir_training_result(cfg: edict, map50: float) -> None:
         training_result['model'] = files
         training_result['map'] = max(float(training_result.get('map', 0)), map50)
     else:
-        training_result = {
-            'model': files,
-            'map': float(map50),
-            'stage_name': cfg.param.model
-        }
+        training_result = {'model': files, 'map': float(map50), 'stage_name': cfg.param.model}
 
     with open(training_result_file, 'w') as f:
         yaml.safe_dump(training_result, f)

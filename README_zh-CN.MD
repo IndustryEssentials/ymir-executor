@@ -232,3 +232,7 @@ tail -f -n 100 ymir_app.log
     - [Paper with Code: Object Detection](https://paperswithcode.com/task/object-detection)
 
     - [awesome object detection](https://github.com/amusi/awesome-object-detection)
+
+    - [voc2012 object detection leadboard](http://host.robots.ox.ac.uk:8080/leaderboard/displaylb.php?challengeid=11&compid=4)
+
+    - [coco object detection leadboard](https://cocodataset.org/#detection-leaderboard)
