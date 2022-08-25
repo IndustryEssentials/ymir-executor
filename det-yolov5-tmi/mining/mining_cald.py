@@ -6,17 +6,18 @@ import sys
 from typing import Dict, List, Tuple
 
 import cv2
-from easydict import EasyDict as edict
 import numpy as np
+from easydict import EasyDict as edict
 from nptyping import NDArray
 from scipy.stats import entropy
 from tqdm import tqdm
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
+from ymir_exc.util import YmirStage, get_merged_config, get_ymir_process
 
 from mining.data_augment import cutout, horizontal_flip, intersect, resize, rotate
-from utils.ymir_yolov5 import BBOX, CV_IMAGE, YmirYolov5, YmirStage, get_ymir_process, get_merged_config
+from utils.ymir_yolov5 import BBOX, CV_IMAGE, YmirYolov5
 
 
 def split_result(result: NDArray) -> Tuple[BBOX, NDArray, NDArray]:
@@ -49,7 +50,7 @@ class MiningCald(YmirYolov5):
 
     def mining(self) -> List:
         N = dr.items_count(env.DatasetType.CANDIDATE)
-        monitor_gap = max(1, N // 100)
+        monitor_gap = max(1, N // 1000)
         idx = -1
         beta = 1.3
         mining_result = []

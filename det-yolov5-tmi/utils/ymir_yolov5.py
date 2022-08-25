@@ -5,73 +5,25 @@ import glob
 import os
 import os.path as osp
 import shutil
-from enum import IntEnum
 from typing import Any, List
 
 import numpy as np
 import torch
 import yaml
 from easydict import EasyDict as edict
-from models.common import DetectMultiBackend
-from torch.nn.parallel import DistributedDataParallel as DDP
 from nptyping import NDArray, Shape, UInt8
 from packaging.version import Version
-from utils.augmentations import letterbox
-from utils.general import check_img_size, non_max_suppression, scale_coords, check_version
-from utils.torch_utils import select_device
-from ymir_exc import env
+from ymir_exc import monitor
 from ymir_exc import result_writer as rw
+from ymir_exc.util import YmirStage, get_weight_files, get_ymir_process
 
-
-class YmirStage(IntEnum):
-    PREPROCESS = 1  # convert dataset
-    TASK = 2  # training/mining/infer
-    POSTPROCESS = 3  # export model
-
+from models.common import DetectMultiBackend
+from utils.augmentations import letterbox
+from utils.general import check_img_size, non_max_suppression, scale_coords
+from utils.torch_utils import select_device
 
 BBOX = NDArray[Shape['*,4'], Any]
 CV_IMAGE = NDArray[Shape['*,*,3'], UInt8]
-
-
-def get_ymir_process(stage: YmirStage, p: float, task_idx: int = 0, task_num: int = 1) -> float:
-    """
-    stage: pre-process/task/post-process
-    p: percent for stage
-    task_idx: index for multiple tasks like mining (task_idx=0) and infer (task_idx=1)
-    task_num: the total number of multiple tasks.
-    """
-    # const value for ymir process
-    PREPROCESS_PERCENT = 0.1
-    TASK_PERCENT = 0.8
-    POSTPROCESS_PERCENT = 0.1
-
-    if p < 0 or p > 1.0:
-        raise Exception(f'p not in [0,1], p={p}')
-
-    ratio = 1.0 / task_num
-    init = task_idx / task_num
-
-    if stage == YmirStage.PREPROCESS:
-        return init + PREPROCESS_PERCENT * p * ratio
-    elif stage == YmirStage.TASK:
-        return init + (PREPROCESS_PERCENT + TASK_PERCENT * p) * ratio
-    elif stage == YmirStage.POSTPROCESS:
-        return init + (PREPROCESS_PERCENT + TASK_PERCENT + POSTPROCESS_PERCENT * p) * ratio
-    else:
-        raise NotImplementedError(f'unknown stage {stage}')
-
-
-def get_merged_config() -> edict:
-    """
-    merge ymir_config and executor_config
-    """
-    merged_cfg = edict()
-    # the hyperparameter information
-    merged_cfg.param = env.get_executor_config()
-
-    # the ymir path information
-    merged_cfg.ymir = env.get_current_env()
-    return merged_cfg
 
 
 def get_weight_file(cfg: edict) -> str:
@@ -79,48 +31,47 @@ def get_weight_file(cfg: edict) -> str:
     return the weight file path by priority
     find weight file in cfg.param.model_params_path or cfg.param.model_params_path
     """
-    if cfg.ymir.run_training:
-        model_params_path = cfg.param.get('pretrained_model_params', [])
-    else:
-        model_params_path = cfg.param.model_params_path
-
-    model_dir = cfg.ymir.input.models_dir
-    model_params_path = [
-        osp.join(model_dir, p) for p in model_params_path if osp.exists(osp.join(model_dir, p)) and p.endswith('.pt')
-    ]
-
+    weight_files = get_weight_files(cfg, suffix=('.pt'))
     # choose weight file by priority, best.pt > xxx.pt
-    for p in model_params_path:
+    for p in weight_files:
         if p.endswith('best.pt'):
             return p
 
-    if len(model_params_path) > 0:
-        return max(model_params_path, key=osp.getctime)
+    if len(weight_files) > 0:
+        return max(weight_files, key=osp.getctime)
 
     return ""
 
 
-class YmirYolov5(object):
+class YmirYolov5(torch.nn.Module):
     """
     used for mining and inference to init detector and predict.
     """
-
-    def __init__(self, cfg: edict):
+    def __init__(self, cfg: edict, task='infer'):
+        super().__init__()
         self.cfg = cfg
         if cfg.ymir.run_mining and cfg.ymir.run_infer:
             # multiple task, run mining first, infer later
-            infer_task_idx = 1
-            task_num = 2
+            if task == 'infer':
+                self.task_idx = 1
+            elif task == 'mining':
+                self.task_idx = 0
+            else:
+                raise Exception(f'unknown task {task}')
+
+            self.task_num = 2
         else:
-            infer_task_idx = 0
-            task_num = 1
+            self.task_idx = 0
+            self.task_num = 1
 
-        self.task_idx = infer_task_idx
-        self.task_num = task_num
-
-        device = select_device(cfg.param.get('gpu_id', 'cpu'))
-
+        self.gpu_id: str = str(cfg.param.get('gpu_id', '0'))
+        device = select_device(self.gpu_id)
+        self.gpu_count: int = len(self.gpu_id.split(',')) if self.gpu_id else 0
+        self.batch_size_per_gpu = int(cfg.param.get('batch_size_per_gpu', 4))
+        self.num_workers_per_gpu = int(cfg.param.get('num_workers_per_gpu', 4))
+        self.batch_size: int = self.batch_size_per_gpu * self.gpu_count
         self.model = self.init_detector(device)
+        self.model.eval()
         self.device = device
         self.class_names = cfg.param.class_names
         self.stride = self.model.stride
@@ -128,11 +79,26 @@ class YmirYolov5(object):
         self.iou_thres = float(cfg.param.iou_thres)
 
         img_size = int(cfg.param.img_size)
-        imgsz = (img_size, img_size)
+        imgsz = [img_size, img_size]
         imgsz = check_img_size(imgsz, s=self.stride)
 
         self.model.warmup(imgsz=(1, 3, *imgsz), half=False)  # warmup
         self.img_size = imgsz
+
+    def forward(self, x, nms=False):
+        pred = self.model(x)
+        if not nms:
+            return pred
+
+        # postprocess
+        conf_thres = self.conf_thres
+        iou_thres = self.iou_thres
+        classes = None  # not filter class_idx in results
+        agnostic_nms = False
+        max_det = 100
+
+        pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
+        return pred
 
     def init_detector(self, device: torch.device) -> DetectMultiBackend:
         weights = get_weight_file(self.cfg)
@@ -140,24 +106,12 @@ class YmirYolov5(object):
         if not weights:
             raise Exception("no weights file specified!")
 
-        data_yaml = osp.join(self.cfg.ymir.output.root_dir, 'data.yaml')
         model = DetectMultiBackend(
             weights=weights,
             device=device,
             dnn=False,  # not use opencv dnn for onnx inference
-            data=data_yaml)  # dataset.yaml path
+            data=None)  # dataset.yaml path
 
-        if ddp:
-            LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
-            RANK = int(os.getenv('RANK', -1))
-            # WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
-            cuda = device.type != 'cpu'
-            if cuda and RANK != -1:
-                if check_version(torch.__version__, '1.11.0'):
-                    model.model = DDP(model, device_ids=[LOCAL_RANK], output_device=LOCAL_RANK,
-                                      static_graph=True)  # type: ignore
-                else:
-                    model = DDP(model, device_ids=[LOCAL_RANK], output_device=LOCAL_RANK)  # type: ignore
         return model
 
     def predict(self, img: CV_IMAGE) -> NDArray:
@@ -175,16 +129,7 @@ class YmirYolov5(object):
 
         img1 = img1 / 255  # 0 - 255 to 0.0 - 1.0
         img1.unsqueeze_(dim=0)  # expand for batch dim
-        pred = self.model(img1)
-
-        # postprocess
-        conf_thres = self.conf_thres
-        iou_thres = self.iou_thres
-        classes = None  # not filter class_idx in results
-        agnostic_nms = False
-        max_det = 1000
-
-        pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
+        pred = self.forward(img1, nms=True)
 
         result = []
         for det in pred:
@@ -215,6 +160,10 @@ class YmirYolov5(object):
             anns.append(ann)
 
         return anns
+
+    def write_monitor_logger(self, stage: YmirStage, p: float):
+        monitor.write_monitor_logger(
+            percent=get_ymir_process(stage=stage, p=p, task_idx=self.task_idx, task_num=self.task_num))
 
 
 def convert_ymir_to_yolov5(cfg: edict):

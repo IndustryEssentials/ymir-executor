@@ -100,7 +100,7 @@ class YmirModel:
         cfg_options = parse_option(options) if options else None
 
         # current infer can only use one gpu!!!
-        gpu_ids = cfg.param.gpu_id
+        gpu_ids = cfg.param.get('gpu_id', '0')
         gpu_id = gpu_ids.split(',')[0]
         # build the model from a config file and a checkpoint file
         self.model = init_detector(
