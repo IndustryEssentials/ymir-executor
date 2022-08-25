@@ -154,7 +154,7 @@ def _run_infer(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
         port = find_free_port()
         command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} mining/ymir_infer.py'  # noqa
 
-        logging.info(f'mining: {command}')
+        logging.info(f'infer: {command}')
         subprocess.run(command.split(), check=True)
 
     monitor.write_monitor_logger(

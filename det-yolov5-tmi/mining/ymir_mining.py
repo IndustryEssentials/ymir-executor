@@ -146,7 +146,7 @@ def run(ymir_cfg, ymir_yolov5):
             image_file = batch['image_file'][inner_idx]
             mining_results[image_file] = batch_consistency[inner_idx]
 
-    torch.save(mining_results, f'mining_results_{RANK}.pt')
+    torch.save(mining_results, f'/out/mining_results_{RANK}.pt')
 
 
 def main():
@@ -167,9 +167,9 @@ def main():
     if RANK in [0, -1]:
         results = []
         for rank in range(WORLD_SIZE):
-            results.append(torch.load(f'mining_results_{rank}.pt'))
+            results.append(torch.load(f'/out/mining_results_{rank}.pt'))
 
-        torch.save(results, 'mining_results_all_rank.pt')
+        torch.save(results, '/out/mining_results_all_rank.pt')
 
         ymir_mining_result = []
         for result in results:
