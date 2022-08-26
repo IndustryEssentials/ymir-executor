@@ -4,12 +4,14 @@
 3. merge result
 """
 import os
+import sys
 import warnings
 from functools import partial
 
 import torch
 import torch.distributed as dist
 import torch.utils.data as td
+from easydict import EasyDict as edict
 from tqdm import tqdm
 from ymir_exc import result_writer as rw
 from ymir_exc.util import YmirStage, get_merged_config
@@ -23,7 +25,7 @@ RANK = int(os.getenv('RANK', -1))
 WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 
 
-def run(ymir_cfg, ymir_yolov5):
+def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     # eg: gpu_id = 1,3,5,7  for LOCAL_RANK = 2, will use gpu 5.
     gpu = int(ymir_yolov5.gpu_id.split(',')[LOCAL_RANK])
     device = torch.device('cuda', gpu)
@@ -32,8 +34,9 @@ def run(ymir_cfg, ymir_yolov5):
     load_fn = partial(load_image_file, img_size=ymir_yolov5.img_size, stride=ymir_yolov5.stride)
     batch_size_per_gpu = ymir_yolov5.batch_size_per_gpu
     gpu_count = ymir_yolov5.gpu_count
+    cpu_count: int = os.cpu_count() or 1
     num_workers_per_gpu = min([
-        os.cpu_count() // max(gpu_count, 1), batch_size_per_gpu if batch_size_per_gpu > 1 else 0,
+        cpu_count // max(gpu_count, 1), batch_size_per_gpu if batch_size_per_gpu > 1 else 0,
         ymir_yolov5.num_workers_per_gpu
     ])
 
@@ -48,7 +51,7 @@ def run(ymir_cfg, ymir_yolov5):
                                           shuffle=False,
                                           sampler=None,
                                           num_workers=num_workers_per_gpu,
-                                          pin_memory=False,
+                                          pin_memory=ymir_yolov5.pin_memory,
                                           drop_last=False)
 
     results = []
@@ -76,7 +79,7 @@ def run(ymir_cfg, ymir_yolov5):
     torch.save(results, f'/out/infer_results_{RANK}.pt')
 
 
-def main():
+def main() -> int:
     ymir_cfg = get_merged_config()
     ymir_yolov5 = YmirYolov5(ymir_cfg, task='infer')
 
@@ -89,14 +92,13 @@ def main():
 
     run(ymir_cfg, ymir_yolov5)
 
+    # wait all process to save the infer result
     dist.barrier()
 
     if RANK in [0, -1]:
         results = []
         for rank in range(WORLD_SIZE):
             results.append(torch.load(f'/out/infer_results_{rank}.pt'))
-
-        torch.save(results, '/out/infer_results_all_rank.pt')
 
         ymir_infer_result = dict()
         for result in results:
@@ -122,7 +124,8 @@ def main():
 
     print(f'rank: {RANK}, start destroy process group')
     dist.destroy_process_group()
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

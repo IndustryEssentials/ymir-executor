@@ -114,6 +114,15 @@ def _run_training(cfg: edict) -> None:
 
 
 def _run_mining(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
+    # generate data.yaml for mining
+    out_dir = cfg.ymir.output.root_dir
+    convert_ymir_to_yolov5(cfg)
+    logging.info(f'generate {out_dir}/data.yaml')
+    monitor.write_monitor_logger(
+        percent=get_ymir_process(stage=YmirStage.PREPROCESS,
+                                 p=1.0,
+                                 task_idx=task_idx,
+                                 task_num=task_num))
     gpu_id: str = str(cfg.param.get('gpu_id', '0'))
     gpu_count: int = len(gpu_id.split(',')) if gpu_id else 0
 
@@ -129,6 +138,16 @@ def _run_mining(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
 
 
 def _run_infer(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
+    # generate data.yaml for infer
+    out_dir = cfg.ymir.output.root_dir
+    convert_ymir_to_yolov5(cfg)
+    logging.info(f'generate {out_dir}/data.yaml')
+    monitor.write_monitor_logger(
+        percent=get_ymir_process(stage=YmirStage.PREPROCESS,
+                                 p=1.0,
+                                 task_idx=task_idx,
+                                 task_num=task_num))
+
     gpu_id: str = str(cfg.param.get('gpu_id', '0'))
     gpu_count: int = len(gpu_id.split(',')) if gpu_id else 0
 

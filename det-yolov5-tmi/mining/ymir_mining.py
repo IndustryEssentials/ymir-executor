@@ -6,12 +6,14 @@
 5. merge mining result
 """
 import os
+import sys
 from functools import partial
 
 import numpy as np
 import torch
 import torch.distributed as dist
 import torch.utils.data as td
+from easydict import EasyDict as edict
 from tqdm import tqdm
 from ymir_exc import result_writer as rw
 from ymir_exc.util import YmirStage, get_merged_config
@@ -26,17 +28,18 @@ RANK = int(os.getenv('RANK', -1))
 WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 
 
-def run(ymir_cfg, ymir_yolov5):
+def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     # eg: gpu_id = 1,3,5,7  for LOCAL_RANK = 2, will use gpu 5.
     gpu = int(ymir_yolov5.gpu_id.split(',')[LOCAL_RANK])
     device = torch.device('cuda', gpu)
     ymir_yolov5.to(device)
 
     load_fn = partial(load_image_file, img_size=ymir_yolov5.img_size, stride=ymir_yolov5.stride)
-    batch_size_per_gpu = ymir_yolov5.batch_size_per_gpu
-    gpu_count = ymir_yolov5.gpu_count
+    batch_size_per_gpu: int = ymir_yolov5.batch_size_per_gpu
+    gpu_count: int = ymir_yolov5.gpu_count
+    cpu_count: int = os.cpu_count() or 1
     num_workers_per_gpu = min([
-        os.cpu_count() // max(gpu_count, 1), batch_size_per_gpu if batch_size_per_gpu > 1 else 0,
+        cpu_count // max(gpu_count, 1), batch_size_per_gpu if batch_size_per_gpu > 1 else 0,
         ymir_yolov5.num_workers_per_gpu
     ])
 
@@ -51,7 +54,7 @@ def run(ymir_cfg, ymir_yolov5):
                                           shuffle=False,
                                           sampler=None,
                                           num_workers=num_workers_per_gpu,
-                                          pin_memory=False,
+                                          pin_memory=ymir_yolov5.pin_memory,
                                           drop_last=False)
 
     results = []
@@ -63,7 +66,7 @@ def run(ymir_cfg, ymir_yolov5):
         with torch.no_grad():
             pred = ymir_yolov5.forward(batch['image'].float().to(device), nms=True)
 
-        ymir_yolov5.write_monitor_logger(stage=YmirStage.TASK, p=idx / dataset_size)
+        ymir_yolov5.write_monitor_logger(stage=YmirStage.TASK, p=idx * batch_size_per_gpu / dataset_size)
         preprocess_image_shape = batch['image'].shape[2:]
         for inner_idx, det in enumerate(pred):  # per image
             result_per_image = []
@@ -88,7 +91,7 @@ def run(ymir_cfg, ymir_yolov5):
                                        sampler=None,
                                        collate_fn=collate_fn_with_fake_ann,
                                        num_workers=num_workers_per_gpu,
-                                       pin_memory=False,
+                                       pin_memory=ymir_yolov5.pin_memory,
                                        drop_last=False)
 
     dataset_size = len(results)
@@ -149,7 +152,7 @@ def run(ymir_cfg, ymir_yolov5):
     torch.save(mining_results, f'/out/mining_results_{RANK}.pt')
 
 
-def main():
+def main() -> int:
     ymir_cfg = get_merged_config()
     ymir_yolov5 = YmirYolov5(ymir_cfg, task='mining')
 
@@ -169,8 +172,6 @@ def main():
         for rank in range(WORLD_SIZE):
             results.append(torch.load(f'/out/mining_results_{rank}.pt'))
 
-        torch.save(results, '/out/mining_results_all_rank.pt')
-
         ymir_mining_result = []
         for result in results:
             for img_file, score in result.items():
@@ -179,7 +180,8 @@ def main():
 
     print(f'rank: {RANK}, start destroy process group')
     dist.destroy_process_group()
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

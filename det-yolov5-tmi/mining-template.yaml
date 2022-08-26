@@ -12,4 +12,4 @@ conf_thres: 0.25
 iou_thres: 0.45
 batch_size_per_gpu: 16
 num_workers_per_gpu: 4
-ddp: False
+pin_memory: False

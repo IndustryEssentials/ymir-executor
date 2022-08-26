@@ -15,7 +15,7 @@ from nptyping import NDArray, Shape, UInt8
 from packaging.version import Version
 from ymir_exc import monitor
 from ymir_exc import result_writer as rw
-from ymir_exc.util import YmirStage, get_weight_files, get_ymir_process
+from ymir_exc.util import YmirStage, get_bool, get_weight_files, get_ymir_process
 
 from models.common import DetectMultiBackend
 from utils.augmentations import letterbox
@@ -67,37 +67,36 @@ class YmirYolov5(torch.nn.Module):
         self.gpu_id: str = str(cfg.param.get('gpu_id', '0'))
         device = select_device(self.gpu_id)
         self.gpu_count: int = len(self.gpu_id.split(',')) if self.gpu_id else 0
-        self.batch_size_per_gpu = int(cfg.param.get('batch_size_per_gpu', 4))
-        self.num_workers_per_gpu = int(cfg.param.get('num_workers_per_gpu', 4))
+        self.batch_size_per_gpu: int = int(cfg.param.get('batch_size_per_gpu', 4))
+        self.num_workers_per_gpu: int = int(cfg.param.get('num_workers_per_gpu', 4))
+        self.pin_memory: bool = get_bool(cfg, 'pin_memory', False)
         self.batch_size: int = self.batch_size_per_gpu * self.gpu_count
         self.model = self.init_detector(device)
         self.model.eval()
         self.device = device
-        self.class_names = cfg.param.class_names
+        self.class_names: List[str] = cfg.param.class_names
         self.stride = self.model.stride
-        self.conf_thres = float(cfg.param.conf_thres)
-        self.iou_thres = float(cfg.param.iou_thres)
+        self.conf_thres: float = float(cfg.param.conf_thres)
+        self.iou_thres: float = float(cfg.param.iou_thres)
 
         img_size = int(cfg.param.img_size)
         imgsz = [img_size, img_size]
         imgsz = check_img_size(imgsz, s=self.stride)
 
         self.model.warmup(imgsz=(1, 3, *imgsz), half=False)  # warmup
-        self.img_size = imgsz
+        self.img_size: List[int] = imgsz
 
     def forward(self, x, nms=False):
         pred = self.model(x)
         if not nms:
             return pred
 
-        # postprocess
-        conf_thres = self.conf_thres
-        iou_thres = self.iou_thres
-        classes = None  # not filter class_idx in results
-        agnostic_nms = False
-        max_det = 100
-
-        pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
+        pred = non_max_suppression(pred,
+                                   conf_thres=self.conf_thres,
+                                   iou_thres=self.iou_thres,
+                                   classes=None,  # not filter class_idx
+                                   agnostic=False,
+                                   max_det=100)
         return pred
 
     def init_detector(self, device: torch.device) -> DetectMultiBackend:
@@ -106,11 +105,12 @@ class YmirYolov5(torch.nn.Module):
         if not weights:
             raise Exception("no weights file specified!")
 
+        data_yaml = osp.join(self.cfg.ymir.output.root_dir, 'data.yaml')
         model = DetectMultiBackend(
             weights=weights,
             device=device,
             dnn=False,  # not use opencv dnn for onnx inference
-            data=None)  # dataset.yaml path
+            data=data_yaml)  # dataset.yaml path
 
         return model
 
