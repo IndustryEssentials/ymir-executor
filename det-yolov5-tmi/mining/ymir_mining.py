@@ -70,9 +70,9 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
         preprocess_image_shape = batch['image'].shape[2:]
         for inner_idx, det in enumerate(pred):  # per image
             result_per_image = []
+            image_file = batch['image_file'][inner_idx]
             if len(det):
                 origin_image_shape = (batch['origin_shape'][0][inner_idx], batch['origin_shape'][1][inner_idx])
-                image_file = batch['image_file'][inner_idx]
                 # Rescale boxes from img_size to img size
                 det[:, :4] = scale_coords(preprocess_image_shape, det[:, :4], origin_image_shape).round()
                 result_per_image.append(det)
