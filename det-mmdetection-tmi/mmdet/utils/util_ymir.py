@@ -132,7 +132,7 @@ def _modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
         mmdet_cfg.log_config['hooks'][1].update(tensorboard_logger)
 
     # modify evaluation and interval
-    interval = max(1, mmdet_cfg.runner.max_epochs//30)
+    interval = max(1, mmdet_cfg.runner.max_epochs // 30)
     mmdet_cfg.evaluation.interval = interval
     mmdet_cfg.evaluation.metric = ymir_cfg.param.get('metric', 'bbox')
     # TODO Whether to evaluating the AP for each class
@@ -146,9 +146,9 @@ def get_weight_file(cfg: edict) -> str:
     find weight file in cfg.param.pretrained_model_params or cfg.param.model_params_path
     """
     if cfg.ymir.run_training:
-        model_params_path: List = cfg.param.get('pretrained_model_params', [])
+        model_params_path: List[str] = cfg.param.get('pretrained_model_params', [])
     else:
-        model_params_path: List = cfg.param.get('model_params_path', [])
+        model_params_path = cfg.param.get('model_params_path', [])
 
     model_dir = cfg.ymir.input.models_dir
     model_params_path = [
