@@ -67,7 +67,7 @@
 | yolov7 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
 | mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
 | detectron2 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
-| vidt | ? | ✔️ | ✔️ | ✔️ pytorch | ❌ | online |
+| vidt | ? | ✔️ | ✔️ | pytorch | ❌ | online |
 
 - online 预训练权重可能在训练时通过网络下载
 
