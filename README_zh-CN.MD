@@ -95,7 +95,7 @@ gpu: single GeForce GTX 1080 Ti
 | yolov5 | 16 | 100 | yolov5s | 70.35% | 2h | coco-pretrained |
 | yolov7 | 16 | 100 | yolov7-tiny | 70.4% | 5h | coco-pretrained |
 | mmdetection | 16 | 100 | yolox_tiny | 66.2% | 5h | coco-pretrained |
-| detectron2 | 2 | 20000 | retinanet_R_50_FPN_1x | 53.54% | 2h | imagenet-pretrained |
+| detectron2 | 2 | 20000 steps | retinanet_R_50_FPN_1x | 53.54% | 2h | imagenet-pretrained |
 
 ---
 
