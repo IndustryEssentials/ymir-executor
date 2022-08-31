@@ -125,8 +125,8 @@ def get_weight_file(cfg: edict) -> str:
                 if model_name_splits[1] == 'nano':
                     # yolox_tiny_8x8_300e_coco_20211124_171234-b4047906.pth or yolox_tiny.py
                     yolox_weight_files = [f for f in weight_files if osp.basename(f).startswith('yolox_tiny')]
-                elif model_name_splits[1] == 'm':
-                    yolox_weight_files = [f for f in weight_files if osp.basename(f).startswith('yolox_l')]
+                else:
+                    yolox_weight_files = [f for f in weight_files if osp.basename(f).startswith('yolox_s')]
 
             if len(yolox_weight_files) > 0:
                 logging.info(f'load yolox pretrained weight {yolox_weight_files[0]}')
