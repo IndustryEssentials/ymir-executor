@@ -156,6 +156,10 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 
     - 通过ymir网页端的 `模型管理/模型列表/导入模型` 同样可以导入模型
 
+## 参考
+
+- [挖掘算法CALD](https://github.com/we1pingyu/CALD/)
+
 ---
 
 # FAQ

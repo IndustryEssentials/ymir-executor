@@ -139,3 +139,7 @@ docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
 ## how to import pretrained model weights
 
 - [import pretainted model weights](https://github.com/IndustryEssentials/ymir/blob/dev/docs/import-extra-models.md)
+
+## reference
+
+- [mining algorithm: CALD](https://github.com/we1pingyu/CALD/)
