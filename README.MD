@@ -143,3 +143,8 @@ docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
 ## reference
 
 - [mining algorithm: CALD](https://github.com/we1pingyu/CALD/)
+- [yolov5](https://github.com/ultralytics/yolov5)
+- [mmdetection](https://github.com/open-mmlab/mmdetection)
+- [yolov7](https://github.com/wongkinyiu/yolov7)
+- [detectron2](https://github.com/facebookresearch/detectron2)
+- [vidt](https://github.com/naver-ai/vidt)

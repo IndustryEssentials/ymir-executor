@@ -159,6 +159,11 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 ## 参考
 
 - [挖掘算法CALD](https://github.com/we1pingyu/CALD/)
+- [yolov5](https://github.com/ultralytics/yolov5)
+- [mmdetection](https://github.com/open-mmlab/mmdetection)
+- [yolov7](https://github.com/wongkinyiu/yolov7)
+- [detectron2](https://github.com/facebookresearch/detectron2)
+- [vidt](https://github.com/naver-ai/vidt)
 
 ---
 
@@ -166,9 +171,9 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 
 ## 关于cuda版本
 
-- 推荐安装11.2以上的cuda版本, 使用11.1及以上的镜像
+- 推荐主机安装11.2以上的cuda版本, 使用11.1及以上的镜像
 
-- GTX3080/GTX3090系统不支持11.1以下的cuda，只能使用cuda11.1及以上的镜像
+- GTX3080/GTX3090不支持11.1以下的cuda，只能使用cuda11.1及以上的镜像
 
 ## apt 或 pip 安装慢或出错
 
@@ -247,10 +252,10 @@ tail -f -n 100 ymir_app.log
 - 挂载目录并运行镜像`<docker-image-name>`，注意需要将ymir部署目录挂载到镜像中
 
     ```
-    docker run -it --gpus all --shm-size 12G -v $PWD/in:/in -v $PWD/out:/out -v <YMIR_WORKPLACE>:<YMIR_WORKPLACE> <docker-image-name> bash
+    docker run -it --gpus all --shm-size 12G -v $PWD/in:/in -v $PWD/out:/out -v <YMIR_WORKPLACE>:<YMIR_WORKPLACE> -v <YMIR_WORKPLACE>/sandbox/<USER_ID>/training_assset_cache:/in/assets <docker-image-name> bash
 
-    # 以/home/ymir/ymir-workplace作为ymir部署目录为例
-    docker run -it --gpus all --shm-size 12G -v $PWD/in:/in -v $PWD/out:/out -v /home/ymir/ymir-workplace:/home/ymir/ymir-workplace <docker-image-name> bash
+    # 以/home/ymir/ymir-workplace作为ymir部署目录为例, <USER_ID>以实际情况为准
+    docker run -it --gpus all --shm-size 12G -v $PWD/in:/in -v /home/ymir/ymir-workplace/sandbox/0001/training_assset_cache:/in/assets -v $PWD/out:/out -v /home/ymir/ymir-workplace:/home/ymir/ymir-workplace <docker-image-name> bash
     ```
 
 - 进入到docker 容器中后, 执行镜像默认的命令, 如dockerfile中写的 `CMD bash /usr/bin/start.sh`
