@@ -2,11 +2,11 @@
 
 - [ymir](https://github.com/IndustryEssentials/ymir)
 
-- [wiki](https://github.com/yzbx/ymir-executor-fork/wiki)
+- [wiki](https://github.com/modelai/ymir-executor-fork/wiki)
 
 ## ymir-1.1.0 官方镜像
 
-- [yolov4](https://github.com/yzbx/ymir-executor-fork#det-yolov4-training)
+- [yolov4](https://github.com/modelai/ymir-executor-fork#det-yolov4-training)
 
     ```
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov4-cu112-tmi
@@ -14,7 +14,7 @@
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov4-cu101-tmi
     ```
 
-- [yolov5](https://github.com/yzbx/ymir-executor-fork#det-yolov5-tmi)
+- [yolov5](https://github.com/modelai/ymir-executor-fork#det-yolov5-tmi)
 
     - [change log](./det-yolov5-tmi/README.md)
 
@@ -24,7 +24,7 @@
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov5-cu102-tmi
     ```
 
-- [mmdetection](https://github.com/yzbx/ymir-executor-fork#det-mmdetection-tmi)
+- [mmdetection](https://github.com/modelai/ymir-executor-fork#det-mmdetection-tmi)
 
     - [change log](./det-mmdetection-tmi/README.md)
 
@@ -34,35 +34,69 @@
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-mmdet-cu102-tmi
     ```
 
-- [detectron2](https://github.com/yzbx/ymir-detectron2)
+- [detectron2](https://github.com/modelai/ymir-detectron2)
 
-    - [change log](https://github.com/yzbx/ymir-detectron2/blob/master/README.md)
+    - [change log](https://github.com/modelai/ymir-detectron2/blob/master/README.md)
 
     ```
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-detectron2-cu111-tmi
     ```
 
-- [yolov7](https://github.com/yzbx/ymir-yolov7)
+- [yolov7](https://github.com/modelai/ymir-yolov7)
 
-    - [change log](https://github.com/yzbx/ymir-yolov7/blob/main/ymir/README.md)
+    - [change log](https://github.com/modelai/ymir-yolov7/blob/main/ymir/README.md)
 
     ```
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov7-cu111-tmi
     ```
 
-- 比较
+- [vidt](https://github.com/modelai/ymir-vidt)
 
-    | docker image | [finetune](https://github.com/yzbx/ymir-executor-fork/wiki/use-yolov5-to-finetune-or-training-model) | tensorboard | args | framework | onnx | pretrained weight |
-    | - | - | - | - | - | - | - |
-    | yolov4 | ? | ✔️ | ❌ | darknet + mxnet | ❌ | local |
-    | yolov5 | ✔️ | ✔️ | ✔️ | pytorch | ✔️ | local+online |
-    | yolov7 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
-    | mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
-    | detectron2 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
+    - [change log](https://github.com/modelai/ymir-vidt/tree/main/ymir)
 
-    - online 预训练权重可能在训练时通过网络下载
+    ```
+    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-vidt-cu111-tmi
+    ```
 
-    - local 预训练权重在构建镜像时复制到了镜像
+## 比较
+
+| docker image | [finetune](https://github.com/modelai/ymir-executor-fork/wiki/use-yolov5-to-finetune-or-training-model) | tensorboard | args | framework | onnx | pretrained weight |
+| - | - | - | - | - | - | - |
+| yolov4 | ? | ✔️ | ❌ | darknet + mxnet | ❌ | local |
+| yolov5 | ✔️ | ✔️ | ✔️ | pytorch | ✔️ | local+online |
+| yolov7 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
+| mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
+| detectron2 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
+| vidt | ? | ✔️ | ✔️ | ✔️ pytorch | ❌ | online |
+
+- online 预训练权重可能在训练时通过网络下载
+
+- local 预训练权重在构建镜像时复制到了镜像
+
+### benchmark
+
+- training dataset: voc2012-train 5717 images
+- validation dataset: voc2012-val 5823 images
+- image size: 640
+
+gpu: single Tesla P4
+
+| docker image | batch size | epoch number | model | voc2012 val map50 | training time | note |
+| - | - | - | - | - | - | - |
+| yolov5 | 16 | 100 | yolov5s | 70.05% | 9h | coco-pretrained |
+| vidt | 2 | 100 | swin-nano | 54.13% | 2d | imagenet-pretrained |
+| yolov4 | 4 | 20000 steps | yolov4 | 66.18% | 2d | imagenet-pretrained |
+| yolov7 | 16 | 100 | yolov7-tiny | 70% | 8h | coco-pretrained |
+
+gpu: single GeForce GTX 1080 Ti
+
+| docker image | batch size | epoch number | model | voc2012 val map50 | training time | note |
+| - | - | - | - | - | - | - |
+| yolov5 | 16 | 100 | yolov5s | 70.35% | 2h | coco-pretrained |
+| yolov7 | 16 | 100 | yolov7-tiny | 70.4% | 5h | coco-pretrained |
+| mmdetection | 16 | 100 | yolox_tiny | 66.2% | 5h | coco-pretrained |
+| detectron2 | 2 | 20000 | retinanet_R_50_FPN_1x | 53.54% | 2h | imagenet-pretrained |
+
 ---
 
 ## det-yolov4-tmi
@@ -114,7 +148,7 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 
 - [ymir-executor 制作指南](https://github.com/IndustryEssentials/ymir/blob/dev/docs/ymir-dataset-zh-CN.md)
 
-- [ymir-executor-sdk](https://github.com/yzbx/ymir-executor-sdk) ymir镜像开发辅助库
+- [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk) ymir镜像开发辅助库
 
 ## 如何导入预训练模型
 
@@ -122,15 +156,24 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 
     - 通过ymir网页端的 `模型管理/模型列表/导入模型` 同样可以导入模型
 
+## 参考
+
+- [挖掘算法CALD](https://github.com/we1pingyu/CALD/)
+- [yolov5](https://github.com/ultralytics/yolov5)
+- [mmdetection](https://github.com/open-mmlab/mmdetection)
+- [yolov7](https://github.com/wongkinyiu/yolov7)
+- [detectron2](https://github.com/facebookresearch/detectron2)
+- [vidt](https://github.com/naver-ai/vidt)
+
 ---
 
 # FAQ
 
 ## 关于cuda版本
 
-- 推荐安装11.2以上的cuda版本, 使用11.1及以上的镜像
+- 推荐主机安装11.2以上的cuda版本, 使用11.1及以上的镜像
 
-- GTX3080/GTX3090系统不支持11.1以下的cuda，只能使用cuda11.1及以上的镜像
+- GTX3080/GTX3090不支持11.1以下的cuda，只能使用cuda11.1及以上的镜像
 
 ## apt 或 pip 安装慢或出错
 
@@ -209,10 +252,10 @@ tail -f -n 100 ymir_app.log
 - 挂载目录并运行镜像`<docker-image-name>`，注意需要将ymir部署目录挂载到镜像中
 
     ```
-    docker run -it --gpus all --shm-size 12G -v $PWD/in:/in -v $PWD/out:/out -v <YMIR_WORKPLACE>:<YMIR_WORKPLACE> <docker-image-name> bash
+    docker run -it --gpus all --shm-size 12G -v $PWD/in:/in -v $PWD/out:/out -v <YMIR_WORKPLACE>:<YMIR_WORKPLACE> -v <YMIR_WORKPLACE>/sandbox/<USER_ID>/training_assset_cache:/in/assets <docker-image-name> bash
 
-    # 以/home/ymir/ymir-workplace作为ymir部署目录为例
-    docker run -it --gpus all --shm-size 12G -v $PWD/in:/in -v $PWD/out:/out -v /home/ymir/ymir-workplace:/home/ymir/ymir-workplace <docker-image-name> bash
+    # 以/home/ymir/ymir-workplace作为ymir部署目录为例, <USER_ID>以实际情况为准
+    docker run -it --gpus all --shm-size 12G -v $PWD/in:/in -v /home/ymir/ymir-workplace/sandbox/0001/training_assset_cache:/in/assets -v $PWD/out:/out -v /home/ymir/ymir-workplace:/home/ymir/ymir-workplace <docker-image-name> bash
     ```
 
 - 进入到docker 容器中后, 执行镜像默认的命令, 如dockerfile中写的 `CMD bash /usr/bin/start.sh`
@@ -232,3 +275,7 @@ tail -f -n 100 ymir_app.log
     - [Paper with Code: Object Detection](https://paperswithcode.com/task/object-detection)
 
     - [awesome object detection](https://github.com/amusi/awesome-object-detection)
+
+    - [voc2012 object detection leadboard](http://host.robots.ox.ac.uk:8080/leaderboard/displaylb.php?challengeid=11&compid=4)
+
+    - [coco object detection leadboard](https://cocodataset.org/#detection-leaderboard)

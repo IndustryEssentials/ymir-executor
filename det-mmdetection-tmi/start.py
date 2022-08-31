@@ -4,9 +4,8 @@ import subprocess
 import sys
 
 from easydict import EasyDict as edict
-
-from mmdet.utils.util_ymir import get_merged_config
 from ymir_exc import monitor
+from ymir_exc.util import find_free_port, get_merged_config
 
 
 def start(cfg: edict) -> int:
@@ -16,7 +15,7 @@ def start(cfg: edict) -> int:
         _run_training()
     elif cfg.ymir.run_mining or cfg.ymir.run_infer:
         if cfg.ymir.run_mining:
-            _run_mining()
+            _run_mining(cfg)
         if cfg.ymir.run_infer:
             _run_infer()
     else:
@@ -35,11 +34,19 @@ def _run_training() -> None:
     logging.info("training finished")
 
 
-def _run_mining() -> None:
-    command = 'python3 ymir_mining.py'
+def _run_mining(cfg: edict) -> None:
+    gpu_id: str = str(cfg.param.get('gpu_id', '0'))
+    gpu_count = len(gpu_id.split(','))
+    if gpu_count <= 1:
+        command = 'python3 ymir_mining.py'
+    else:
+        port = find_free_port()
+        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} ymir_mining.py'  # noqa
+
     logging.info(f'start mining: {command}')
     subprocess.run(command.split(), check=True)
     logging.info("mining finished")
+
 
 def _run_infer() -> None:
     command = 'python3 ymir_infer.py'

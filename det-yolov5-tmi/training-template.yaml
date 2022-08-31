@@ -10,7 +10,7 @@
 shm_size: '32G'
 export_format: 'ark:raw'
 model: 'yolov5s'
-batch_size: 16
+batch_size_per_gpu: 16
 epochs: 300
 img_size: 640
 opset: 11

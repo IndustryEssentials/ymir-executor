@@ -39,6 +39,8 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
+from ymir_exc.util import YmirStage, get_merged_config, get_ymir_process, write_ymir_training_result
+
 import val  # for end-of-epoch mAP
 from models.experimental import attempt_load
 from models.yolo import Model
@@ -47,22 +49,16 @@ from utils.autobatch import check_train_batch_size
 from utils.callbacks import Callbacks
 from utils.datasets import create_dataloader
 from utils.downloads import attempt_download
-from utils.general import (LOGGER, check_dataset, check_file, check_git_status,
-                           check_img_size, check_requirements, check_suffix,
-                           check_version, check_yaml, colorstr, get_latest_run,
-                           increment_path, init_seeds, intersect_dicts,
-                           labels_to_class_weights, labels_to_image_weights,
-                           methods, one_cycle, print_args, print_mutation,
-                           strip_optimizer)
+from utils.general import (LOGGER, check_dataset, check_file, check_git_status, check_img_size, check_requirements,
+                           check_suffix, check_version, check_yaml, colorstr, get_latest_run, increment_path,
+                           init_seeds, intersect_dicts, labels_to_class_weights, labels_to_image_weights, methods,
+                           one_cycle, print_args, print_mutation, strip_optimizer)
 from utils.loggers import Loggers
 from utils.loggers.wandb.wandb_utils import check_wandb_resume
 from utils.loss import ComputeLoss
 from utils.metrics import fitness
 from utils.plots import plot_evolve, plot_labels
-from utils.torch_utils import (EarlyStopping, ModelEMA, de_parallel,
-                               select_device, torch_distributed_zero_first)
-from utils.ymir_yolov5 import (YmirStage, get_merged_config, get_ymir_process,
-                               write_ymir_training_result)
+from utils.torch_utils import EarlyStopping, ModelEMA, de_parallel, select_device, torch_distributed_zero_first
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -423,7 +419,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                 if (epoch > 0) and (opt.save_period > 0) and (epoch % opt.save_period == 0):
                     torch.save(ckpt, w / f'epoch{epoch}.pt')
                     weight_file = str(w / f'epoch{epoch}.pt')
-                    write_ymir_training_result(ymir_cfg, map50=results[2], epoch=epoch, weight_file=weight_file)
+                    write_ymir_training_result(ymir_cfg, map50=results[2], id=str(epoch), files=[weight_file])
                 del ckpt
                 callbacks.run('on_model_save', last, epoch, final_epoch, best_fitness, fi)
 
@@ -472,7 +468,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
     torch.cuda.empty_cache()
     # save the best and last weight file with other files in models_dir
     if RANK in [-1, 0]:
-        write_ymir_training_result(ymir_cfg, map50=best_fitness, epoch=epochs, weight_file='')
+        write_ymir_training_result(ymir_cfg, map50=best_fitness, id=str(epochs), files=[])
     return results
 
 

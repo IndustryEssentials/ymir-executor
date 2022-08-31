@@ -21,13 +21,14 @@ RUN	apt-get update && apt-get install -y gnupg2 git libglib2.0-0 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# install ymir-exc sdk
-RUN pip install "git+https://github.com/yzbx/ymir-executor-sdk.git@ymir1.0.0"
+COPY ./requirements.txt /workspace/
+# install ymir-exc sdk and requirements
+RUN pip install "git+https://github.com/modelai/ymir-executor-sdk.git@ymir1.0.0" \
+    && pip install -r /workspace/requirements.txt
 
 # Copy file from host to docker and install requirements
 COPY . /app
-RUN mkdir /img-man && mv /app/*-template.yaml /img-man/ \
-    && pip install -r /app/requirements.txt
+RUN mkdir /img-man && mv /app/*-template.yaml /img-man/
 
 # Download pretrained weight and font file
 RUN cd /app && bash data/scripts/download_weights.sh \
