@@ -67,7 +67,7 @@
 | yolov7 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
 | mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
 | detectron2 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
-| vidt | ? | ✔️ | ✔️ | ✔️ pytorch | ❌ | online |
+| vidt | ? | ✔️ | ✔️ | pytorch | ❌ | online |
 
 - online pretrained weights may download through network
 
