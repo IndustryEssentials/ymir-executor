@@ -3,7 +3,7 @@ export_format: 'ark:raw'
 samples_per_gpu: 16
 workers_per_gpu: 16
 max_epochs: 300
-config_file: 'configs/yolox/yolox_nano_8x8_300e_coco.py'
+config_file: 'configs/yolox/yolox_tiny_8x8_300e_coco.py'
 args_options: ''
 cfg_options: ''
 metric: 'bbox'
