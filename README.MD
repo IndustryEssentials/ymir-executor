@@ -68,7 +68,7 @@
 
 ## overview
 
-| docker image | [finetune](https://github.com/modelai/ymir-executor-fork/wiki/use-yolov5-to-finetune-or-training-model) | tensorboard | args | framework | onnx | pretrained weights |
+| docker image | [finetune](https://github.com/modelai/ymir-executor-fork/wiki/use-yolov5-to-finetune-or-training-model) | tensorboard | args/cfg options | framework | onnx | pretrained weights |
 | - | - | - | - | - | - | - |
 | yolov4 | ? | ✔️ | ❌ | darknet + mxnet | ❌ | local |
 | yolov5 | ✔️ | ✔️ | ✔️ | pytorch | ✔️ | local+online |
@@ -76,11 +76,11 @@
 | mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
 | detectron2 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
 | vidt | ? | ✔️ | ✔️ | pytorch | ❌ | online |
-| nanodet | ❌ | ✔️ | ❌ | pytorch_lightning | ❌ | online |
+| nanodet | ✔️ | ✔️ | ❌ | pytorch_lightning | ❌ | online |
 
-- online pretrained weights may download through network
+- `online` pretrained weights may download through network
 
-- local pretrained weights have copied to docker images when building image
+- `local` pretrained weights have copied to docker images when building image
 
 ### benchmark
 

@@ -68,7 +68,7 @@
 
 ## 比较
 
-| docker image | [finetune](https://github.com/modelai/ymir-executor-fork/wiki/use-yolov5-to-finetune-or-training-model) | tensorboard | args | framework | onnx | pretrained weight |
+| docker image | [finetune](https://github.com/modelai/ymir-executor-fork/wiki/use-yolov5-to-finetune-or-training-model) | tensorboard | args/cfg options | framework | onnx | pretrained weight |
 | - | - | - | - | - | - | - |
 | yolov4 | ? | ✔️ | ❌ | darknet + mxnet | ❌ | local |
 | yolov5 | ✔️ | ✔️ | ✔️ | pytorch | ✔️ | local+online |
@@ -76,11 +76,11 @@
 | mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
 | detectron2 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
 | vidt | ? | ✔️ | ✔️ | pytorch | ❌ | online |
-| nanodet | ❌ | ✔️ | ❌ | pytorch_lightning | ❌ | online |
+| nanodet | ✔️ | ✔️ | ❌ | pytorch_lightning | ❌ | online |
 
-- online 预训练权重可能在训练时通过网络下载
+- `online` 预训练权重可能在训练时通过网络下载
 
-- local 预训练权重在构建镜像时复制到了镜像
+- `local` 预训练权重在构建镜像时复制到了镜像
 
 ### benchmark
 
