@@ -6,11 +6,10 @@ import mmcv
 import torch.distributed as dist
 from mmcv.runner import DistEvalHook as BaseDistEvalHook
 from mmcv.runner import EvalHook as BaseEvalHook
+from mmdet.utils.util_ymir import write_ymir_training_result
 from torch.nn.modules.batchnorm import _BatchNorm
 from ymir_exc import monitor
-
-from mmdet.utils.util_ymir import (YmirStage, get_ymir_process,
-                                   write_ymir_training_result)
+from ymir_exc.util import YmirStage, get_ymir_process
 
 
 def _calc_dynamic_intervals(start_interval, dynamic_interval_list):

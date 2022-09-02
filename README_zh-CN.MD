@@ -58,6 +58,14 @@
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-vidt-cu111-tmi
     ```
 
+- [nanodet](https://github.com/modelai/ymir-nanodet/tree/ymir-dev)
+
+    - [change log](https://github.com/modelai/ymir-nanodet/tree/ymir-dev/ymir)
+
+    ```
+    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-nanodet-cu111-tmi
+    ```
+
 ## 比较
 
 | docker image | [finetune](https://github.com/modelai/ymir-executor-fork/wiki/use-yolov5-to-finetune-or-training-model) | tensorboard | args | framework | onnx | pretrained weight |
@@ -68,6 +76,7 @@
 | mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
 | detectron2 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
 | vidt | ? | ✔️ | ✔️ | pytorch | ❌ | online |
+| nanodet | ❌ | ✔️ | ❌ | pytorch_lightning | ❌ | online |
 
 - online 预训练权重可能在训练时通过网络下载
 
@@ -159,11 +168,13 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 ## 参考
 
 - [挖掘算法CALD](https://github.com/we1pingyu/CALD/)
+- [yolov4](https://github.com/AlexeyAB/darknet)
 - [yolov5](https://github.com/ultralytics/yolov5)
 - [mmdetection](https://github.com/open-mmlab/mmdetection)
 - [yolov7](https://github.com/wongkinyiu/yolov7)
 - [detectron2](https://github.com/facebookresearch/detectron2)
 - [vidt](https://github.com/naver-ai/vidt)
+- [nanodet](https://github.com/RangiLyu/nanodet)
 
 ---
 

@@ -9,14 +9,12 @@ import numpy as np
 from easydict import EasyDict as edict
 from mmcv import DictAction
 from mmdet.apis import inference_detector, init_detector
-from mmdet.utils.util_ymir import YmirStage, get_merged_config, get_weight_file, get_ymir_process
-from nptyping import NDArray, Shape
+from mmdet.utils.util_ymir import get_weight_file
 from tqdm import tqdm
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
-
-DETECTION_RESULT = NDArray[Shape['*,5'], Any]
+from ymir_exc.util import YmirStage, get_merged_config, get_ymir_process
 
 
 def parse_option(cfg_options: str) -> dict:
@@ -35,7 +33,10 @@ def parse_option(cfg_options: str) -> dict:
     return args.cfg_options
 
 
-def mmdet_result_to_ymir(results: List[DETECTION_RESULT], class_names: List[str]) -> List[rw.Annotation]:
+def mmdet_result_to_ymir(results: List[Any], class_names: List[str]) -> List[rw.Annotation]:
+    """
+    results: List[NDArray[Shape['*,5'], Any]]
+    """
     ann_list = []
     for idx, result in enumerate(results):
         for line in result:
