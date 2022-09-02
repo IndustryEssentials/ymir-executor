@@ -107,7 +107,7 @@ def update_consistency(consistency, consistency_per_aug, beta, pred_bboxes_key, 
         p = cls_scores_aug[aug_idx]
         q = cls_scores[origin_idx]
         m = (p + q) / 2.
-        js = 0.5 * entropy(p, m) + 0.5 * entropy(q, m)
+        js = 0.5 * entropy([p, 1 - p], [m, 1 - m]) + 0.5 * entropy([q, 1 - q], [m, 1 - m])
         if js < 0:
             js = 0
         consistency_box = max_iou
