@@ -12,7 +12,7 @@ from ymir_exc.util import YmirStage, get_merged_config, get_ymir_process
 
 def main(cfg: edict) -> int:
     # default ymir config
-    gpu_id = cfg.param.get("gpu_id", '0')
+    gpu_id: str = str(cfg.param.get("gpu_id", '0'))
     num_gpus = len(gpu_id.split(","))
     if num_gpus == 0:
         raise Exception(f'gpu_id = {gpu_id} is not valid, eg: 0 or 2,4')

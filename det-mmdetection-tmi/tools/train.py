@@ -16,7 +16,7 @@ from mmdet.apis import init_random_seed, set_random_seed, train_detector
 from mmdet.datasets import build_dataset
 from mmdet.models import build_detector
 from mmdet.utils import collect_env, get_root_logger, setup_multi_processes
-from mmdet.utils.util_ymir import _modify_mmdet_config
+from mmdet.utils.util_ymir import modify_mmdet_config
 from ymir_exc.util import get_merged_config
 
 
@@ -101,7 +101,7 @@ def main():
     cfg = Config.fromfile(args.config)
     print(cfg)
     # modify mmdet config from file
-    cfg = _modify_mmdet_config(mmdet_cfg=cfg, ymir_cfg=ymir_cfg)
+    cfg = modify_mmdet_config(mmdet_cfg=cfg, ymir_cfg=ymir_cfg)
 
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)

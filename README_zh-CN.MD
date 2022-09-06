@@ -84,9 +84,11 @@
 
 ### benchmark
 
-- training dataset: voc2012-train 5717 images
-- validation dataset: voc2012-val 5823 images
-- image size: 640
+- 训练集: voc2012-train 5717 images
+- 测试集: voc2012-val 5823 images
+- 图像大小: 640 (nanodet为416)
+
+**由于 coco 数据集包含 voc 数据集中的类, 因此这个对比并不公平, 仅供参考**
 
 gpu: single Tesla P4
 
@@ -105,6 +107,7 @@ gpu: single GeForce GTX 1080 Ti
 | yolov7 | 16 | 100 | yolov7-tiny | 70.4% | 5h | coco-pretrained |
 | mmdetection | 16 | 100 | yolox_tiny | 66.2% | 5h | coco-pretrained |
 | detectron2 | 2 | 20000 steps | retinanet_R_50_FPN_1x | 53.54% | 2h | imagenet-pretrained |
+| nanodet | 16 | 100 | nanodet-plus-m_416 | 58.63% | 5h | imagenet-pretrained |
 
 ---
 
@@ -155,13 +158,13 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 
 ## 如何制作自己的ymir-executor
 
-- [ymir-executor 制作指南](https://github.com/IndustryEssentials/ymir/blob/dev/docs/ymir-dataset-zh-CN.md)
+- [ymir-executor 制作指南](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/ymir-dataset-zh-CN.md)
 
 - [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk) ymir镜像开发辅助库
 
 ## 如何导入预训练模型
 
-- [如何导入外部模型](https://github.com/IndustryEssentials/ymir/blob/dev/docs/import-extra-models.md)
+- [如何导入外部模型](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/import-extra-models.md)
 
     - 通过ymir网页端的 `模型管理/模型列表/导入模型` 同样可以导入模型
 

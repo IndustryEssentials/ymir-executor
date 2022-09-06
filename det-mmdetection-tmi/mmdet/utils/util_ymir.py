@@ -19,7 +19,7 @@ BBOX = NDArray[Shape['*,4'], Any]
 CV_IMAGE = NDArray[Shape['*,*,3'], UInt8]
 
 
-def _modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
+def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
     """
     useful for training process
     - modify dataset config
@@ -83,6 +83,9 @@ def _modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
     mmdet_cfg.evaluation.metric = ymir_cfg.param.get('metric', 'bbox')
     # TODO Whether to evaluating the AP for each class
     # mmdet_cfg.evaluation.classwise = True
+
+    # fix DDP error
+    mmdet_cfg.find_unused_parameters = True
     return mmdet_cfg
 
 

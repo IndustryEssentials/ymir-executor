@@ -19,11 +19,10 @@ from typing import Any, List
 import cv2
 import numpy as np
 import torch.utils.data as td
-from scipy.stats import entropy
-from torch.utils.data._utils.collate import default_collate
-
 from mining.data_augment import cutout, horizontal_flip, resize, rotate
 from mining.mining_cald import get_ious
+from scipy.stats import entropy
+from torch.utils.data._utils.collate import default_collate
 from utils.augmentations import letterbox
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
