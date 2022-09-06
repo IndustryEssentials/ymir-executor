@@ -25,3 +25,7 @@ docker build -t ymir-executor/mmdet:cuda111-tmi --build-arg SERVER_MODE=dev --bu
 - add `training-template.yaml, infer-template.yaml, mining-template.yaml` for ymir pre-defined hyper-parameters.
 - add `docker/Dockerfile.cuda102, docker/Dockerfile.cuda111` to build docker image
 - remove `docker/Dockerfile` to avoid misuse
+
+---
+
+- 2022/09/06: set `find_unused_parameters = True`, fix DDP bug
