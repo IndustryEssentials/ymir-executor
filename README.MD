@@ -142,13 +142,13 @@ docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
 
 ## how to custom ymir-executor
 
-- [custom ymir-executor](https://github.com/IndustryEssentials/ymir/blob/dev/docs/ymir-dataset-zh-CN.md)
+- [custom ymir-executor](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/ymir-dataset-zh-CN.md)
 
 - [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk)
 
 ## how to import pretrained model weights
 
-- [import pretainted model weights](https://github.com/IndustryEssentials/ymir/blob/dev/docs/import-extra-models.md)
+- [import pretainted model weights](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/import-extra-models.md)
 
 ## reference
 

@@ -50,7 +50,13 @@ def main():
         logger.info('no python package needs to install')
 
     # step 3. run /app/start.py
-    cmd = 'python3 start.py'
+    if osp.exists('/app/start.py'):
+        cmd = 'python3 start.py'
+    elif osp.exists('/app/ymir/start.py'):
+        cmd = 'python3 ymir/start.py'
+    else:
+        raise Exception('cannot found start.py')
+
     logger.info(f'run task: {cmd}')
     subprocess.run(cmd.split(), check=True, cwd='/app')
 

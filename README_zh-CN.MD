@@ -158,13 +158,13 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 
 ## 如何制作自己的ymir-executor
 
-- [ymir-executor 制作指南](https://github.com/IndustryEssentials/ymir/blob/dev/docs/ymir-dataset-zh-CN.md)
+- [ymir-executor 制作指南](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/ymir-dataset-zh-CN.md)
 
 - [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk) ymir镜像开发辅助库
 
 ## 如何导入预训练模型
 
-- [如何导入外部模型](https://github.com/IndustryEssentials/ymir/blob/dev/docs/import-extra-models.md)
+- [如何导入外部模型](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/import-extra-models.md)
 
     - 通过ymir网页端的 `模型管理/模型列表/导入模型` 同样可以导入模型
 
