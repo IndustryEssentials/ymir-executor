@@ -174,6 +174,7 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 ## 参考
 
 - [挖掘算法CALD](https://github.com/we1pingyu/CALD/)
+- [挖掘算法ALDD](https://gitlab.com/haghdam/deep_active_learning)
 - [yolov4](https://github.com/AlexeyAB/darknet)
 - [yolov5](https://github.com/ultralytics/yolov5)
 - [mmdetection](https://github.com/open-mmlab/mmdetection)

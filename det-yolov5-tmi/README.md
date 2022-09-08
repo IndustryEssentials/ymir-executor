@@ -7,7 +7,7 @@ docker build -t ymir/ymir-executor:ymir1.1.0-cuda102-yolov5-tmi --build-arg SERV
 docker build -t ymir/ymir-executor:ymir1.1.0-cuda111-yolov5-tmi --build-arg SERVER_MODE=dev --build-arg YMIR=1.1.0 -f cuda111.dockerfile .
 ```
 
-## change log
+## main change log
 
 - add `start.py` and `utils/ymir_yolov5.py` for train/infer/mining
 
@@ -34,3 +34,7 @@ docker build -t ymir/ymir-executor:ymir1.1.0-cuda111-yolov5-tmi --build-arg SERV
 - modify `requirements.txt`
 
 - other modify support onnx export, not important.
+
+## new features
+
+- 2022/09/08: add aldd active learning algorithm for mining task. [Active Learning for Deep Detection Neural Networks (ICCV 2019)](https://gitlab.com/haghdam/deep_active_learning)
