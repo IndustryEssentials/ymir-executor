@@ -47,7 +47,7 @@ class ALDD(object):
             if len(scores) < self.num_classes:
                 warnings.warn('extend 1.0 to class_distribution_scores')
                 scores.extend([1.0] * (self.num_classes - len(scores)))
-            self.class_distribution_scores = np.array(scores, dtype=np.float32)
+            self.class_distribution_scores = np.array(scores[0:self.num_classes], dtype=np.float32)
         else:
             self.class_distribution_scores = np.array([1.0] * self.num_classes, dtype=np.float32)
 
