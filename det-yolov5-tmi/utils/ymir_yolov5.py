@@ -11,16 +11,15 @@ import numpy as np
 import torch
 import yaml
 from easydict import EasyDict as edict
+from models.common import DetectMultiBackend
 from nptyping import NDArray, Shape, UInt8
 from packaging.version import Version
-from ymir_exc import monitor
-from ymir_exc import result_writer as rw
-from ymir_exc.util import YmirStage, get_bool, get_weight_files, get_ymir_process
-
-from models.common import DetectMultiBackend
 from utils.augmentations import letterbox
 from utils.general import check_img_size, non_max_suppression, scale_coords
 from utils.torch_utils import select_device
+from ymir_exc import monitor
+from ymir_exc import result_writer as rw
+from ymir_exc.util import YmirStage, get_bool, get_weight_files, get_ymir_process
 
 BBOX = NDArray[Shape['*,4'], Any]
 CV_IMAGE = NDArray[Shape['*,*,3'], UInt8]
@@ -65,7 +64,7 @@ class YmirYolov5(torch.nn.Module):
             self.task_num = 1
 
         self.gpu_id: str = str(cfg.param.get('gpu_id', '0'))
-        device = select_device(self.gpu_id)
+        device = select_device(self.gpu_id)  # will set CUDA_VISIBLE_DEVICES=self.gpu_id
         self.gpu_count: int = len(self.gpu_id.split(',')) if self.gpu_id else 0
         self.batch_size_per_gpu: int = int(cfg.param.get('batch_size_per_gpu', 4))
         self.num_workers_per_gpu: int = int(cfg.param.get('num_workers_per_gpu', 4))

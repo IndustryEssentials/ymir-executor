@@ -17,4 +17,3 @@ opset: 11
 args_options: '--exist-ok'
 save_period: 10
 sync_bn: False # work for multi-gpu only
-port: 29500 # work for multi-gpu only

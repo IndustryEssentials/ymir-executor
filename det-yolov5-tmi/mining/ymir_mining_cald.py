@@ -29,7 +29,8 @@ WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 
 def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     # eg: gpu_id = 1,3,5,7  for LOCAL_RANK = 2, will use gpu 5.
-    gpu = int(ymir_yolov5.gpu_id.split(',')[LOCAL_RANK])
+    # gpu = int(ymir_yolov5.gpu_id.split(',')[LOCAL_RANK])
+    gpu = LOCAL_RANK if LOCAL_RANK >= 0 else 0
     device = torch.device('cuda', gpu)
     ymir_yolov5.to(device)
 
@@ -158,7 +159,8 @@ def main() -> int:
 
     if LOCAL_RANK != -1:
         assert torch.cuda.device_count() > LOCAL_RANK, 'insufficient CUDA devices for DDP command'
-        gpu = int(ymir_yolov5.gpu_id.split(',')[LOCAL_RANK])
+        # gpu = int(ymir_yolov5.gpu_id.split(',')[LOCAL_RANK])
+        gpu = LOCAL_RANK if LOCAL_RANK >= 0 else 0
         torch.cuda.set_device(gpu)
         dist.init_process_group(backend="nccl" if dist.is_nccl_available() else "gloo")
 
