@@ -5,7 +5,7 @@ import glob
 import logging
 import os
 import os.path as osp
-from typing import Any, List, Optional
+from typing import Any, Iterable, List, Optional
 
 import mmcv
 import yaml
@@ -19,13 +19,24 @@ BBOX = NDArray[Shape['*,4'], Any]
 CV_IMAGE = NDArray[Shape['*,*,3'], UInt8]
 
 
-def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
+def modify_mmcv_config(mmcv_cfg: Config, ymir_cfg: edict) -> None:
     """
     useful for training process
     - modify dataset config
     - modify model output channel
     - modify epochs, checkpoint, tensorboard config
     """
+    def recursive_modify(mmcv_cfg: Config, attribute_key: str, attribute_value: Any):
+        for key in mmcv_cfg:
+            if key == attribute_key:
+                mmcv_cfg[key] = attribute_value
+            elif isinstance(mmcv_cfg[key], Config):
+                recursive_modify(mmcv_cfg[key], attribute_key, attribute_value)
+            elif isinstance(mmcv_cfg[key], Iterable):
+                for cfg in mmcv_cfg[key]:
+                    if isinstance(cfg, Config):
+                        recursive_modify(cfg, attribute_key, attribute_value)
+
     # modify dataset config
     ymir_ann_files = dict(train=ymir_cfg.ymir.input.training_index_file,
                           val=ymir_cfg.ymir.input.val_index_file,
@@ -35,8 +46,11 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
     # so set smaller samples_per_gpu for validation
     samples_per_gpu = ymir_cfg.param.samples_per_gpu
     workers_per_gpu = ymir_cfg.param.workers_per_gpu
-    mmdet_cfg.data.samples_per_gpu = samples_per_gpu
-    mmdet_cfg.data.workers_per_gpu = workers_per_gpu
+    mmcv_cfg.data.samples_per_gpu = samples_per_gpu
+    mmcv_cfg.data.workers_per_gpu = workers_per_gpu
+
+    num_classes = len(ymir_cfg.param.class_names)
+    recursive_modify(mmcv_cfg.model, 'num_classes', num_classes)
 
     for split in ['train', 'val', 'test']:
         ymir_dataset_cfg = dict(type='YmirDataset',
@@ -47,7 +61,7 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
                                 data_root=ymir_cfg.ymir.input.root_dir,
                                 filter_empty_gt=False)
         # modify dataset config for `split`
-        mmdet_dataset_cfg = mmdet_cfg.data.get(split, None)
+        mmdet_dataset_cfg = mmcv_cfg.data.get(split, None)
         if mmdet_dataset_cfg is None:
             continue
 
@@ -63,33 +77,65 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
             else:
                 raise Exception(f'unsupported source dataset type {src_dataset_type}')
 
-    # modify model output channel
-    mmdet_model_cfg = mmdet_cfg.model.bbox_head
-    mmdet_model_cfg.num_classes = len(ymir_cfg.param.class_names)
+    # # modify model output channel
+    # if mmcv_cfg.model.get('bbox_head'):  # yolox, yolo, yolof, retinanet, ssd
+    #     mmdet_model_cfg = mmcv_cfg.model.bbox_head
+    # elif mmcv_cfg.model.get('roi_head'):  # Faster-RCNN, fast-rcnn
+    #     mmdet_model_cfg = mmcv_cfg.model.roi_head.bbox_head
+    # elif mmcv_cfg.model.get('mask_head'):  # SOLO
+    #     mmdet_model_cfg = mmcv_cfg.model.mask_head
+    # else:
+    #     raise Exception('unknown model structure')
+
+    # if mmdet_model_cfg.get('num_classes'):
+    #     mmdet_model_cfg.num_classes = len(ymir_cfg.param.class_names)
+    # else:
+    #     raise Exception('unknown model structure, no attr num_classes found')
 
     # modify epochs, checkpoint, tensorboard config
     if ymir_cfg.param.get('max_epochs', None):
-        mmdet_cfg.runner.max_epochs = ymir_cfg.param.max_epochs
-    mmdet_cfg.checkpoint_config['out_dir'] = ymir_cfg.ymir.output.models_dir
+        mmcv_cfg.runner.max_epochs = ymir_cfg.param.max_epochs
+    mmcv_cfg.checkpoint_config['out_dir'] = ymir_cfg.ymir.output.models_dir
     tensorboard_logger = dict(type='TensorboardLoggerHook', log_dir=ymir_cfg.ymir.output.tensorboard_dir)
-    if len(mmdet_cfg.log_config['hooks']) <= 1:
-        mmdet_cfg.log_config['hooks'].append(tensorboard_logger)
+    if len(mmcv_cfg.log_config['hooks']) <= 1:
+        mmcv_cfg.log_config['hooks'].append(tensorboard_logger)
     else:
-        mmdet_cfg.log_config['hooks'][1].update(tensorboard_logger)
+        mmcv_cfg.log_config['hooks'][1].update(tensorboard_logger)
 
     # modify evaluation and interval
-    interval = max(1, mmdet_cfg.runner.max_epochs // 30)
-    mmdet_cfg.evaluation.interval = interval
-    mmdet_cfg.evaluation.metric = ymir_cfg.param.get('metric', 'bbox')
+    interval = max(1, mmcv_cfg.runner.max_epochs // 10)
+    mmcv_cfg.evaluation.interval = interval
+    mmcv_cfg.evaluation.metric = ymir_cfg.param.get('metric', 'bbox')
+    mmcv_cfg.checkpoint_config.interval = mmcv_cfg.evaluation.interval
     # TODO Whether to evaluating the AP for each class
     # mmdet_cfg.evaluation.classwise = True
 
     # fix DDP error
-    mmdet_cfg.find_unused_parameters = True
-    return mmdet_cfg
+    mmcv_cfg.find_unused_parameters = True
+
+    # set work dir
+    mmcv_cfg.work_dir = ymir_cfg.ymir.output.models_dir
+
+    args_options = ymir_cfg.param.get("args_options", '')
+    cfg_options = ymir_cfg.param.get("cfg_options", '')
+
+    # auto load offered weight file if not set by user!
+    if (args_options.find('--resume-from') == -1 and
+        args_options.find('--load-from') == -1 and
+        cfg_options.find('load_from') == -1 and
+        cfg_options.find('resume_from') == -1):  # noqa: E129
+
+        weight_file = get_best_weight_file(ymir_cfg)
+        if weight_file:
+            if cfg_options:
+                cfg_options += f' load_from={weight_file}'
+            else:
+                cfg_options = f'load_from={weight_file}'
+        else:
+            logging.warning('no weight file used for training!')
 
 
-def get_weight_file(cfg: edict) -> str:
+def get_best_weight_file(cfg: edict) -> str:
     """
     return the weight file path by priority
     find weight file in cfg.param.pretrained_model_params or cfg.param.model_params_path
@@ -118,6 +164,7 @@ def get_weight_file(cfg: edict) -> str:
     if cfg.ymir.run_training:
         weight_files = [f for f in glob.glob('/weights/**/*', recursive=True) if f.endswith(('.pth', '.pt'))]
 
+        # load pretrained model weight for yolox only
         model_name_splits = osp.basename(cfg.param.config_file).split('_')
         if len(weight_files) > 0 and model_name_splits[0] == 'yolox':
             yolox_weight_files = [
