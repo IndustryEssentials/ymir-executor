@@ -56,6 +56,7 @@ def _run_training(cfg: edict) -> None:
     # 2. training model
     epochs: int = int(cfg.param.epochs)
     batch_size_per_gpu: int = int(cfg.param.batch_size_per_gpu)
+    num_workers_per_gpu: int = int(cfg.param.get('num_workers_per_gpu', 8))
     model: str = cfg.param.model
     img_size: int = int(cfg.param.img_size)
     save_period: int = max(1, min(epochs // 10, int(cfg.param.save_period)))
@@ -87,7 +88,8 @@ def _run_training(cfg: edict) -> None:
         str(batch_size), '--data', f'{out_dir}/data.yaml', '--project', project, '--cfg', f'models/{model}.yaml',
         '--name', name, '--weights', weights, '--img-size',
         str(img_size), '--save-period',
-        str(save_period), '--device', device
+        str(save_period), '--device', device,
+        '--workers', str(num_workers_per_gpu)
     ])
 
     if gpu_count > 1 and sync_bn:
