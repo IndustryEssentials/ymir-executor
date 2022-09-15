@@ -74,7 +74,7 @@ class ALDD(object):
         scores = torch.mean(unc, dim=(1, 2, 3))
         return scores
 
-    def compute_aldd_score(self, net_output: torch.Tensor, net_input_shape: Any):
+    def compute_aldd_score(self, net_output: List[torch.Tensor], net_input_shape: Any):
         """
         args:
             imgs: list[np.array(H, W, C)]
@@ -87,27 +87,35 @@ class ALDD(object):
         # CLASS_DISTRIBUTION_SCORE = np.array([1.0] * num_of_class)
         scores_list = []
 
+        for feature_map in net_output:
+            feature_map.sigmoid_()
+
         for each_class_index in range(self.num_classes):
             feature_map_list: List[torch.Tensor] = []
 
+            # each_output_feature_map: [bs, 3, h, w, 5 + num_classes]
             for each_output_feature_map in net_output:
-                each_output_feature_map.sigmoid_()
                 net_output_conf = each_output_feature_map[:, :, :, :, 4]
                 net_output_cls_mult_conf = net_output_conf * each_output_feature_map[:, :, :, :, 5 + each_class_index]
+                # feature_map_reshape: [bs, 3, h, w]
                 feature_map_reshape = torch.nn.functional.interpolate(net_output_cls_mult_conf,
                                                                       net_input_shape,
                                                                       mode='bilinear',
                                                                       align_corners=False)
                 feature_map_list.append(feature_map_reshape)
 
+            # len(net_output) = 3
+            # feature_map_concate: [bs, 9, h, w]
             feature_map_concate = torch.cat(feature_map_list, 1)
+            # scores: [bs, 1]
             scores = self.calc_unc_val(feature_map_concate)
             scores = scores.cpu().detach().numpy()
             scores_list.append(scores)
 
+        # total_scores: [bs, num_classes]
         total_scores = np.array(scores_list)
         total_scores = total_scores * self.class_distribution_scores
-        total_scores = np.sum(total_scores, axis=0)
+        total_scores = np.sum(total_scores, axis=1)
 
         return total_scores
 
