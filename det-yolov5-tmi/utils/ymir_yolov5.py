@@ -85,6 +85,12 @@ class YmirYolov5(torch.nn.Module):
         self.model.warmup(imgsz=(1, 3, *imgsz), half=False)  # warmup
         self.img_size: List[int] = imgsz
 
+    def extract_feats(self, x):
+        """
+        return the feature maps before sigmoid for mining
+        """
+        return self.model.model(x)[1]
+
     def forward(self, x, nms=False):
         pred = self.model(x)
         if not nms:

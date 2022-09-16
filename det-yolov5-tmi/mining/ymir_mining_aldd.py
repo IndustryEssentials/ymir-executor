@@ -14,6 +14,7 @@ from typing import Any, List
 import numpy as np
 import torch
 import torch.distributed as dist
+import torch.nn.functional as F
 import torch.utils.data as td
 from easydict import EasyDict as edict
 from mining.util import YmirDataset, load_image_file
@@ -29,17 +30,9 @@ WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 
 class ALDD(object):
     def __init__(self, ymir_cfg: edict):
-        avg_pool_kernel = 9
-        max_pool_kernel = 30
-        pad = (avg_pool_kernel - 1) // 2
-
-        self.avg_pooling_layer = torch.nn.AvgPool2d(kernel_size=(avg_pool_kernel, avg_pool_kernel),
-                                                    stride=(1, 1),
-                                                    count_include_pad=False,
-                                                    padding=(pad, pad))
-        self.max_pooling_layer = torch.nn.MaxPool2d(kernel_size=(max_pool_kernel, max_pool_kernel),
-                                                    stride=(30, 30),
-                                                    padding=(2, 2))
+        self.avg_pool_size = 9
+        self.max_pool_size = 32
+        self.avg_pool_pad = (self.avg_pool_size - 1) // 2
 
         self.num_classes = len(ymir_cfg.param.class_names)
         if ymir_cfg.param.get('class_distribution_scores', ''):
@@ -53,25 +46,32 @@ class ALDD(object):
 
     def calc_unc_val(self, heatmap: torch.Tensor) -> torch.Tensor:
         # mean of entropy
-        prob_pixel = heatmap
-        prob_pixel_m1 = 1 - heatmap
-        ent = -(prob_pixel * torch.log(prob_pixel + 1e-12) + prob_pixel_m1 * torch.log(prob_pixel_m1 + 1e-12)
-                )  # N, C, H, W
-        ent = torch.sum(ent, dim=1, keepdim=True)  # N, 1, H, W
-        mean_of_entropy = self.avg_pooling_layer(ent)  # N, 1, H, W
+        ent = F.binary_cross_entropy(heatmap, heatmap, reduction='none')
+        avg_ent = F.avg_pool2d(ent,
+                               kernel_size=self.avg_pool_size,
+                               stride=1,
+                               padding=self.avg_pool_pad,
+                               count_include_pad=False)  # N, 1, H, W
+        mean_of_entropy = torch.sum(avg_ent, dim=1, keepdim=True)  # N, 1, H, W
 
         # entropy of mean
-        prob_local = self.avg_pooling_layer(heatmap)  # N, C, H, W
-        prob_local_m1 = 1 - prob_local
-        entropy_of_mean = -(
-            prob_local * torch.log(prob_local + 1e-12) + prob_local_m1 * torch.log(prob_local_m1 + 1e-12))  # N, C, H, W
-        entropy_of_mean = torch.sum(entropy_of_mean, dim=1, keepdim=True)  # N, 1, H, W
+        avg_heatmap = F.avg_pool2d(heatmap,
+                                   kernel_size=self.avg_pool_size,
+                                   stride=1,
+                                   padding=self.avg_pool_pad,
+                                   count_include_pad=False)  # N, C, H, W
+        ent_avg = F.binary_cross_entropy(avg_heatmap, avg_heatmap, reduction='none')
+        entropy_of_mean = torch.sum(ent_avg, dim=1, keepdim=True)  # N, 1, H, W
 
         uncertainty = entropy_of_mean - mean_of_entropy
-        unc = self.max_pooling_layer(uncertainty)
+        unc = F.max_pool2d(uncertainty,
+                           kernel_size=self.max_pool_size,
+                           stride=self.max_pool_size,
+                           padding=0,
+                           ceil_mode=False)
 
         # aggregating
-        scores = torch.mean(unc, dim=(1, 2, 3))
+        scores = torch.mean(unc, dim=(1, 2, 3))  # (N,)
         return scores
 
     def compute_aldd_score(self, net_output: List[torch.Tensor], net_input_shape: Any):
@@ -98,22 +98,22 @@ class ALDD(object):
                 net_output_conf = each_output_feature_map[:, :, :, :, 4]
                 net_output_cls_mult_conf = net_output_conf * each_output_feature_map[:, :, :, :, 5 + each_class_index]
                 # feature_map_reshape: [bs, 3, h, w]
-                feature_map_reshape = torch.nn.functional.interpolate(net_output_cls_mult_conf,
-                                                                      net_input_shape,
-                                                                      mode='bilinear',
-                                                                      align_corners=False)
+                feature_map_reshape = F.interpolate(net_output_cls_mult_conf,
+                                                    net_input_shape,
+                                                    mode='bilinear',
+                                                    align_corners=False)
                 feature_map_list.append(feature_map_reshape)
 
             # len(net_output) = 3
             # feature_map_concate: [bs, 9, h, w]
             feature_map_concate = torch.cat(feature_map_list, 1)
-            # scores: [bs, 1]
+            # scores: [bs, 1] for each class
             scores = self.calc_unc_val(feature_map_concate)
             scores = scores.cpu().detach().numpy()
             scores_list.append(scores)
 
         # total_scores: [bs, num_classes]
-        total_scores = np.array(scores_list)
+        total_scores = np.stack(scores_list, axis=1)
         total_scores = total_scores * self.class_distribution_scores
         total_scores = np.sum(total_scores, axis=1)
 
