@@ -14,6 +14,7 @@ from mmcv import Config
 from nptyping import NDArray, Shape, UInt8
 from packaging.version import Version
 from ymir_exc import result_writer as rw
+from ymir_exc.util import get_merged_config
 
 BBOX = NDArray[Shape['*,4'], Any]
 CV_IMAGE = NDArray[Shape['*,*,3'], UInt8]
@@ -101,11 +102,17 @@ def modify_mmcv_config(mmcv_cfg: Config, ymir_cfg: edict) -> None:
     if val_interval > 0:
         val_interval = min(val_interval, mmcv_cfg.runner.max_epochs)
     else:
-        val_interval = max(1, mmcv_cfg.runner.max_epochs // 10)
+        val_interval = 1
 
     mmcv_cfg.evaluation.interval = val_interval
     mmcv_cfg.evaluation.metric = ymir_cfg.param.get('metric', 'bbox')
+
+    # save best top-k model weights files
+    # max_keep_ckpts <= 0  # save all checkpoints
+    max_keep_ckpts: int = int(ymir_cfg.param.get('max_keep_checkpoints', 1))
     mmcv_cfg.checkpoint_config.interval = mmcv_cfg.evaluation.interval
+    mmcv_cfg.checkpoint_config.max_keep_ckpts = max_keep_ckpts
+
     # TODO Whether to evaluating the AP for each class
     # mmdet_cfg.evaluation.classwise = True
 
@@ -189,6 +196,30 @@ def write_ymir_training_result(last: bool = False, key_score: Optional[float] = 
         _write_ancient_ymir_training_result(key_score)
 
 
+def get_topk_checkpoints(files: List[str], k: int) -> List[str]:
+    """
+    keep topk checkpoint files, remove other files.
+    """
+    checkpoints_files = [f for f in files if f.endswith(('.pth', '.pt'))]
+
+    best_pth_files = [f for f in checkpoints_files if osp.basename(f).startswith('best_')]
+    if len(best_pth_files) > 0:
+        # newest first
+        topk_best_pth_files = sorted(best_pth_files, key=os.path.getctime, reverse=True)
+    else:
+        topk_best_pth_files = []
+
+    epoch_pth_files = [f for f in checkpoints_files if osp.basename(f).startswith(('epoch_', 'iter_'))]
+    if len(epoch_pth_files) > 0:
+        topk_epoch_pth_files = sorted(epoch_pth_files, key=os.path.getctime, reverse=True)
+    else:
+        topk_epoch_pth_files = []
+
+    # python will check the length of list
+    return topk_best_pth_files[0:k] + topk_epoch_pth_files[0:k]
+
+
+# TODO save topk checkpoints, fix invalid stage due to delete checkpoint
 def _write_latest_ymir_training_result(last: bool = False, key_score: Optional[float] = None):
     if key_score:
         logging.info(f'key_score is {key_score}')
@@ -209,6 +240,11 @@ def _write_latest_ymir_training_result(last: bool = False, key_score: Optional[f
 
     if last:
         # save all output file
+        ymir_cfg = get_merged_config()
+        max_keep_checkpoints = int(ymir_cfg.param.get('max_keep_checkpoints', 1))
+        if max_keep_checkpoints > 0:
+            topk_checkpoints = get_topk_checkpoints(result_files, max_keep_checkpoints)
+            result_files = [f for f in result_files if not f.endswith(('.pth', '.pt'))] + topk_checkpoints
         rw.write_model_stage(files=result_files, mAP=float(map), stage_name='last')
     else:
         # save newest weight file in format epoch_xxx.pth or iter_xxx.pth
@@ -245,12 +281,16 @@ def _write_ancient_ymir_training_result(key_score: Optional[float] = None):
     # eval_result may be empty dict {}.
     map = eval_result.get('bbox_mAP_50', 0)
 
-    WORK_DIR = os.getenv('YMIR_MODELS_DIR')
-    if WORK_DIR is None or not osp.isdir(WORK_DIR):
-        raise Exception(f'please set valid environment variable YMIR_MODELS_DIR, invalid directory {WORK_DIR}')
+    ymir_cfg = get_merged_config()
+    WORK_DIR = ymir_cfg.ymir.output.models_dir
 
     # assert only one model config file in work_dir
     result_files = [osp.basename(f) for f in glob.glob(osp.join(WORK_DIR, '*')) if osp.basename(f) != 'result.yaml']
+
+    max_keep_checkpoints = int(ymir_cfg.param.get('max_keep_checkpoints', 1))
+    if max_keep_checkpoints > 0:
+        topk_checkpoints = get_topk_checkpoints(result_files, max_keep_checkpoints)
+        result_files = [f for f in result_files if not f.endswith(('.pth', '.pt'))] + topk_checkpoints
 
     training_result_file = osp.join(WORK_DIR, 'result.yaml')
     if osp.exists(training_result_file):

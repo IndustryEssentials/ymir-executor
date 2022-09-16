@@ -3,6 +3,7 @@
 Common modules
 """
 
+import os
 import json
 import math
 import platform
@@ -41,7 +42,17 @@ class Conv(nn.Module):
         super().__init__()
         self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p), groups=g, bias=False)
         self.bn = nn.BatchNorm2d(c2)
-        self.act = nn.Hardswish() if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
+
+        activation = os.environ.get('ACTIVATION', None)
+        if activation is None:
+            self.act = nn.Hardswish() if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
+        else:
+            if activation.lower() == 'relu':
+                custom_act = nn.ReLU()
+            else:
+                warnings.warn(f'unknown activation {activation}, use Hardswish instead')
+                custom_act = nn.Hardswish()
+            self.act = custom_act if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
 
     def forward(self, x):
         return self.act(self.bn(self.conv(x)))
@@ -115,7 +126,15 @@ class BottleneckCSP(nn.Module):
         self.cv3 = nn.Conv2d(c_, c_, 1, 1, bias=False)
         self.cv4 = Conv(2 * c_, c2, 1, 1)
         self.bn = nn.BatchNorm2d(2 * c_)  # applied to cat(cv2, cv3)
-        self.act = nn.SiLU()
+        activation = os.environ.get('ACTIVATION', None)
+        if activation is None:
+            self.act = nn.SiLU()
+        else:
+            if activation.lower() == 'relu':
+                self.act = nn.ReLU()
+            else:
+                warnings.warn(f'unknown activation {activation}, use SiLU instead')
+                self.act = nn.SiLU()
         self.m = nn.Sequential(*(Bottleneck(c_, c_, shortcut, g, e=1.0) for _ in range(n)))
 
     def forward(self, x):

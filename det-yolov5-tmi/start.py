@@ -14,9 +14,7 @@ from ymir_exc.util import (YmirStage, find_free_port, get_bool, get_merged_confi
                            write_ymir_training_result)
 
 
-def start() -> int:
-    cfg = get_merged_config()
-
+def start(cfg: edict) -> int:
     logging.info(f'merged config: {cfg}')
 
     if cfg.ymir.run_training:
@@ -187,5 +185,11 @@ if __name__ == '__main__':
                         datefmt='%Y%m%d-%H:%M:%S',
                         level=logging.INFO)
 
+    cfg = get_merged_config()
     os.environ.setdefault('PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION', 'python')
-    sys.exit(start())
+
+    # activation: relu
+    activation: str = cfg.param.get('activation', '')
+    if activation:
+        os.environ.setdefault('ACTIVATION', activation)
+    sys.exit(start(cfg))
