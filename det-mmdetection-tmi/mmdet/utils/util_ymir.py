@@ -26,16 +26,23 @@ def modify_mmcv_config(mmcv_cfg: Config, ymir_cfg: edict) -> None:
     - modify model output channel
     - modify epochs, checkpoint, tensorboard config
     """
-    def recursive_modify(mmcv_cfg: Config, attribute_key: str, attribute_value: Any):
+    def recursive_modify_attribute(mmcv_cfg: Config, attribute_key: str, attribute_value: Any):
+        """
+        recursive modify mmcv_cfg:
+            1. mmcv_cfg.attribute_key to attribute_value
+            2. mmcv_cfg.xxx.xxx.xxx.attribute_key to attribute_value (recursive)
+            3. mmcv_cfg.xxx[i].attribute_key to attribute_value (i=0, 1, 2 ...)
+            4. mmcv_cfg.xxx[i].xxx.xxx[j].attribute_key to attribute_value
+        """
         for key in mmcv_cfg:
             if key == attribute_key:
                 mmcv_cfg[key] = attribute_value
             elif isinstance(mmcv_cfg[key], Config):
-                recursive_modify(mmcv_cfg[key], attribute_key, attribute_value)
+                recursive_modify_attribute(mmcv_cfg[key], attribute_key, attribute_value)
             elif isinstance(mmcv_cfg[key], Iterable):
                 for cfg in mmcv_cfg[key]:
                     if isinstance(cfg, Config):
-                        recursive_modify(cfg, attribute_key, attribute_value)
+                        recursive_modify_attribute(cfg, attribute_key, attribute_value)
 
     # modify dataset config
     ymir_ann_files = dict(train=ymir_cfg.ymir.input.training_index_file,
@@ -49,8 +56,9 @@ def modify_mmcv_config(mmcv_cfg: Config, ymir_cfg: edict) -> None:
     mmcv_cfg.data.samples_per_gpu = samples_per_gpu
     mmcv_cfg.data.workers_per_gpu = workers_per_gpu
 
+    # modify model output channel
     num_classes = len(ymir_cfg.param.class_names)
-    recursive_modify(mmcv_cfg.model, 'num_classes', num_classes)
+    recursive_modify_attribute(mmcv_cfg.model, 'num_classes', num_classes)
 
     for split in ['train', 'val', 'test']:
         ymir_dataset_cfg = dict(type='YmirDataset',
@@ -77,24 +85,9 @@ def modify_mmcv_config(mmcv_cfg: Config, ymir_cfg: edict) -> None:
             else:
                 raise Exception(f'unsupported source dataset type {src_dataset_type}')
 
-    # # modify model output channel
-    # if mmcv_cfg.model.get('bbox_head'):  # yolox, yolo, yolof, retinanet, ssd
-    #     mmdet_model_cfg = mmcv_cfg.model.bbox_head
-    # elif mmcv_cfg.model.get('roi_head'):  # Faster-RCNN, fast-rcnn
-    #     mmdet_model_cfg = mmcv_cfg.model.roi_head.bbox_head
-    # elif mmcv_cfg.model.get('mask_head'):  # SOLO
-    #     mmdet_model_cfg = mmcv_cfg.model.mask_head
-    # else:
-    #     raise Exception('unknown model structure')
-
-    # if mmdet_model_cfg.get('num_classes'):
-    #     mmdet_model_cfg.num_classes = len(ymir_cfg.param.class_names)
-    # else:
-    #     raise Exception('unknown model structure, no attr num_classes found')
-
     # modify epochs, checkpoint, tensorboard config
     if ymir_cfg.param.get('max_epochs', None):
-        mmcv_cfg.runner.max_epochs = ymir_cfg.param.max_epochs
+        mmcv_cfg.runner.max_epochs = int(ymir_cfg.param.max_epochs)
     mmcv_cfg.checkpoint_config['out_dir'] = ymir_cfg.ymir.output.models_dir
     tensorboard_logger = dict(type='TensorboardLoggerHook', log_dir=ymir_cfg.ymir.output.tensorboard_dir)
     if len(mmcv_cfg.log_config['hooks']) <= 1:
@@ -102,9 +95,15 @@ def modify_mmcv_config(mmcv_cfg: Config, ymir_cfg: edict) -> None:
     else:
         mmcv_cfg.log_config['hooks'][1].update(tensorboard_logger)
 
+    # TODO save only the best top-k model weight files.
     # modify evaluation and interval
-    interval = max(1, mmcv_cfg.runner.max_epochs // 10)
-    mmcv_cfg.evaluation.interval = interval
+    val_interval: int = int(ymir_cfg.param.get('val_interval', 1))
+    if val_interval > 0:
+        val_interval = min(val_interval, mmcv_cfg.runner.max_epochs)
+    else:
+        val_interval = max(1, mmcv_cfg.runner.max_epochs // 10)
+
+    mmcv_cfg.evaluation.interval = val_interval
     mmcv_cfg.evaluation.metric = ymir_cfg.param.get('metric', 'bbox')
     mmcv_cfg.checkpoint_config.interval = mmcv_cfg.evaluation.interval
     # TODO Whether to evaluating the AP for each class
@@ -120,10 +119,8 @@ def modify_mmcv_config(mmcv_cfg: Config, ymir_cfg: edict) -> None:
     cfg_options = ymir_cfg.param.get("cfg_options", '')
 
     # auto load offered weight file if not set by user!
-    if (args_options.find('--resume-from') == -1 and
-        args_options.find('--load-from') == -1 and
-        cfg_options.find('load_from') == -1 and
-        cfg_options.find('resume_from') == -1):  # noqa: E129
+    if (args_options.find('--resume-from') == -1 and args_options.find('--load-from') == -1
+            and cfg_options.find('load_from') == -1 and cfg_options.find('resume_from') == -1):  # noqa: E129
 
         weight_file = get_best_weight_file(ymir_cfg)
         if weight_file:

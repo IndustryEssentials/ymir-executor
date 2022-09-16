@@ -122,7 +122,6 @@ class ALDD(object):
 
 def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     # eg: gpu_id = 1,3,5,7  for LOCAL_RANK = 2, will use gpu 5.
-    # gpu = int(ymir_yolov5.gpu_id.split(',')[LOCAL_RANK])
     gpu = LOCAL_RANK if LOCAL_RANK >= 0 else 0
     device = torch.device('cuda', gpu)
     ymir_yolov5.to(device)
@@ -178,7 +177,6 @@ def main() -> int:
 
     if LOCAL_RANK != -1:
         assert torch.cuda.device_count() > LOCAL_RANK, 'insufficient CUDA devices for DDP command'
-        # gpu = int(ymir_yolov5.gpu_id.split(',')[LOCAL_RANK])
         gpu = LOCAL_RANK if LOCAL_RANK >= 0 else 0
         torch.cuda.set_device(gpu)
         dist.init_process_group(backend="nccl" if dist.is_nccl_available() else "gloo")
@@ -186,7 +184,7 @@ def main() -> int:
     run(ymir_cfg, ymir_yolov5)
 
     # wait all process to save the mining result
-    if WORLD_SIZE > 1:
+    if LOCAL_RANK != -1:
         dist.barrier()
 
     if RANK in [0, -1]:
@@ -200,7 +198,8 @@ def main() -> int:
                 ymir_mining_result.append((img_file, score))
         rw.write_mining_result(mining_result=ymir_mining_result)
 
-    print(f'rank: {RANK}, start destroy process group')
+    if LOCAL_RANK != -1:
+        print(f'rank: {RANK}, start destroy process group')
     dist.destroy_process_group()
     return 0
 
