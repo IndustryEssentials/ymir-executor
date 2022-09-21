@@ -58,6 +58,10 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     monitor_gap = max(1, dataset_size // 1000 // batch_size_per_gpu)
     pbar = tqdm(origin_dataset_loader) if RANK == 0 else origin_dataset_loader
     for idx, batch in enumerate(pbar):
+        # batch-level sync, avoid 30min time-out error
+        if LOCAL_RANK != -1:
+            dist.barrier()
+
         with torch.no_grad():
             pred = ymir_yolov5.forward(batch['image'].float().to(device), nms=True)
 

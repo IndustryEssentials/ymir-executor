@@ -283,6 +283,10 @@ class YmirMining(YmirModel):
         beta = 1.3
         mining_result = []
         for asset_path in tbar:
+            # batch-level sync, avoid 30min time-out error
+            if LOCAL_RANK != -1:
+                dist.barrier()
+
             img = cv2.imread(asset_path)
             # xyxy,conf,cls
             result = self.predict(img)

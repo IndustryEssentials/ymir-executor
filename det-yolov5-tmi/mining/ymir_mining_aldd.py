@@ -157,6 +157,10 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     pbar = tqdm(origin_dataset_loader) if RANK == 0 else origin_dataset_loader
     miner = ALDD(ymir_cfg)
     for idx, batch in enumerate(pbar):
+        # batch-level sync, avoid 30min time-out error
+        if LOCAL_RANK != -1:
+            dist.barrier()
+
         with torch.no_grad():
             featuremap_output = ymir_yolov5.model.model(batch['image'].float().to(device))[1]
             unc_scores = miner.compute_aldd_score(featuremap_output, ymir_yolov5.img_size)
@@ -200,7 +204,7 @@ def main() -> int:
 
     if LOCAL_RANK != -1:
         print(f'rank: {RANK}, start destroy process group')
-    dist.destroy_process_group()
+        dist.destroy_process_group()
     return 0
 
 
