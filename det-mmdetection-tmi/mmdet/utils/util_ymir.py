@@ -5,7 +5,7 @@ import glob
 import logging
 import os
 import os.path as osp
-from typing import Any, List, Optional
+from typing import Any, Iterable, List, Optional
 
 import mmcv
 import yaml
@@ -14,18 +14,37 @@ from mmcv import Config
 from nptyping import NDArray, Shape, UInt8
 from packaging.version import Version
 from ymir_exc import result_writer as rw
+from ymir_exc.util import get_merged_config
 
 BBOX = NDArray[Shape['*,4'], Any]
 CV_IMAGE = NDArray[Shape['*,*,3'], UInt8]
 
 
-def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
+def modify_mmcv_config(mmcv_cfg: Config, ymir_cfg: edict) -> None:
     """
     useful for training process
     - modify dataset config
     - modify model output channel
     - modify epochs, checkpoint, tensorboard config
     """
+    def recursive_modify_attribute(mmcv_cfg: Config, attribute_key: str, attribute_value: Any):
+        """
+        recursive modify mmcv_cfg:
+            1. mmcv_cfg.attribute_key to attribute_value
+            2. mmcv_cfg.xxx.xxx.xxx.attribute_key to attribute_value (recursive)
+            3. mmcv_cfg.xxx[i].attribute_key to attribute_value (i=0, 1, 2 ...)
+            4. mmcv_cfg.xxx[i].xxx.xxx[j].attribute_key to attribute_value
+        """
+        for key in mmcv_cfg:
+            if key == attribute_key:
+                mmcv_cfg[key] = attribute_value
+            elif isinstance(mmcv_cfg[key], Config):
+                recursive_modify_attribute(mmcv_cfg[key], attribute_key, attribute_value)
+            elif isinstance(mmcv_cfg[key], Iterable):
+                for cfg in mmcv_cfg[key]:
+                    if isinstance(cfg, Config):
+                        recursive_modify_attribute(cfg, attribute_key, attribute_value)
+
     # modify dataset config
     ymir_ann_files = dict(train=ymir_cfg.ymir.input.training_index_file,
                           val=ymir_cfg.ymir.input.val_index_file,
@@ -35,8 +54,12 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
     # so set smaller samples_per_gpu for validation
     samples_per_gpu = ymir_cfg.param.samples_per_gpu
     workers_per_gpu = ymir_cfg.param.workers_per_gpu
-    mmdet_cfg.data.samples_per_gpu = samples_per_gpu
-    mmdet_cfg.data.workers_per_gpu = workers_per_gpu
+    mmcv_cfg.data.samples_per_gpu = samples_per_gpu
+    mmcv_cfg.data.workers_per_gpu = workers_per_gpu
+
+    # modify model output channel
+    num_classes = len(ymir_cfg.param.class_names)
+    recursive_modify_attribute(mmcv_cfg.model, 'num_classes', num_classes)
 
     for split in ['train', 'val', 'test']:
         ymir_dataset_cfg = dict(type='YmirDataset',
@@ -47,7 +70,7 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
                                 data_root=ymir_cfg.ymir.input.root_dir,
                                 filter_empty_gt=False)
         # modify dataset config for `split`
-        mmdet_dataset_cfg = mmdet_cfg.data.get(split, None)
+        mmdet_dataset_cfg = mmcv_cfg.data.get(split, None)
         if mmdet_dataset_cfg is None:
             continue
 
@@ -63,33 +86,60 @@ def modify_mmdet_config(mmdet_cfg: Config, ymir_cfg: edict) -> Config:
             else:
                 raise Exception(f'unsupported source dataset type {src_dataset_type}')
 
-    # modify model output channel
-    mmdet_model_cfg = mmdet_cfg.model.bbox_head
-    mmdet_model_cfg.num_classes = len(ymir_cfg.param.class_names)
-
     # modify epochs, checkpoint, tensorboard config
     if ymir_cfg.param.get('max_epochs', None):
-        mmdet_cfg.runner.max_epochs = ymir_cfg.param.max_epochs
-    mmdet_cfg.checkpoint_config['out_dir'] = ymir_cfg.ymir.output.models_dir
+        mmcv_cfg.runner.max_epochs = int(ymir_cfg.param.max_epochs)
+    mmcv_cfg.checkpoint_config['out_dir'] = ymir_cfg.ymir.output.models_dir
     tensorboard_logger = dict(type='TensorboardLoggerHook', log_dir=ymir_cfg.ymir.output.tensorboard_dir)
-    if len(mmdet_cfg.log_config['hooks']) <= 1:
-        mmdet_cfg.log_config['hooks'].append(tensorboard_logger)
+    if len(mmcv_cfg.log_config['hooks']) <= 1:
+        mmcv_cfg.log_config['hooks'].append(tensorboard_logger)
     else:
-        mmdet_cfg.log_config['hooks'][1].update(tensorboard_logger)
+        mmcv_cfg.log_config['hooks'][1].update(tensorboard_logger)
 
+    # TODO save only the best top-k model weight files.
     # modify evaluation and interval
-    interval = max(1, mmdet_cfg.runner.max_epochs // 30)
-    mmdet_cfg.evaluation.interval = interval
-    mmdet_cfg.evaluation.metric = ymir_cfg.param.get('metric', 'bbox')
+    val_interval: int = int(ymir_cfg.param.get('val_interval', 1))
+    if val_interval > 0:
+        val_interval = min(val_interval, mmcv_cfg.runner.max_epochs)
+    else:
+        val_interval = 1
+
+    mmcv_cfg.evaluation.interval = val_interval
+    mmcv_cfg.evaluation.metric = ymir_cfg.param.get('metric', 'bbox')
+
+    # save best top-k model weights files
+    # max_keep_ckpts <= 0  # save all checkpoints
+    max_keep_ckpts: int = int(ymir_cfg.param.get('max_keep_checkpoints', 1))
+    mmcv_cfg.checkpoint_config.interval = mmcv_cfg.evaluation.interval
+    mmcv_cfg.checkpoint_config.max_keep_ckpts = max_keep_ckpts
+
     # TODO Whether to evaluating the AP for each class
     # mmdet_cfg.evaluation.classwise = True
 
     # fix DDP error
-    mmdet_cfg.find_unused_parameters = True
-    return mmdet_cfg
+    mmcv_cfg.find_unused_parameters = True
+
+    # set work dir
+    mmcv_cfg.work_dir = ymir_cfg.ymir.output.models_dir
+
+    args_options = ymir_cfg.param.get("args_options", '')
+    cfg_options = ymir_cfg.param.get("cfg_options", '')
+
+    # auto load offered weight file if not set by user!
+    if (args_options.find('--resume-from') == -1 and args_options.find('--load-from') == -1
+            and cfg_options.find('load_from') == -1 and cfg_options.find('resume_from') == -1):  # noqa: E129
+
+        weight_file = get_best_weight_file(ymir_cfg)
+        if weight_file:
+            if cfg_options:
+                cfg_options += f' load_from={weight_file}'
+            else:
+                cfg_options = f'load_from={weight_file}'
+        else:
+            logging.warning('no weight file used for training!')
 
 
-def get_weight_file(cfg: edict) -> str:
+def get_best_weight_file(cfg: edict) -> str:
     """
     return the weight file path by priority
     find weight file in cfg.param.pretrained_model_params or cfg.param.model_params_path
@@ -118,6 +168,7 @@ def get_weight_file(cfg: edict) -> str:
     if cfg.ymir.run_training:
         weight_files = [f for f in glob.glob('/weights/**/*', recursive=True) if f.endswith(('.pth', '.pt'))]
 
+        # load pretrained model weight for yolox only
         model_name_splits = osp.basename(cfg.param.config_file).split('_')
         if len(weight_files) > 0 and model_name_splits[0] == 'yolox':
             yolox_weight_files = [
@@ -145,6 +196,30 @@ def write_ymir_training_result(last: bool = False, key_score: Optional[float] = 
         _write_ancient_ymir_training_result(key_score)
 
 
+def get_topk_checkpoints(files: List[str], k: int) -> List[str]:
+    """
+    keep topk checkpoint files, remove other files.
+    """
+    checkpoints_files = [f for f in files if f.endswith(('.pth', '.pt'))]
+
+    best_pth_files = [f for f in checkpoints_files if osp.basename(f).startswith('best_')]
+    if len(best_pth_files) > 0:
+        # newest first
+        topk_best_pth_files = sorted(best_pth_files, key=os.path.getctime, reverse=True)
+    else:
+        topk_best_pth_files = []
+
+    epoch_pth_files = [f for f in checkpoints_files if osp.basename(f).startswith(('epoch_', 'iter_'))]
+    if len(epoch_pth_files) > 0:
+        topk_epoch_pth_files = sorted(epoch_pth_files, key=os.path.getctime, reverse=True)
+    else:
+        topk_epoch_pth_files = []
+
+    # python will check the length of list
+    return topk_best_pth_files[0:k] + topk_epoch_pth_files[0:k]
+
+
+# TODO save topk checkpoints, fix invalid stage due to delete checkpoint
 def _write_latest_ymir_training_result(last: bool = False, key_score: Optional[float] = None):
     if key_score:
         logging.info(f'key_score is {key_score}')
@@ -165,6 +240,11 @@ def _write_latest_ymir_training_result(last: bool = False, key_score: Optional[f
 
     if last:
         # save all output file
+        ymir_cfg = get_merged_config()
+        max_keep_checkpoints = int(ymir_cfg.param.get('max_keep_checkpoints', 1))
+        if max_keep_checkpoints > 0:
+            topk_checkpoints = get_topk_checkpoints(result_files, max_keep_checkpoints)
+            result_files = [f for f in result_files if not f.endswith(('.pth', '.pt'))] + topk_checkpoints
         rw.write_model_stage(files=result_files, mAP=float(map), stage_name='last')
     else:
         # save newest weight file in format epoch_xxx.pth or iter_xxx.pth
@@ -201,12 +281,16 @@ def _write_ancient_ymir_training_result(key_score: Optional[float] = None):
     # eval_result may be empty dict {}.
     map = eval_result.get('bbox_mAP_50', 0)
 
-    WORK_DIR = os.getenv('YMIR_MODELS_DIR')
-    if WORK_DIR is None or not osp.isdir(WORK_DIR):
-        raise Exception(f'please set valid environment variable YMIR_MODELS_DIR, invalid directory {WORK_DIR}')
+    ymir_cfg = get_merged_config()
+    WORK_DIR = ymir_cfg.ymir.output.models_dir
 
     # assert only one model config file in work_dir
     result_files = [osp.basename(f) for f in glob.glob(osp.join(WORK_DIR, '*')) if osp.basename(f) != 'result.yaml']
+
+    max_keep_checkpoints = int(ymir_cfg.param.get('max_keep_checkpoints', 1))
+    if max_keep_checkpoints > 0:
+        topk_checkpoints = get_topk_checkpoints(result_files, max_keep_checkpoints)
+        result_files = [f for f in result_files if not f.endswith(('.pth', '.pt'))] + topk_checkpoints
 
     training_result_file = osp.join(WORK_DIR, 'result.yaml')
     if osp.exists(training_result_file):

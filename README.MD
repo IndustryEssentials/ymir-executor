@@ -99,13 +99,14 @@ gpu: single Tesla P4
 
 gpu: single GeForce GTX 1080 Ti
 
-| docker image | batch size | epoch number | model | voc2012 val map50 | training time | note |
-| - | - | - | - | - | - | - |
-| yolov5 | 16 | 100 | yolov5s | 70.35% | 2h | coco-pretrained |
-| yolov7 | 16 | 100 | yolov7-tiny | 70.4% | 5h | coco-pretrained |
-| mmdetection | 16 | 100 | yolox_tiny | 66.2% | 5h | coco-pretrained |
-| detectron2 | 2 | 20000 steps | retinanet_R_50_FPN_1x | 53.54% | 2h | imagenet-pretrained |
-| nanodet | 16 | 100 | nanodet-plus-m_416 | 58.63% | 5h | imagenet-pretrained |
+| docker image | image size | batch size | epoch number | model | voc2012 val map50 | training time | note |
+| - | - | - | - | - | - | - | - |
+| yolov4 | 608 | 64/32 | 20000 steps | yolov4 | 72.73% | 6h | imagenet-pretrained |
+| yolov5 | 640 | 16 | 100 | yolov5s | 70.35% | 2h | coco-pretrained |
+| yolov7 | 640 | 16 | 100 | yolov7-tiny | 70.4% | 5h | coco-pretrained |
+| mmdetection | 640 | 16 | 100 | yolox_tiny | 66.2% | 5h | coco-pretrained |
+| detectron2 | 640 | 2 | 20000 steps | retinanet_R_50_FPN_1x | 53.54% | 2h | imagenet-pretrained |
+| nanodet | 416 | 16 | 100 | nanodet-plus-m_416 | 58.63% | 5h | imagenet-pretrained |
 
 ---
 
@@ -148,11 +149,14 @@ docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
 
 ## how to import pretrained model weights
 
-- [import pretainted model weights](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/import-extra-models.md)
+- [import and finetune model](https://github.com/modelai/ymir-executor-fork/wiki/import-and-finetune-model)
+
+- ~~[import pretainted model weights](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/import-extra-models.md)~~
 
 ## reference
 
 - [mining algorithm: CALD](https://github.com/we1pingyu/CALD/)
+- [mining algorithm: ALDD](https://gitlab.com/haghdam/deep_active_learning) 
 - [yolov4](https://github.com/AlexeyAB/darknet)
 - [yolov5](https://github.com/ultralytics/yolov5)
 - [mmdetection](https://github.com/open-mmlab/mmdetection)

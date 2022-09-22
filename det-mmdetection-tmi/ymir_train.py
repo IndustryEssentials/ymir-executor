@@ -5,9 +5,9 @@ import subprocess
 import sys
 
 from easydict import EasyDict as edict
-from mmdet.utils.util_ymir import get_weight_file, write_ymir_training_result
+from mmdet.utils.util_ymir import get_best_weight_file, write_ymir_training_result
 from ymir_exc import monitor
-from ymir_exc.util import YmirStage, get_merged_config, get_ymir_process
+from ymir_exc.util import YmirStage, find_free_port, get_merged_config, get_ymir_process
 
 
 def main(cfg: edict) -> int:
@@ -32,7 +32,7 @@ def main(cfg: edict) -> int:
             (cfg_options is None or (cfg_options.find('load_from') == -1 and
                                      cfg_options.find('resume_from') == -1)):
 
-        weight_file = get_weight_file(cfg)
+        weight_file = get_best_weight_file(cfg)
         if weight_file:
             if cfg_options:
                 cfg_options += f' load_from={weight_file}'
@@ -55,7 +55,7 @@ def main(cfg: edict) -> int:
             f"--work-dir {work_dir} --gpu-id {gpu_id}"
     else:
         os.environ.setdefault('CUDA_VISIBLE_DEVICES', gpu_id)
-        port = cfg.param.get('port')
+        port = find_free_port()
         os.environ.setdefault('PORT', str(port))
         cmd = f"bash ./tools/dist_train.sh {config_file} {num_gpus} " + \
             f"--work-dir {work_dir}"

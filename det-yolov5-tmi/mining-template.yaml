@@ -8,6 +8,8 @@
 # class_names: []
 
 img_size: 640
+mining_algorithm: aldd
+class_distribution_scores: '' # 1.0,1.0,0.1,0.2
 conf_thres: 0.25
 iou_thres: 0.45
 batch_size_per_gpu: 16

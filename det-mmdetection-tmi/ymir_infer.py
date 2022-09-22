@@ -9,7 +9,7 @@ import numpy as np
 from easydict import EasyDict as edict
 from mmcv import DictAction
 from mmdet.apis import inference_detector, init_detector
-from mmdet.utils.util_ymir import get_weight_file
+from mmdet.utils.util_ymir import get_best_weight_file
 from tqdm import tqdm
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
@@ -87,7 +87,7 @@ class YmirModel:
 
         # Specify the path to model config and checkpoint file
         config_file = get_config_file(cfg)
-        checkpoint_file = get_weight_file(cfg)
+        checkpoint_file = get_best_weight_file(cfg)
         options = cfg.param.get('cfg_options', None)
         cfg_options = parse_option(options) if options else None
 

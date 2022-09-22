@@ -5,19 +5,16 @@ import sys
 
 import cv2
 from easydict import EasyDict as edict
+from models.experimental import attempt_download
+from utils.ymir_yolov5 import YmirYolov5, convert_ymir_to_yolov5, get_weight_file
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
 from ymir_exc.util import (YmirStage, find_free_port, get_bool, get_merged_config, get_ymir_process,
                            write_ymir_training_result)
 
-from models.experimental import attempt_download
-from utils.ymir_yolov5 import YmirYolov5, convert_ymir_to_yolov5, get_weight_file
 
-
-def start() -> int:
-    cfg = get_merged_config()
-
+def start(cfg: edict) -> int:
     logging.info(f'merged config: {cfg}')
 
     if cfg.ymir.run_training:
@@ -57,6 +54,7 @@ def _run_training(cfg: edict) -> None:
     # 2. training model
     epochs: int = int(cfg.param.epochs)
     batch_size_per_gpu: int = int(cfg.param.batch_size_per_gpu)
+    num_workers_per_gpu: int = int(cfg.param.get('num_workers_per_gpu', 8))
     model: str = cfg.param.model
     img_size: int = int(cfg.param.img_size)
     save_period: int = max(1, min(epochs // 10, int(cfg.param.save_period)))
@@ -88,7 +86,8 @@ def _run_training(cfg: edict) -> None:
         str(batch_size), '--data', f'{out_dir}/data.yaml', '--project', project, '--cfg', f'models/{model}.yaml',
         '--name', name, '--weights', weights, '--img-size',
         str(img_size), '--save-period',
-        str(save_period), '--device', device
+        str(save_period), '--device', device,
+        '--workers', str(num_workers_per_gpu)
     ])
 
     if gpu_count > 1 and sync_bn:
@@ -119,18 +118,21 @@ def _run_mining(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
     convert_ymir_to_yolov5(cfg)
     logging.info(f'generate {out_dir}/data.yaml')
     monitor.write_monitor_logger(
-        percent=get_ymir_process(stage=YmirStage.PREPROCESS,
-                                 p=1.0,
-                                 task_idx=task_idx,
-                                 task_num=task_num))
+        percent=get_ymir_process(stage=YmirStage.PREPROCESS, p=1.0, task_idx=task_idx, task_num=task_num))
     gpu_id: str = str(cfg.param.get('gpu_id', '0'))
     gpu_count: int = len(gpu_id.split(',')) if gpu_id else 0
 
-    if gpu_count <= 1:
+    mining_algorithm = cfg.param.get('mining_algorithm', 'aldd')
+    support_mining_algorithms = ['aldd', 'cald']
+    if mining_algorithm not in support_mining_algorithms:
+        raise Exception(f'unknown mining algorithm {mining_algorithm}, not in {support_mining_algorithms}')
+
+    if gpu_count <= 1 and mining_algorithm in ['cald']:
         command = 'python3 mining/mining_cald.py'
     else:
         port = find_free_port()
-        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} mining/ymir_mining.py'  # noqa
+        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} mining/ymir_mining_{mining_algorithm}.py'  # noqa
+
     logging.info(f'mining: {command}')
     subprocess.run(command.split(), check=True)
     monitor.write_monitor_logger(
@@ -143,10 +145,7 @@ def _run_infer(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
     convert_ymir_to_yolov5(cfg)
     logging.info(f'generate {out_dir}/data.yaml')
     monitor.write_monitor_logger(
-        percent=get_ymir_process(stage=YmirStage.PREPROCESS,
-                                 p=1.0,
-                                 task_idx=task_idx,
-                                 task_num=task_num))
+        percent=get_ymir_process(stage=YmirStage.PREPROCESS, p=1.0, task_idx=task_idx, task_num=task_num))
 
     gpu_id: str = str(cfg.param.get('gpu_id', '0'))
     gpu_count: int = len(gpu_id.split(',')) if gpu_id else 0
@@ -186,5 +185,11 @@ if __name__ == '__main__':
                         datefmt='%Y%m%d-%H:%M:%S',
                         level=logging.INFO)
 
+    cfg = get_merged_config()
     os.environ.setdefault('PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION', 'python')
-    sys.exit(start())
+
+    # activation: relu
+    activation: str = cfg.param.get('activation', '')
+    if activation:
+        os.environ.setdefault('ACTIVATION', activation)
+    sys.exit(start(cfg))

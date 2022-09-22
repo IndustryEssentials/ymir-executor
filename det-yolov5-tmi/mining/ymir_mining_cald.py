@@ -29,7 +29,7 @@ WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 
 def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     # eg: gpu_id = 1,3,5,7  for LOCAL_RANK = 2, will use gpu 5.
-    gpu = int(ymir_yolov5.gpu_id.split(',')[LOCAL_RANK])
+    gpu = LOCAL_RANK if LOCAL_RANK >= 0 else 0
     device = torch.device('cuda', gpu)
     ymir_yolov5.to(device)
 
@@ -62,6 +62,10 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     dataset_size = len(images_rank)
     pbar = tqdm(origin_dataset_loader) if RANK == 0 else origin_dataset_loader
     for idx, batch in enumerate(pbar):
+        # batch-level sync, avoid 30min time-out error
+        if LOCAL_RANK != -1:
+            dist.barrier()
+
         with torch.no_grad():
             pred = ymir_yolov5.forward(batch['image'].float().to(device), nms=True)
 
@@ -98,6 +102,10 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     monitor_gap = max(1, dataset_size // 1000 // batch_size_per_gpu)
     pbar = tqdm(aug_dataset_loader) if RANK == 0 else aug_dataset_loader
     for idx, batch in enumerate(pbar):
+        # batch-level sync, avoid 30min time-out error
+        if LOCAL_RANK != -1:
+            dist.barrier()
+
         if idx % monitor_gap == 0 and RANK in [-1, 0]:
             ymir_yolov5.write_monitor_logger(stage=YmirStage.TASK, p=idx * batch_size_per_gpu / dataset_size)
 
@@ -158,14 +166,15 @@ def main() -> int:
 
     if LOCAL_RANK != -1:
         assert torch.cuda.device_count() > LOCAL_RANK, 'insufficient CUDA devices for DDP command'
-        gpu = int(ymir_yolov5.gpu_id.split(',')[LOCAL_RANK])
+        gpu = LOCAL_RANK if LOCAL_RANK >= 0 else 0
         torch.cuda.set_device(gpu)
         dist.init_process_group(backend="nccl" if dist.is_nccl_available() else "gloo")
 
     run(ymir_cfg, ymir_yolov5)
 
     # wait all process to save the mining result
-    dist.barrier()
+    if LOCAL_RANK != -1:
+        dist.barrier()
 
     if RANK in [0, -1]:
         results = []
@@ -178,7 +187,8 @@ def main() -> int:
                 ymir_mining_result.append((img_file, score))
         rw.write_mining_result(mining_result=ymir_mining_result)
 
-    print(f'rank: {RANK}, start destroy process group')
+    if LOCAL_RANK != -1:
+        print(f'rank: {RANK}, start destroy process group')
     dist.destroy_process_group()
     return 0
 
