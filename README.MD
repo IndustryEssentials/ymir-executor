@@ -73,10 +73,10 @@
 | yolov4 | ? | ✔️ | ❌ | darknet + mxnet | ❌ | local |
 | yolov5 | ✔️ | ✔️ | ✔️ | pytorch | ✔️ | local+online |
 | yolov7 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
-| mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
+| mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
 | detectron2 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
 | vidt | ? | ✔️ | ✔️ | pytorch | ❌ | online |
-| nanodet | ✔️ | ✔️ | ❌ | pytorch_lightning | ❌ | online |
+| nanodet | ✔️ | ✔️ | ❌ | pytorch_lightning | ❌ | local+online |
 
 - `online` pretrained weights may download through network
 
@@ -156,7 +156,7 @@ docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
 ## reference
 
 - [mining algorithm: CALD](https://github.com/we1pingyu/CALD/)
-- [mining algorithm: ALDD](https://gitlab.com/haghdam/deep_active_learning) 
+- [mining algorithm: ALDD](https://gitlab.com/haghdam/deep_active_learning)
 - [yolov4](https://github.com/AlexeyAB/darknet)
 - [yolov5](https://github.com/ultralytics/yolov5)
 - [mmdetection](https://github.com/open-mmlab/mmdetection)

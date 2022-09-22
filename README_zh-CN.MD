@@ -73,10 +73,10 @@
 | yolov4 | ? | ✔️ | ❌ | darknet + mxnet | ❌ | local |
 | yolov5 | ✔️ | ✔️ | ✔️ | pytorch | ✔️ | local+online |
 | yolov7 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
-| mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
+| mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
 | detectron2 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
 | vidt | ? | ✔️ | ✔️ | pytorch | ❌ | online |
-| nanodet | ✔️ | ✔️ | ❌ | pytorch_lightning | ❌ | online |
+| nanodet | ✔️ | ✔️ | ❌ | pytorch_lightning | ❌ | local+online |
 
 - `online` 预训练权重可能在训练时通过网络下载
 
