@@ -4,9 +4,10 @@ image_width: 608
 learning_rate: 0.0013
 max_batches: 20000
 warmup_iterations: 1000
-batch: 4
-subdivisions: 32
+batch: 64
+subdivisions: 64
 shm_size: '16G'
+export_format: 'ark:raw'
 # class_names:
 # - cat
 # gpu_id: '0,1,2,3'

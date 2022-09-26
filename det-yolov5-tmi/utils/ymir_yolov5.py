@@ -171,79 +171,20 @@ class YmirYolov5(torch.nn.Module):
             percent=get_ymir_process(stage=stage, p=p, task_idx=self.task_idx, task_num=self.task_num))
 
 
-def convert_ymir_to_yolov5(cfg: edict):
+def convert_ymir_to_yolov5(cfg: edict, out_dir: str = None):
     """
     convert ymir format dataset to yolov5 format
     generate data.yaml for training/mining/infer
     """
 
-    data = dict(path=cfg.ymir.output.root_dir, nc=len(cfg.param.class_names), names=cfg.param.class_names)
+    out_dir = out_dir or cfg.ymir.output.root_dir
+    data = dict(path=out_dir, nc=len(cfg.param.class_names), names=cfg.param.class_names)
     for split, prefix in zip(['train', 'val', 'test'], ['training', 'val', 'candidate']):
         src_file = getattr(cfg.ymir.input, f'{prefix}_index_file')
         if osp.exists(src_file):
-            shutil.copy(src_file, f'{cfg.ymir.output.root_dir}/{split}.tsv')
+            shutil.copy(src_file, f'{out_dir}/{split}.tsv')
 
         data[split] = f'{split}.tsv'
 
-    with open(osp.join(cfg.ymir.output.root_dir, 'data.yaml'), 'w') as fw:
+    with open(osp.join(out_dir, 'data.yaml'), 'w') as fw:
         fw.write(yaml.safe_dump(data))
-
-
-def write_ymir_training_result(cfg: edict, map50: float = 0.0, epoch: int = 0, weight_file: str = ""):
-    YMIR_VERSION = os.getenv('YMIR_VERSION', '1.2.0')
-    if Version(YMIR_VERSION) >= Version('1.2.0'):
-        _write_latest_ymir_training_result(cfg, float(map50), epoch, weight_file)
-    else:
-        _write_ancient_ymir_training_result(cfg, float(map50))
-
-
-def _write_latest_ymir_training_result(cfg: edict, map50: float, epoch: int, weight_file: str) -> int:
-    """
-    for ymir>=1.2.0
-    cfg: ymir config
-    map50: map50
-    epoch: stage
-    weight_file: saved weight files, empty weight_file will save all files
-
-    1. save weight file for each epoch.
-    2. save weight file for last.pt, best.pt and other config file
-    3. save weight file for best.onnx, no valid map50, attach to stage f"{model}_last_and_best"
-    """
-    model = cfg.param.model
-    # use `rw.write_training_result` to save training result
-    if weight_file:
-        rw.write_model_stage(stage_name=f"{model}_{epoch}", files=[osp.basename(weight_file)], mAP=float(map50))
-    else:
-        # save other files with
-        files = [
-            osp.basename(f) for f in glob.glob(osp.join(cfg.ymir.output.models_dir, '*')) if not f.endswith('.pt')
-        ] + ['last.pt', 'best.pt']
-
-        training_result_file = cfg.ymir.output.training_result_file
-        if osp.exists(training_result_file):
-            with open(training_result_file, 'r') as f:
-                training_result = yaml.safe_load(stream=f)
-
-            map50 = max(training_result.get('map', 0.0), map50)
-        rw.write_model_stage(stage_name=f"{model}_last_and_best", files=files, mAP=float(map50))
-    return 0
-
-
-def _write_ancient_ymir_training_result(cfg: edict, map50: float) -> None:
-    """
-    for 1.0.0 <= ymir <=1.1.0
-    """
-
-    files = [osp.basename(f) for f in glob.glob(osp.join(cfg.ymir.output.models_dir, '*'))]
-    training_result_file = cfg.ymir.output.training_result_file
-    if osp.exists(training_result_file):
-        with open(training_result_file, 'r') as f:
-            training_result = yaml.safe_load(stream=f)
-
-        training_result['model'] = files
-        training_result['map'] = max(float(training_result.get('map', 0)), map50)
-    else:
-        training_result = {'model': files, 'map': float(map50), 'stage_name': cfg.param.model}
-
-    with open(training_result_file, 'w') as f:
-        yaml.safe_dump(training_result, f)

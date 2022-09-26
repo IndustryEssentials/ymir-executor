@@ -166,8 +166,7 @@ def main() -> int:
 
     if LOCAL_RANK != -1:
         assert torch.cuda.device_count() > LOCAL_RANK, 'insufficient CUDA devices for DDP command'
-        gpu = LOCAL_RANK if LOCAL_RANK >= 0 else 0
-        torch.cuda.set_device(gpu)
+        torch.cuda.set_device(LOCAL_RANK)
         dist.init_process_group(backend="nccl" if dist.is_nccl_available() else "gloo")
 
     run(ymir_cfg, ymir_yolov5)
