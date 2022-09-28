@@ -176,7 +176,7 @@ def _run_infer(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
         subprocess.run(command.split(), check=True)
 
     monitor.write_monitor_logger(
-        percent=get_ymir_process(stage=YmirStage.PREPROCESS, p=1.0, task_idx=task_idx, task_num=task_num))
+        percent=get_ymir_process(stage=YmirStage.POSTPROCESS, p=1.0, task_idx=task_idx, task_num=task_num))
 
 
 if __name__ == '__main__':
