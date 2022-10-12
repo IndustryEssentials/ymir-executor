@@ -5,13 +5,14 @@ import sys
 
 import cv2
 from easydict import EasyDict as edict
-from models.experimental import attempt_download
-from utils.ymir_yolov5 import YmirYolov5, convert_ymir_to_yolov5, get_weight_file
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
 from ymir_exc.util import (YmirStage, find_free_port, get_bool, get_merged_config, get_ymir_process,
                            write_ymir_training_result)
+
+from models.experimental import attempt_download
+from utils.ymir_yolov5 import YmirYolov5, convert_ymir_to_yolov5, get_weight_file
 
 
 def start(cfg: edict) -> int:

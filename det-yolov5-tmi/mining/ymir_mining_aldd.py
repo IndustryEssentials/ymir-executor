@@ -17,11 +17,12 @@ import torch.distributed as dist
 import torch.nn.functional as F
 import torch.utils.data as td
 from easydict import EasyDict as edict
-from mining.util import YmirDataset, load_image_file
 from tqdm import tqdm
-from utils.ymir_yolov5 import YmirYolov5
 from ymir_exc import result_writer as rw
 from ymir_exc.util import YmirStage, get_merged_config
+
+from mining.util import YmirDataset, load_image_file
+from utils.ymir_yolov5 import YmirYolov5
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -29,6 +30,7 @@ WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 
 
 class ALDD(object):
+
     def __init__(self, ymir_cfg: edict):
         self.avg_pool_size = 9
         self.max_pool_size = 32
@@ -138,6 +140,8 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     with open(ymir_cfg.ymir.input.candidate_index_file, 'r') as f:
         images = [line.strip() for line in f.readlines()]
 
+    max_barrier_times = (len(images) // max(1, WORLD_SIZE)) // batch_size_per_gpu
+
     # origin dataset
     if RANK != -1:
         images_rank = images[RANK::WORLD_SIZE]
@@ -158,7 +162,7 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     miner = ALDD(ymir_cfg)
     for idx, batch in enumerate(pbar):
         # batch-level sync, avoid 30min time-out error
-        if LOCAL_RANK != -1:
+        if LOCAL_RANK != -1 and idx < max_barrier_times:
             dist.barrier()
 
         with torch.no_grad():
@@ -188,7 +192,9 @@ def main() -> int:
 
     # wait all process to save the mining result
     if LOCAL_RANK != -1:
+        print(f'rank: {RANK}, sync start before merge')
         dist.barrier()
+        print(f'rank: {RANK}, sync finished before merge')
 
     if RANK in [0, -1]:
         results = []
@@ -203,7 +209,8 @@ def main() -> int:
 
     if LOCAL_RANK != -1:
         print(f'rank: {RANK}, start destroy process group')
-        dist.destroy_process_group()
+        # dist.destroy_process_group()
+        print(f'rank: {RANK}, finished destroy process group')
     return 0
 
 

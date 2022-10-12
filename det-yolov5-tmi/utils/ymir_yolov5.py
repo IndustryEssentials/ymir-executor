@@ -11,15 +11,16 @@ import numpy as np
 import torch
 import yaml
 from easydict import EasyDict as edict
-from models.common import DetectMultiBackend
 from nptyping import NDArray, Shape, UInt8
 from packaging.version import Version
-from utils.augmentations import letterbox
-from utils.general import check_img_size, non_max_suppression, scale_coords
-from utils.torch_utils import select_device
 from ymir_exc import monitor
 from ymir_exc import result_writer as rw
 from ymir_exc.util import YmirStage, get_bool, get_weight_files, get_ymir_process
+
+from models.common import DetectMultiBackend
+from utils.augmentations import letterbox
+from utils.general import check_img_size, non_max_suppression, scale_coords
+from utils.torch_utils import select_device
 
 BBOX = NDArray[Shape['*,4'], Any]
 CV_IMAGE = NDArray[Shape['*,*,3'], UInt8]
