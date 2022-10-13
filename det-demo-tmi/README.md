@@ -46,7 +46,8 @@ voc_dog
 3. 配置 `/in/env.yaml` 与 `/in/config.yaml`
 
   * 示例 `voc_dog/in/env.yaml`
-  protocol_version: ymir1.3.0之后添加的字段，说明ymir接口版本
+
+  * protocol_version: ymir1.3.0之后添加的字段，说明ymir接口版本
 
   ```
   task_id: task0
@@ -260,7 +261,7 @@ for idx, line in enumerate(lines):
 
 可以使用以下几种方式进行测试：
 
-1. 通过 `ymir-executor-verifier` 进行测试
+1. 通过 [ymir-executor-verifier](https://github.com/modelai/ymir-executor-verifier) 进行测试
 
 2. 通过 ymir web 系统进行测试
 
