@@ -4,13 +4,13 @@
 
 - 训练镜像需要指定数据集标注格式, ymir1.1.0默认标注格式为`ark:raw`
 
-- 训练镜像可以获得系统的ymir版本，方便镜像做兼容
+- 训练镜像可以获得系统的ymir接口版本，方便镜像兼容
 
 ## 辅助库
 
 - [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk) 采用ymir1.3.0分支
 
-- [ymir-executor-verifier]() 镜像检查工具
+- [ymir-executor-verifier](https://github.com/modelai/ymir-executor-verifier) 镜像检查工具
 
 # ymir1.1.0
 
