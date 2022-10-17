@@ -127,15 +127,17 @@ ymir 通过 mir train / mir mining / mir infer 命令启动镜像，遵循以下
 
 5. ymir 将正确结果或异常结果归档，完成整个过程
 
-## 训练、挖掘与推理镜像的通用部分开发
+## 训练、挖掘与推理镜像的开发工具包 ymir_exc
 
-app/start.py 展示了一个简单的镜像执行部分，此文档也将基于这个样例工程来说明如何使用框架来开发镜像。
+`app/start.py` 展示了一个简单的镜像执行部分，此文档也将基于这个样例工程来说明如何使用`ymir_exc`来开发镜像。
 
 关于这个文件，有以下部分值得注意：
 
-1. 在 Dockerfile 中，最后一条命令说明了：当此镜像被 ymir 系统通过 nvidia-docker run 启动时，默认执行的是 `python /app/start.py` 命令，也就是此工程中的 `app/start.py` 文件
+1. 在 Dockerfile 中，最后一条命令说明了：当此镜像被 ymir 系统通过 nvidia-docker run 启动时，默认执行的是 `bash /usr/bin/start.sh`, 即调用 `python /app/start.py` 命令，也就是此工程中的 `app/start.py` 文件
 
 2. 镜像框架相关的所有内容都在 `ymir_exc` 包中，包括以下部分：
+
+  安装方式 `pip install "git+https://github.com/modelai/ymir-executor-sdk.git@ymir1.3.0"`, 注意通过 `pip install ymir_exc` 的方式安装的版本不具有 `ymir_exc.util` 包。
 
   * `env`：环境，提供任务类型，任务 id 等信息
 
@@ -151,7 +153,11 @@ app/start.py 展示了一个简单的镜像执行部分，此文档也将基于�
 
 4. 在 `start()` 方法中，通过 `cfg.ymir` 中的 `run_training` / `run_mining` / `run_infer` 来判断本次需要执行的任务类型。如果任务类型是本镜像不支持的，可以直接报错
 
-5. 虽然 `app/start.py` 展示的是一个训练，挖掘和推理多合一的镜像，开发者也可以分成若干个独立的镜像，例如，训练一个，挖掘和推理合成一个
+5. 虽然 `app/start.py` 展示的是一个训练，挖掘和推理多合一的镜像，开发者也可以分成若干个独立的镜像，例如，训练一个，挖掘和推理合成一个。实际应用中，镜像可以同时运行推理和挖掘这两个任务，注意其进度与单独运行时不同。
+
+  * 单独运行时，推理或者挖掘的进度值 `percent` 在 [0, 1] 区间，并通过 `monitor.write_monitor_logger(percent)` 记录在 `/out/monitor.txt` 中。
+
+  * 同时运行时， 假设先进行挖掘任务， 那么挖掘的进度值在 [0, 0.5] 区间，推理的进度度值在 [0.5, 1] 区间。
 
 ## 训练过程
 

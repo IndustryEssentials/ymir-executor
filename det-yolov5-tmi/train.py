@@ -21,6 +21,7 @@ import time
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
+import subprocess
 
 import numpy as np
 import torch
@@ -402,7 +403,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
             callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi)
 
             # Save model
-            if (not nosave) or (final_epoch and not evolve):  # if save
+            if (not nosave) or (best_fitness == fi) or (final_epoch and not evolve):  # if save
                 ckpt = {'epoch': epoch,
                         'best_fitness': best_fitness,
                         'model': deepcopy(de_parallel(model)).half(),
@@ -416,7 +417,8 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                 torch.save(ckpt, last)
                 if best_fitness == fi:
                     torch.save(ckpt, best)
-                if (epoch > 0) and (opt.save_period > 0) and (epoch % opt.save_period == 0):
+                    write_ymir_training_result(ymir_cfg, map50=best_fitness, id='best', files=[str(best)])
+                if (not nosave) and (epoch > 0) and (opt.save_period > 0) and (epoch % opt.save_period == 0):
                     torch.save(ckpt, w / f'epoch{epoch}.pt')
                     weight_file = str(w / f'epoch{epoch}.pt')
                     write_ymir_training_result(ymir_cfg, map50=results[2], id=f'epoch_{epoch}', files=[weight_file])
@@ -465,10 +467,20 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         callbacks.run('on_train_end', last, best, plots, epoch, results)
         LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}")
 
+        opset = ymir_cfg.param.opset
+        onnx_file: Path = best.with_suffix('.onnx')
+        command = f'python3 export.py --weights {best} --opset {opset} --include onnx'
+        LOGGER.info(f'export onnx weight: {command}')
+        subprocess.run(command.split(), check=True)
+
+        if nosave:
+            # save best.pt and best.onnx
+            write_ymir_training_result(ymir_cfg, map50=best_fitness, id='best', files=[str(best), str(onnx_file)])
+        else:
+            # set files = [] to save all files in /out/models
+            write_ymir_training_result(ymir_cfg, map50=best_fitness, id='best', files=[])
+
     torch.cuda.empty_cache()
-    # save the best and last weight file with other files in models_dir
-    if RANK in [-1, 0]:
-        write_ymir_training_result(ymir_cfg, map50=best_fitness, id=f'epoch_{epochs}', files=[])
     return results
 
 

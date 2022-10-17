@@ -27,7 +27,7 @@ WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 
 def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     # eg: gpu_id = 1,3,5,7  for LOCAL_RANK = 2, will use gpu 5.
-    gpu = int(ymir_yolov5.gpu_id.split(',')[LOCAL_RANK])
+    gpu = max(0, LOCAL_RANK)
     device = torch.device('cuda', gpu)
     ymir_yolov5.to(device)
 

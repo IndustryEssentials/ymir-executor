@@ -8,8 +8,7 @@ from easydict import EasyDict as edict
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
-from ymir_exc.util import (YmirStage, find_free_port, get_bool, get_merged_config, get_ymir_process,
-                           write_ymir_training_result)
+from ymir_exc.util import (YmirStage, find_free_port, get_bool, get_merged_config, get_ymir_process)
 
 from models.experimental import attempt_download
 from utils.ymir_yolov5 import YmirYolov5, convert_ymir_to_yolov5, get_weight_file
@@ -58,7 +57,8 @@ def _run_training(cfg: edict) -> None:
     num_workers_per_gpu: int = int(cfg.param.get('num_workers_per_gpu', 8))
     model: str = cfg.param.model
     img_size: int = int(cfg.param.img_size)
-    save_period: int = max(1, min(epochs // 10, int(cfg.param.save_period)))
+    save_period: int = int(cfg.param.save_period)
+    save_best_only: bool = get_bool(cfg, key='save_best_only', default_value=True)
     args_options: str = cfg.param.args_options
     gpu_id: str = str(cfg.param.get('gpu_id', '0'))
     gpu_count: int = len(gpu_id.split(',')) if gpu_id else 0
@@ -91,6 +91,9 @@ def _run_training(cfg: edict) -> None:
         '--workers', str(num_workers_per_gpu)
     ])
 
+    if save_best_only:
+        commands.append("--nosave")
+
     if gpu_count > 1 and sync_bn:
         commands.append("--sync-bn")
 
@@ -102,13 +105,6 @@ def _run_training(cfg: edict) -> None:
     subprocess.run(commands, check=True)
     monitor.write_monitor_logger(percent=get_ymir_process(stage=YmirStage.TASK, p=1.0))
 
-    # 3. convert to onnx and save model weight to design directory
-    opset = cfg.param.opset
-    command = f'python3 export.py --weights {models_dir}/best.pt --opset {opset} --include onnx'
-    logging.info(f'export onnx weight: {command}')
-    subprocess.run(command.split(), check=True)
-
-    write_ymir_training_result(cfg, map50=0, files=[], id='last')
     # if task done, write 100% percent log
     monitor.write_monitor_logger(percent=1.0)
 
