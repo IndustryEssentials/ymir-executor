@@ -5,13 +5,12 @@ import sys
 
 import cv2
 from easydict import EasyDict as edict
+from models.experimental import attempt_download
+from utils.ymir_yolov5 import YmirYolov5, convert_ymir_to_yolov5, get_weight_file
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
-from ymir_exc.util import (YmirStage, find_free_port, get_bool, get_merged_config, get_ymir_process)
-
-from models.experimental import attempt_download
-from utils.ymir_yolov5 import YmirYolov5, convert_ymir_to_yolov5, get_weight_file
+from ymir_exc.util import YmirStage, find_free_port, get_bool, get_merged_config, get_ymir_process
 
 
 def start(cfg: edict) -> int:
@@ -63,7 +62,7 @@ def _run_training(cfg: edict) -> None:
     gpu_id: str = str(cfg.param.get('gpu_id', '0'))
     gpu_count: int = len(gpu_id.split(',')) if gpu_id else 0
     batch_size: int = batch_size_per_gpu * max(1, gpu_count)
-    port: int = int(cfg.param.get('port', 29500))
+    port: int = find_free_port()
     sync_bn: bool = get_bool(cfg, key='sync_bn', default_value=False)
 
     weights = get_weight_file(cfg)

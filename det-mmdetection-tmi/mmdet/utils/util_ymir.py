@@ -236,7 +236,7 @@ def _write_latest_ymir_training_result(last: bool = False, key_score: Optional[f
         raise Exception(f'please set valid environment variable YMIR_MODELS_DIR, invalid directory {WORK_DIR}')
 
     # assert only one model config file in work_dir
-    result_files = [osp.basename(f) for f in glob.glob(osp.join(WORK_DIR, '*')) if osp.basename(f) != 'result.yaml']
+    result_files = [f for f in glob.glob(osp.join(WORK_DIR, '*')) if osp.basename(f) != 'result.yaml']
 
     if last:
         # save all output file
@@ -245,8 +245,11 @@ def _write_latest_ymir_training_result(last: bool = False, key_score: Optional[f
         if max_keep_checkpoints > 0:
             topk_checkpoints = get_topk_checkpoints(result_files, max_keep_checkpoints)
             result_files = [f for f in result_files if not f.endswith(('.pth', '.pt'))] + topk_checkpoints
+
+        result_files = [osp.basename(f) for f in result_files]
         rw.write_model_stage(files=result_files, mAP=float(map), stage_name='last')
     else:
+        result_files = [osp.basename(f) for f in result_files]
         # save newest weight file in format epoch_xxx.pth or iter_xxx.pth
         weight_files = [
             osp.join(WORK_DIR, f) for f in result_files if f.startswith(('iter_', 'epoch_')) and f.endswith('.pth')
@@ -285,12 +288,15 @@ def _write_ancient_ymir_training_result(key_score: Optional[float] = None):
     WORK_DIR = ymir_cfg.ymir.output.models_dir
 
     # assert only one model config file in work_dir
-    result_files = [osp.basename(f) for f in glob.glob(osp.join(WORK_DIR, '*')) if osp.basename(f) != 'result.yaml']
+    result_files = [f for f in glob.glob(osp.join(WORK_DIR, '*')) if osp.basename(f) != 'result.yaml']
 
     max_keep_checkpoints = int(ymir_cfg.param.get('max_keep_checkpoints', 1))
     if max_keep_checkpoints > 0:
         topk_checkpoints = get_topk_checkpoints(result_files, max_keep_checkpoints)
         result_files = [f for f in result_files if not f.endswith(('.pth', '.pt'))] + topk_checkpoints
+
+    # convert to basename
+    result_files = [osp.basename(f) for f in result_files]
 
     training_result_file = osp.join(WORK_DIR, 'result.yaml')
     if osp.exists(training_result_file):
