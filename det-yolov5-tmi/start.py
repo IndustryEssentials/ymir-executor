@@ -53,7 +53,7 @@ def _run_training(cfg: edict) -> None:
     # 2. training model
     epochs: int = int(cfg.param.epochs)
     batch_size_per_gpu: int = int(cfg.param.batch_size_per_gpu)
-    num_workers_per_gpu: int = int(cfg.param.get('num_workers_per_gpu', 8))
+    num_workers_per_gpu: int = int(cfg.param.get('num_workers_per_gpu', 4))
     model: str = cfg.param.model
     img_size: int = int(cfg.param.img_size)
     save_period: int = int(cfg.param.save_period)

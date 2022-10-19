@@ -1,7 +1,7 @@
-shm_size: '32G'
+shm_size: '128G'
 export_format: 'ark:raw'
 samples_per_gpu: 16  # batch size per gpu
-workers_per_gpu: 8
+workers_per_gpu: 4
 max_epochs: 100
 config_file: 'configs/yolox/yolox_tiny_8x8_300e_coco.py'
 args_options: ''

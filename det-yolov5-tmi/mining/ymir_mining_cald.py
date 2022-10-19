@@ -14,14 +14,13 @@ import torch
 import torch.distributed as dist
 import torch.utils.data as td
 from easydict import EasyDict as edict
-from tqdm import tqdm
-from ymir_exc import result_writer as rw
-from ymir_exc.util import YmirStage, get_merged_config
-
 from mining.util import (YmirDataset, collate_fn_with_fake_ann, load_image_file, load_image_file_with_ann,
                          update_consistency)
+from tqdm import tqdm
 from utils.general import scale_coords
 from utils.ymir_yolov5 import YmirYolov5
+from ymir_exc import result_writer as rw
+from ymir_exc.util import YmirStage, get_merged_config
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -184,10 +183,6 @@ def main() -> int:
             for img_file, score in result.items():
                 ymir_mining_result.append((img_file, score))
         rw.write_mining_result(mining_result=ymir_mining_result)
-
-    if LOCAL_RANK != -1:
-        print(f'rank: {RANK}, start destroy process group')
-        # dist.destroy_process_group()
     return 0
 
 

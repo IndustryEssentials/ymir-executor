@@ -31,3 +31,4 @@ docker build -t ymir-executor/mmdet:cuda111-tmi --build-arg YMIR=1.1.0 -f docker
 
 - 2022/09/06: set `find_unused_parameters = True`, fix DDP bug
 - 2022/10/18: add `random` and `aldd` mining algorithm. `aldd` algorithm support yolox only.
+- 2022/10/19: fix training class_number bug in `recursive_modify_attribute()`
