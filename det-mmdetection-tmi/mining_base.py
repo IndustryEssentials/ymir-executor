@@ -85,7 +85,7 @@ class ALDDMining(FeatureMapBasedMining):
         return feature_maps
 
     def mining(self, feature_maps: List[torch.Tensor]) -> torch.Tensor:
-        """
+        """mining for feature maps
         feature_maps: [BCHW]
         1. resizing followed by sigmoid
         2. get mining score

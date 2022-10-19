@@ -49,10 +49,10 @@ class EvalHook(BaseEvalHook):
     def after_train_epoch(self, runner):
         """Report the training process for ymir"""
         if self.by_epoch:
-            monitor_interval = max(1, runner.max_epochs//1000)
+            monitor_interval = max(1, runner.max_epochs // 1000)
             if runner.epoch % monitor_interval == 0:
                 percent = get_ymir_process(
-                    stage=YmirStage.TASK, p=runner.epoch/runner.max_epochs)
+                    stage=YmirStage.TASK, p=runner.epoch / runner.max_epochs)
                 monitor.write_monitor_logger(percent=percent)
         super().after_train_epoch(runner)
 
@@ -62,10 +62,10 @@ class EvalHook(BaseEvalHook):
 
     def after_train_iter(self, runner):
         if not self.by_epoch:
-            monitor_interval = max(1, runner.max_iters//1000)
+            monitor_interval = max(1, runner.max_iters // 1000)
             if runner.iter % monitor_interval == 0:
                 percent = get_ymir_process(
-                    stage=YmirStage.TASK, p=runner.iter/runner.max_iters)
+                    stage=YmirStage.TASK, p=runner.iter / runner.max_iters)
                 monitor.write_monitor_logger(percent=percent)
         super().after_train_iter(runner)
 
@@ -119,10 +119,10 @@ class DistEvalHook(BaseDistEvalHook):
     def after_train_epoch(self, runner):
         """Report the training process for ymir"""
         if self.by_epoch and runner.rank == 0:
-            monitor_interval = max(1, runner.max_epochs//1000)
+            monitor_interval = max(1, runner.max_epochs // 1000)
             if runner.epoch % monitor_interval == 0:
                 percent = get_ymir_process(
-                    stage=YmirStage.TASK, p=runner.epoch/runner.max_epochs)
+                    stage=YmirStage.TASK, p=runner.epoch / runner.max_epochs)
                 monitor.write_monitor_logger(percent=percent)
         super().after_train_epoch(runner)
 
@@ -132,10 +132,10 @@ class DistEvalHook(BaseDistEvalHook):
 
     def after_train_iter(self, runner):
         if not self.by_epoch and runner.rank == 0:
-            monitor_interval = max(1, runner.max_iters//1000)
+            monitor_interval = max(1, runner.max_iters // 1000)
             if runner.iter % monitor_interval == 0:
                 percent = get_ymir_process(
-                    stage=YmirStage.TASK, p=runner.iter/runner.max_iters)
+                    stage=YmirStage.TASK, p=runner.iter / runner.max_iters)
                 monitor.write_monitor_logger(percent=percent)
         super().after_train_iter(runner)
 

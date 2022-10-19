@@ -5,12 +5,12 @@ import glob
 import logging
 import os
 import os.path as osp
-from typing import Any, Iterable, List, Optional
+from typing import Any, Iterable, List, Optional, Union
 
 import mmcv
 import yaml
 from easydict import EasyDict as edict
-from mmcv import Config
+from mmcv import Config, ConfigDict
 from nptyping import NDArray, Shape, UInt8
 from packaging.version import Version
 from ymir_exc import result_writer as rw
@@ -27,7 +27,8 @@ def modify_mmcv_config(mmcv_cfg: Config, ymir_cfg: edict) -> None:
     - modify model output channel
     - modify epochs, checkpoint, tensorboard config
     """
-    def recursive_modify_attribute(mmcv_cfg: Config, attribute_key: str, attribute_value: Any):
+
+    def recursive_modify_attribute(mmcv_cfgdict: Union[Config, ConfigDict], attribute_key: str, attribute_value: Any):
         """
         recursive modify mmcv_cfg:
             1. mmcv_cfg.attribute_key to attribute_value
@@ -35,14 +36,15 @@ def modify_mmcv_config(mmcv_cfg: Config, ymir_cfg: edict) -> None:
             3. mmcv_cfg.xxx[i].attribute_key to attribute_value (i=0, 1, 2 ...)
             4. mmcv_cfg.xxx[i].xxx.xxx[j].attribute_key to attribute_value
         """
-        for key in mmcv_cfg:
+        for key in mmcv_cfgdict:
             if key == attribute_key:
-                mmcv_cfg[key] = attribute_value
-            elif isinstance(mmcv_cfg[key], Config):
-                recursive_modify_attribute(mmcv_cfg[key], attribute_key, attribute_value)
-            elif isinstance(mmcv_cfg[key], Iterable):
-                for cfg in mmcv_cfg[key]:
-                    if isinstance(cfg, Config):
+                mmcv_cfgdict[key] = attribute_value
+                logging.info(f'modify {mmcv_cfgdict}, {key} = {attribute_value}')
+            elif isinstance(mmcv_cfgdict[key], (Config, ConfigDict)):
+                recursive_modify_attribute(mmcv_cfgdict[key], attribute_key, attribute_value)
+            elif isinstance(mmcv_cfgdict[key], Iterable):
+                for cfg in mmcv_cfgdict[key]:
+                    if isinstance(cfg, (Config, ConfigDict)):
                         recursive_modify_attribute(cfg, attribute_key, attribute_value)
 
     # modify dataset config

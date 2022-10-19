@@ -2,6 +2,7 @@ import os
 import random
 import sys
 
+import torch
 import torch.distributed as dist
 from easydict import EasyDict as edict
 from mmcv.runner import init_dist
@@ -55,7 +56,8 @@ class RandomMiner(object):
             if WORLD_SIZE > 1 and idx < max_barrier_times:
                 dist.barrier()
 
-            consistency = self.compute_score(asset_path=asset_path)
+            with torch.no_grad():
+                consistency = self.compute_score(asset_path=asset_path)
             mining_result.append((asset_path, consistency))
 
         if WORLD_SIZE > 1:
