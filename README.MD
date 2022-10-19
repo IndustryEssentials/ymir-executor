@@ -4,7 +4,9 @@
 
 - [wiki](https://github.com/modelai/ymir-executor-fork/wiki)
 
-- [ymir executor](./official-docker-image.md)
+- [ymir executor](./docs/official-docker-image.md)
+
+- [ymir mining algorithm](./docs/mining-images-overview.md)
 
 ## overview
 

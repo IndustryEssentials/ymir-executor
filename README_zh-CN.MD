@@ -4,7 +4,9 @@
 
 - [说明文档](https://github.com/modelai/ymir-executor-fork/wiki)
 
-- [ymir镜像](./official-docker-image.md)
+- [ymir镜像](./docs/official-docker-image.md)
+
+- [ymir 挖掘算法](./docs/mining-images-overview.md)
 
 ## 比较
 

@@ -137,7 +137,7 @@ ymir 通过 mir train / mir mining / mir infer 命令启动镜像，遵循以下
 
 2. 镜像框架相关的所有内容都在 `ymir_exc` 包中，包括以下部分：
 
-  安装方式 `pip install "git+https://github.com/modelai/ymir-executor-sdk.git@ymir1.3.0"`, 注意通过 `pip install ymir_exc` 的方式安装的版本不具有 `ymir_exc.util` 包。
+  安装方式 `pip install "git+https://github.com/modelai/ymir-executor-sdk.git@ymir1.3.0"`, 注意通过 ~~`pip install ymir_exc`~~ 的方式安装的版本不具有 `ymir_exc.util` 包。前者在后者的代码基础上进行了扩展，提供了更多的功能(如 `ymir_exc.util`)。
 
   * `env`：环境，提供任务类型，任务 id 等信息
 
@@ -198,9 +198,7 @@ for idx, line in enumerate(lines):
 
     * 例如，如果需要保存 stage_name 为 'epoch-5000' 的模型，则需要把这些模型文件保存到 `os.path.join(cfg.ymir.output.model_dir, 'epoch-5000')` 目录下
 
-  * 之后，可以使用 `result_writer.write_model_stage()` 方法保存训练结果的摘要，这些内容包括：不带目录的模型名称列表，mAP.
-
-  * 也可以使用 `util.write_ymir_training_result()` 方法保存训练结果，它的兼容性与容错性更好。
+  * 推荐使用 `util.write_ymir_training_result()` 方法保存训练结果 (不带目录的模型名称列表，mAP等) ，它对 `result_writer.write_model_stage()` 进行了封装，兼容性与容错性更好。
 
   * 需要保存的模型实际记录在`cfg.ymir.output.training_result_file`中，ymir将依据此文件进行文件打包，供用户下载、迭代训练及推理挖掘。
 
