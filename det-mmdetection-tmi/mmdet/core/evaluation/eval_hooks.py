@@ -9,7 +9,7 @@ from mmcv.runner import EvalHook as BaseEvalHook
 from mmdet.utils.util_ymir import write_ymir_training_result
 from torch.nn.modules.batchnorm import _BatchNorm
 from ymir_exc import monitor
-from ymir_exc.util import YmirStage, get_ymir_process
+from ymir_exc.util import YmirStage, get_merged_config, write_ymir_monitor_process
 
 
 def _calc_dynamic_intervals(start_interval, dynamic_interval_list):
@@ -28,6 +28,7 @@ class EvalHook(BaseEvalHook):
 
     def __init__(self, *args, dynamic_intervals=None, **kwargs):
         super(EvalHook, self).__init__(*args, **kwargs)
+        self.ymir_cfg = get_merged_config()
 
         self.use_dynamic_intervals = dynamic_intervals is not None
         if self.use_dynamic_intervals:
@@ -51,9 +52,7 @@ class EvalHook(BaseEvalHook):
         if self.by_epoch:
             monitor_interval = max(1, runner.max_epochs // 1000)
             if runner.epoch % monitor_interval == 0:
-                percent = get_ymir_process(
-                    stage=YmirStage.TASK, p=runner.epoch / runner.max_epochs)
-                monitor.write_monitor_logger(percent=percent)
+                write_ymir_monitor_process(self.ymir_cfg, task='training', naive_stage_percent=runner.epoch / runner.max_epochs, stage=YmirStage.TASK)
         super().after_train_epoch(runner)
 
     def before_train_iter(self, runner):
@@ -64,9 +63,7 @@ class EvalHook(BaseEvalHook):
         if not self.by_epoch:
             monitor_interval = max(1, runner.max_iters // 1000)
             if runner.iter % monitor_interval == 0:
-                percent = get_ymir_process(
-                    stage=YmirStage.TASK, p=runner.iter / runner.max_iters)
-                monitor.write_monitor_logger(percent=percent)
+                write_ymir_monitor_process(self.ymir_cfg, task='training', naive_stage_percent=runner.ite / runner.max_iters, stage=YmirStage.TASK)
         super().after_train_iter(runner)
 
     def _do_evaluate(self, runner):
@@ -98,6 +95,7 @@ class DistEvalHook(BaseDistEvalHook):
 
     def __init__(self, *args, dynamic_intervals=None, **kwargs):
         super(DistEvalHook, self).__init__(*args, **kwargs)
+        self.ymir_cfg = get_merged_config()
 
         self.use_dynamic_intervals = dynamic_intervals is not None
         if self.use_dynamic_intervals:
@@ -121,9 +119,7 @@ class DistEvalHook(BaseDistEvalHook):
         if self.by_epoch and runner.rank == 0:
             monitor_interval = max(1, runner.max_epochs // 1000)
             if runner.epoch % monitor_interval == 0:
-                percent = get_ymir_process(
-                    stage=YmirStage.TASK, p=runner.epoch / runner.max_epochs)
-                monitor.write_monitor_logger(percent=percent)
+                write_ymir_monitor_process(self.ymir_cfg, task='training', naive_stage_percent=runner.epoch / runner.max_epochs, stage=YmirStage.TASK)
         super().after_train_epoch(runner)
 
     def before_train_iter(self, runner):
@@ -134,9 +130,7 @@ class DistEvalHook(BaseDistEvalHook):
         if not self.by_epoch and runner.rank == 0:
             monitor_interval = max(1, runner.max_iters // 1000)
             if runner.iter % monitor_interval == 0:
-                percent = get_ymir_process(
-                    stage=YmirStage.TASK, p=runner.iter / runner.max_iters)
-                monitor.write_monitor_logger(percent=percent)
+                write_ymir_monitor_process(self.ymir_cfg, task='training', naive_stage_percent=runner.iter / runner.max_iters, stage=YmirStage.TASK)
         super().after_train_iter(runner)
 
     def _do_evaluate(self, runner):
