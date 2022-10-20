@@ -155,7 +155,7 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
             image_file = batch['image_file'][inner_idx]
             mining_results[image_file] = batch_consistency[inner_idx]
 
-    torch.save(mining_results, f'/out/mining_results_{RANK}.pt')
+    torch.save(mining_results, f'/out/mining_results_{max(0,RANK)}.pt')
 
 
 def main() -> int:

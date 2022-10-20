@@ -8,21 +8,14 @@
 import os
 import random
 import sys
-from functools import partial
 
-import numpy as np
 import torch
 import torch.distributed as dist
-import torch.utils.data as td
 from easydict import EasyDict as edict
 from tqdm import tqdm
+from utils.ymir_yolov5 import YmirYolov5
 from ymir_exc import result_writer as rw
 from ymir_exc.util import YmirStage, get_merged_config
-
-from mining.util import (YmirDataset, collate_fn_with_fake_ann, load_image_file, load_image_file_with_ann,
-                         update_consistency)
-from utils.general import scale_coords
-from utils.ymir_yolov5 import YmirYolov5
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -34,16 +27,20 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     gpu = LOCAL_RANK if LOCAL_RANK >= 0 else 0
     device = torch.device('cuda', gpu)
     ymir_yolov5.to(device)
-    
+
     with open(ymir_cfg.ymir.input.candidate_index_file, 'r') as f:
         images = [line.strip() for line in f.readlines()]
 
     images_rank = images[RANK::WORLD_SIZE]
-    mining_results=dict()
-    for image in images_rank:
+    mining_results = dict()
+    dataset_size = len(images_rank)
+    pbar = tqdm(images_rank) if RANK == 0 else images_rank
+    for idx, image in enumerate(pbar):
+        if RANK in [-1, 0]:
+            ymir_yolov5.write_monitor_logger(stage=YmirStage.TASK, p=idx / dataset_size)
         mining_results[image] = random.random()
 
-    torch.save(mining_results, f'/out/mining_results_{RANK}.pt')
+    torch.save(mining_results, f'/out/mining_results_{max(0,RANK)}.pt')
 
 
 def main() -> int:
@@ -58,7 +55,7 @@ def main() -> int:
     run(ymir_cfg, ymir_yolov5)
 
     # wait all process to save the mining result
-    if LOCAL_RANK != -1:
+    if WORLD_SIZE > 1:
         dist.barrier()
 
     if RANK in [0, -1]:
@@ -71,10 +68,6 @@ def main() -> int:
             for img_file, score in result.items():
                 ymir_mining_result.append((img_file, score))
         rw.write_mining_result(mining_result=ymir_mining_result)
-
-    if LOCAL_RANK != -1:
-        print(f'rank: {RANK}, start destroy process group')
-        # dist.destroy_process_group()
     return 0
 
 

@@ -19,16 +19,33 @@ from typing import Any, List
 import cv2
 import numpy as np
 import torch.utils.data as td
+from mining.data_augment import cutout, horizontal_flip, intersect, resize, rotate
+from nptyping import NDArray
 from scipy.stats import entropy
 from torch.utils.data._utils.collate import default_collate
-
-from mining.data_augment import cutout, horizontal_flip, resize, rotate
-from mining.mining_cald import get_ious
 from utils.augmentations import letterbox
+from utils.ymir_yolov5 import BBOX
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
 WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
+
+
+def get_ious(boxes1: BBOX, boxes2: BBOX) -> NDArray:
+    """
+    args:
+        boxes1: np.array, (N, 4), xyxy
+        boxes2: np.array, (M, 4), xyxy
+    return:
+        iou: np.array, (N, M)
+    """
+    area1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
+    area2 = (boxes2[:, 2] - boxes2[:, 0]) * (boxes2[:, 3] - boxes2[:, 1])
+    iner_area = intersect(boxes1, boxes2)
+    area1 = area1.reshape(-1, 1).repeat(area2.shape[0], axis=1)
+    area2 = area2.reshape(1, -1).repeat(area1.shape[0], axis=0)
+    iou = iner_area / (area1 + area2 - iner_area + 1e-14)
+    return iou
 
 
 def preprocess(img, img_size, stride):

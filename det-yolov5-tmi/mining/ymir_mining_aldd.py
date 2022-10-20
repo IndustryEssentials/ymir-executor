@@ -174,7 +174,7 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
         if RANK in [-1, 0]:
             ymir_yolov5.write_monitor_logger(stage=YmirStage.TASK, p=idx * batch_size_per_gpu / dataset_size)
 
-    torch.save(mining_results, f'/out/mining_results_{RANK}.pt')
+    torch.save(mining_results, f'/out/mining_results_{max(0,RANK)}.pt')
 
 
 def main() -> int:
@@ -191,9 +191,7 @@ def main() -> int:
 
     # wait all process to save the mining result
     if LOCAL_RANK != -1:
-        print(f'rank: {RANK}, sync start before merge')
         dist.barrier()
-        print(f'rank: {RANK}, sync finished before merge')
 
     if RANK in [0, -1]:
         results = []

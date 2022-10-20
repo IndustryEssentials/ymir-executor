@@ -119,12 +119,12 @@ def _run_mining(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
     gpu_count: int = len(gpu_id.split(',')) if gpu_id else 0
 
     mining_algorithm = cfg.param.get('mining_algorithm', 'aldd')
-    support_mining_algorithms = ['aldd', 'cald']
+    support_mining_algorithms = ['aldd', 'cald', 'random', 'entropy']
     if mining_algorithm not in support_mining_algorithms:
         raise Exception(f'unknown mining algorithm {mining_algorithm}, not in {support_mining_algorithms}')
 
-    if gpu_count <= 1 and mining_algorithm in ['cald']:
-        command = 'python3 mining/mining_cald.py'
+    if gpu_count <= 1:
+        command = f'python3 mining/ymir_mining_{mining_algorithm}.py'
     else:
         port = find_free_port()
         command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} mining/ymir_mining_{mining_algorithm}.py'  # noqa
