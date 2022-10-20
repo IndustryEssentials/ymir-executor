@@ -17,9 +17,9 @@ import torch.distributed as dist
 import torch.nn.functional as F
 import torch.utils.data as td
 from easydict import EasyDict as edict
-from mining.util import YmirDataset, load_image_file
 from tqdm import tqdm
-from utils.ymir_yolov5 import YmirYolov5
+from ymir.mining.util import YmirDataset, load_image_file
+from ymir.ymir_yolov5 import YmirYolov5
 from ymir_exc import result_writer as rw
 from ymir_exc.util import YmirStage, get_merged_config
 

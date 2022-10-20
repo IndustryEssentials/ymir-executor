@@ -13,7 +13,7 @@ import torch
 import torch.distributed as dist
 from easydict import EasyDict as edict
 from tqdm import tqdm
-from utils.ymir_yolov5 import YmirYolov5
+from ymir.ymir_yolov5 import YmirYolov5
 from ymir_exc import result_writer as rw
 from ymir_exc.util import YmirStage, get_merged_config
 
@@ -31,7 +31,10 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     with open(ymir_cfg.ymir.input.candidate_index_file, 'r') as f:
         images = [line.strip() for line in f.readlines()]
 
-    images_rank = images[RANK::WORLD_SIZE]
+    if RANK != -1:
+        images_rank = images[RANK::WORLD_SIZE]
+    else:
+        images_rank = images
     mining_results = dict()
     dataset_size = len(images_rank)
     pbar = tqdm(images_rank) if RANK == 0 else images_rank

@@ -6,7 +6,7 @@ import sys
 import cv2
 from easydict import EasyDict as edict
 from models.experimental import attempt_download
-from utils.ymir_yolov5 import YmirYolov5, convert_ymir_to_yolov5, get_weight_file
+from ymir.ymir_yolov5 import YmirYolov5, convert_ymir_to_yolov5, get_weight_file
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
@@ -124,10 +124,10 @@ def _run_mining(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
         raise Exception(f'unknown mining algorithm {mining_algorithm}, not in {support_mining_algorithms}')
 
     if gpu_count <= 1:
-        command = f'python3 mining/ymir_mining_{mining_algorithm}.py'
+        command = f'python3 ymir/mining/ymir_mining_{mining_algorithm}.py'
     else:
         port = find_free_port()
-        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} mining/ymir_mining_{mining_algorithm}.py'  # noqa
+        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} ymir/mining/ymir_mining_{mining_algorithm}.py'  # noqa
 
     logging.info(f'mining: {command}')
     subprocess.run(command.split(), check=True)
@@ -147,29 +147,13 @@ def _run_infer(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
     gpu_count: int = len(gpu_id.split(',')) if gpu_id else 0
 
     if gpu_count <= 1:
-        N = dr.items_count(env.DatasetType.CANDIDATE)
-        infer_result = dict()
-        model = YmirYolov5(cfg)
-        idx = -1
-
-        monitor_gap = max(1, N // 100)
-        for asset_path, _ in dr.item_paths(dataset_type=env.DatasetType.CANDIDATE):
-            img = cv2.imread(asset_path)
-            result = model.infer(img)
-            infer_result[asset_path] = result
-            idx += 1
-
-            if idx % monitor_gap == 0:
-                percent = get_ymir_process(stage=YmirStage.TASK, p=idx / N, task_idx=task_idx, task_num=task_num)
-                monitor.write_monitor_logger(percent=percent)
-
-        rw.write_infer_result(infer_result=infer_result)
+        command = 'python3 ymir/mining/ymir_infer.py'
     else:
         port = find_free_port()
-        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} mining/ymir_infer.py'  # noqa
+        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} ymir/mining/ymir_infer.py'  # noqa
 
-        logging.info(f'infer: {command}')
-        subprocess.run(command.split(), check=True)
+    logging.info(f'infer: {command}')
+    subprocess.run(command.split(), check=True)
 
     monitor.write_monitor_logger(
         percent=get_ymir_process(stage=YmirStage.POSTPROCESS, p=1.0, task_idx=task_idx, task_num=task_num))

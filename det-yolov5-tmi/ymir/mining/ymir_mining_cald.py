@@ -14,11 +14,11 @@ import torch
 import torch.distributed as dist
 import torch.utils.data as td
 from easydict import EasyDict as edict
-from mining.util import (YmirDataset, collate_fn_with_fake_ann, load_image_file, load_image_file_with_ann,
-                         update_consistency)
 from tqdm import tqdm
 from utils.general import scale_coords
-from utils.ymir_yolov5 import YmirYolov5
+from ymir.mining.util import (YmirDataset, collate_fn_with_fake_ann, load_image_file, load_image_file_with_ann,
+                              update_consistency)
+from ymir.ymir_yolov5 import YmirYolov5
 from ymir_exc import result_writer as rw
 from ymir_exc.util import YmirStage, get_merged_config
 
@@ -47,7 +47,10 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
 
     max_barrier_times = (len(images) // max(1, WORLD_SIZE)) // batch_size_per_gpu
     # origin dataset
-    images_rank = images[RANK::WORLD_SIZE]
+    if RANK != -1:
+        images_rank = images[RANK::WORLD_SIZE]
+    else:
+        images_rank = images
     origin_dataset = YmirDataset(images_rank, load_fn=load_fn)
     origin_dataset_loader = td.DataLoader(origin_dataset,
                                           batch_size=batch_size_per_gpu,

@@ -8,8 +8,7 @@ from typing import Any, List, Tuple
 import cv2
 import numpy as np
 from nptyping import NDArray
-
-from utils.ymir_yolov5 import BBOX, CV_IMAGE
+from ymir.ymir_yolov5 import BBOX, CV_IMAGE
 
 
 def intersect(boxes1: BBOX, boxes2: BBOX) -> NDArray:

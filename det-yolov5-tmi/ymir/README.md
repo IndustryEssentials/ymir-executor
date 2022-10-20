@@ -9,9 +9,9 @@ docker build -t ymir/ymir-executor:ymir1.1.0-cuda111-yolov5-tmi --build-arg SERV
 
 ## main change log
 
-- add `start.py` and `utils/ymir_yolov5.py` for train/infer/mining
+- add `start.py` and `ymir/ymir_yolov5.py` for train/infer/mining
 
-- add `utils/ymir_yolov5.py` for useful functions
+- add `ymir/ymir_yolov5.py` for useful functions
 
     - `get_merged_config()` add ymir path config `cfg.yaml` and hyper-parameter `cfg.param`
 
