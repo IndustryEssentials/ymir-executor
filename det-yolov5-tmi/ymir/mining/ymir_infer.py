@@ -70,7 +70,10 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
             pred = ymir_yolov5.forward(batch['image'].float().to(device), nms=True)
 
         if idx % monitor_gap == 0:
-            write_ymir_monitor_process(ymir_cfg, task='infer', naive_stage_percent=idx * batch_size_per_gpu / dataset_size, stage=YmirStage.TASK)
+            write_ymir_monitor_process(ymir_cfg,
+                                       task='infer',
+                                       naive_stage_percent=idx * batch_size_per_gpu / dataset_size,
+                                       stage=YmirStage.TASK)
 
         preprocess_image_shape = batch['image'].shape[2:]
         for idx, det in enumerate(pred):  # per image

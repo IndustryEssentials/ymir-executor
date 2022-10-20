@@ -1,5 +1,18 @@
 # official docker image
 
+## ymir1.3.0
+
+support ymir1.1.0/1.2.0/1.3.0/2.0.0
+
+```
+youdaoyzbx/ymir-executor:ymir1.3.0-yolov5-cu111-tmi
+youdaoyzbx/ymir-executor:ymir1.3.0-yolov5-v6.2-cu111-tmi
+youdaoyzbx/ymir-executor:ymir1.3.0-yolov5-cu111-modelstore
+youdaoyzbx/ymir-executor:ymir1.3.0-mmdet-cu111-tmi
+```
+
+## ymir1.1.0
+
 - [yolov4](https://github.com/modelai/ymir-executor-fork#det-yolov4-training)
 
     ```
