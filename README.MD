@@ -4,67 +4,9 @@
 
 - [wiki](https://github.com/modelai/ymir-executor-fork/wiki)
 
-## ymir-1.1.0 official image
+- [ymir executor](./docs/official-docker-image.md)
 
-- [yolov4](https://github.com/modelai/ymir-executor-fork#det-yolov4-training)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov4-cu112-tmi
-
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov4-cu101-tmi
-    ```
-
-- [yolov5](https://github.com/modelai/ymir-executor-fork#det-yolov5-tmi)
-
-    - [change log](./det-yolov5-tmi/README.md)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov5-cu111-tmi
-
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov5-cu102-tmi
-    ```
-
-- [mmdetection](https://github.com/modelai/ymir-executor-fork#det-mmdetection-tmi)
-
-    - [change log](./det-mmdetection-tmi/README.md)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-mmdet-cu111-tmi
-
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-mmdet-cu102-tmi
-    ```
-
-- [detectron2](https://github.com/modelai/ymir-detectron2)
-
-    - [change log](https://github.com/modelai/ymir-detectron2/blob/master/README.md)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-detectron2-cu111-tmi
-    ```
-
-- [yolov7](https://github.com/modelai/ymir-yolov7)
-
-    - [change log](https://github.com/modelai/ymir-yolov7/blob/main/ymir/README.md)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov7-cu111-tmi
-    ```
-
-- [vidt](https://github.com/modelai/ymir-vidt)
-
-    - [change log](https://github.com/modelai/ymir-vidt/tree/main/ymir)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-vidt-cu111-tmi
-    ```
-
-- [nanodet](https://github.com/modelai/ymir-nanodet/tree/ymir-dev)
-
-    - [change log](https://github.com/modelai/ymir-nanodet/tree/ymir-dev/ymir)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-nanodet-cu111-tmi
-    ```
+- [ymir mining algorithm](./docs/mining-images-overview.md)
 
 ## overview
 
@@ -73,10 +15,10 @@
 | yolov4 | ? | ✔️ | ❌ | darknet + mxnet | ❌ | local |
 | yolov5 | ✔️ | ✔️ | ✔️ | pytorch | ✔️ | local+online |
 | yolov7 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
-| mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
+| mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
 | detectron2 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
 | vidt | ? | ✔️ | ✔️ | pytorch | ❌ | online |
-| nanodet | ✔️ | ✔️ | ❌ | pytorch_lightning | ❌ | online |
+| nanodet | ✔️ | ✔️ | ❌ | pytorch_lightning | ❌ | local+online |
 
 - `online` pretrained weights may download through network
 
@@ -109,6 +51,8 @@ gpu: single GeForce GTX 1080 Ti
 | nanodet | 416 | 16 | 100 | nanodet-plus-m_416 | 58.63% | 5h | imagenet-pretrained |
 
 ---
+
+# build ymir executor
 
 ## det-yolov4-tmi
 
@@ -143,9 +87,13 @@ docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
 
 ## how to custom ymir-executor
 
+- [demo ymir-executor](det-demo-tmi/README.md) from zero to one, build you ymir-executor
+
 - [custom ymir-executor](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/ymir-dataset-zh-CN.md)
 
-- [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk)
+- [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk) ymir-executor development SDK.
+
+- [ymir-executor-verifer](https://github.com/modelai/ymir-executor-verifier) debug and check your ymir-executor
 
 ## how to import pretrained model weights
 
@@ -156,7 +104,7 @@ docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
 ## reference
 
 - [mining algorithm: CALD](https://github.com/we1pingyu/CALD/)
-- [mining algorithm: ALDD](https://gitlab.com/haghdam/deep_active_learning) 
+- [mining algorithm: ALDD](https://gitlab.com/haghdam/deep_active_learning)
 - [yolov4](https://github.com/AlexeyAB/darknet)
 - [yolov5](https://github.com/ultralytics/yolov5)
 - [mmdetection](https://github.com/open-mmlab/mmdetection)

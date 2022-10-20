@@ -251,6 +251,7 @@ def split_result(result: NDArray) -> Tuple[BBOX, NDArray, NDArray]:
 
 
 class YmirMining(YmirModel):
+
     def __init__(self, cfg: edict):
         super().__init__(cfg)
         if cfg.ymir.run_mining and cfg.ymir.run_infer:
@@ -267,6 +268,8 @@ class YmirMining(YmirModel):
     def mining(self):
         with open(self.cfg.ymir.input.candidate_index_file, 'r') as f:
             images = [line.strip() for line in f.readlines()]
+
+        max_barrier_times = len(images) // WORLD_SIZE
         if RANK == -1:
             N = len(images)
             tbar = tqdm(images)
@@ -282,9 +285,15 @@ class YmirMining(YmirModel):
         idx = -1
         beta = 1.3
         mining_result = []
-        for asset_path in tbar:
+        for idx, asset_path in enumerate(tbar):
+            if idx % monitor_gap == 0:
+                percent = get_ymir_process(stage=YmirStage.TASK,
+                                           p=idx / N,
+                                           task_idx=self.task_idx,
+                                           task_num=self.task_num)
+                monitor.write_monitor_logger(percent=percent)
             # batch-level sync, avoid 30min time-out error
-            if LOCAL_RANK != -1:
+            if WORLD_SIZE > 1 and idx < max_barrier_times:
                 dist.barrier()
 
             img = cv2.imread(asset_path)
@@ -332,16 +341,8 @@ class YmirMining(YmirModel):
             consistency /= len(aug_results_dict)
 
             mining_result.append((asset_path, consistency))
-            idx += 1
 
-            if idx % monitor_gap == 0:
-                percent = get_ymir_process(stage=YmirStage.TASK,
-                                           p=idx / N,
-                                           task_idx=self.task_idx,
-                                           task_num=self.task_num)
-                monitor.write_monitor_logger(percent=percent)
-
-        if RANK != -1:
+        if WORLD_SIZE > 1:
             mining_result = collect_results_gpu(mining_result, len(images))
 
         return mining_result
@@ -393,8 +394,7 @@ def main():
 
     cfg = get_merged_config()
     miner = YmirMining(cfg)
-    gpu_id: str = str(cfg.param.get('gpu_id', '0'))
-    gpu = int(gpu_id.split(',')[LOCAL_RANK])
+    gpu = max(0, LOCAL_RANK)
     device = torch.device('cuda', gpu)
     miner.model.to(device)
     mining_result = miner.mining()

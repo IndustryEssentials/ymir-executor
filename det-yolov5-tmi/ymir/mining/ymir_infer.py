@@ -12,10 +12,10 @@ import torch
 import torch.distributed as dist
 import torch.utils.data as td
 from easydict import EasyDict as edict
-from mining.util import YmirDataset, load_image_file
 from tqdm import tqdm
 from utils.general import scale_coords
-from utils.ymir_yolov5 import YmirYolov5
+from ymir.mining.util import YmirDataset, load_image_file
+from ymir.ymir_yolov5 import YmirYolov5
 from ymir_exc import result_writer as rw
 from ymir_exc.util import YmirStage, get_merged_config
 
@@ -26,7 +26,7 @@ WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 
 def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     # eg: gpu_id = 1,3,5,7  for LOCAL_RANK = 2, will use gpu 5.
-    gpu = int(ymir_yolov5.gpu_id.split(',')[LOCAL_RANK])
+    gpu = max(0, LOCAL_RANK)
     device = torch.device('cuda', gpu)
     ymir_yolov5.to(device)
 
@@ -42,8 +42,12 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     with open(ymir_cfg.ymir.input.candidate_index_file, 'r') as f:
         images = [line.strip() for line in f.readlines()]
 
+    max_barrier_times = len(images) // max(1, WORLD_SIZE) // batch_size_per_gpu
     # origin dataset
-    images_rank = images[RANK::WORLD_SIZE]
+    if RANK != -1:
+        images_rank = images[RANK::WORLD_SIZE]
+    else:
+        images_rank = images
     origin_dataset = YmirDataset(images_rank, load_fn=load_fn)
     origin_dataset_loader = td.DataLoader(origin_dataset,
                                           batch_size=batch_size_per_gpu,
@@ -59,7 +63,7 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     pbar = tqdm(origin_dataset_loader) if RANK == 0 else origin_dataset_loader
     for idx, batch in enumerate(pbar):
         # batch-level sync, avoid 30min time-out error
-        if LOCAL_RANK != -1:
+        if LOCAL_RANK != -1 and idx < max_barrier_times:
             dist.barrier()
 
         with torch.no_grad():
@@ -79,7 +83,7 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
                 result_per_image.append(det)
             results.append(dict(image_file=image_file, result=result_per_image))
 
-    torch.save(results, f'/out/infer_results_{RANK}.pt')
+    torch.save(results, f'/out/infer_results_{max(0,RANK)}.pt')
 
 
 def main() -> int:
@@ -88,8 +92,6 @@ def main() -> int:
 
     if LOCAL_RANK != -1:
         assert torch.cuda.device_count() > LOCAL_RANK, 'insufficient CUDA devices for DDP command'
-        gpu = int(ymir_yolov5.gpu_id.split(',')[LOCAL_RANK])
-        torch.cuda.set_device(gpu)
         torch.cuda.set_device(LOCAL_RANK)
         dist.init_process_group(backend="nccl" if dist.is_nccl_available() else "gloo")
 
@@ -124,9 +126,6 @@ def main() -> int:
                         anns.append(ann)
                 ymir_infer_result[img_file] = anns
         rw.write_infer_result(infer_result=ymir_infer_result)
-
-    print(f'rank: {RANK}, start destroy process group')
-    dist.destroy_process_group()
     return 0
 
 

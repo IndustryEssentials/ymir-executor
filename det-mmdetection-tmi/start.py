@@ -37,11 +37,15 @@ def _run_training() -> None:
 def _run_mining(cfg: edict) -> None:
     gpu_id: str = str(cfg.param.get('gpu_id', '0'))
     gpu_count = len(gpu_id.split(','))
+    mining_algorithm: str = cfg.param.get('mining_algorithm', 'aldd')
+
+    supported_mining_algorithm = ['cald', 'aldd', 'random']
+    assert mining_algorithm in supported_mining_algorithm, f'unknown mining_algorithm {mining_algorithm}, not in {supported_mining_algorithm}'
     if gpu_count <= 1:
-        command = 'python3 ymir_mining.py'
+        command = f'python3 ymir_mining_{mining_algorithm}.py'
     else:
         port = find_free_port()
-        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} ymir_mining.py'  # noqa
+        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} ymir_mining_{mining_algorithm}.py'  # noqa
 
     logging.info(f'start mining: {command}')
     subprocess.run(command.split(), check=True)

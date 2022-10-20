@@ -15,3 +15,4 @@ iou_thres: 0.45
 batch_size_per_gpu: 16
 num_workers_per_gpu: 4
 pin_memory: False
+shm_size: 128G

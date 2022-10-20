@@ -2,69 +2,11 @@
 
 - [ymir](https://github.com/IndustryEssentials/ymir)
 
-- [wiki](https://github.com/modelai/ymir-executor-fork/wiki)
+- [说明文档](https://github.com/modelai/ymir-executor-fork/wiki)
 
-## ymir-1.1.0 官方镜像
+- [ymir镜像](./docs/official-docker-image.md)
 
-- [yolov4](https://github.com/modelai/ymir-executor-fork#det-yolov4-training)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov4-cu112-tmi
-
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov4-cu101-tmi
-    ```
-
-- [yolov5](https://github.com/modelai/ymir-executor-fork#det-yolov5-tmi)
-
-    - [change log](./det-yolov5-tmi/README.md)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov5-cu111-tmi
-
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov5-cu102-tmi
-    ```
-
-- [mmdetection](https://github.com/modelai/ymir-executor-fork#det-mmdetection-tmi)
-
-    - [change log](./det-mmdetection-tmi/README.md)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-mmdet-cu111-tmi
-
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-mmdet-cu102-tmi
-    ```
-
-- [detectron2](https://github.com/modelai/ymir-detectron2)
-
-    - [change log](https://github.com/modelai/ymir-detectron2/blob/master/README.md)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-detectron2-cu111-tmi
-    ```
-
-- [yolov7](https://github.com/modelai/ymir-yolov7)
-
-    - [change log](https://github.com/modelai/ymir-yolov7/blob/main/ymir/README.md)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov7-cu111-tmi
-    ```
-
-- [vidt](https://github.com/modelai/ymir-vidt)
-
-    - [change log](https://github.com/modelai/ymir-vidt/tree/main/ymir)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-vidt-cu111-tmi
-    ```
-
-- [nanodet](https://github.com/modelai/ymir-nanodet/tree/ymir-dev)
-
-    - [change log](https://github.com/modelai/ymir-nanodet/tree/ymir-dev/ymir)
-
-    ```
-    docker pull youdaoyzbx/ymir-executor:ymir1.1.0-nanodet-cu111-tmi
-    ```
+- [ymir 挖掘算法](./docs/mining-images-overview.md)
 
 ## 比较
 
@@ -73,10 +15,10 @@
 | yolov4 | ? | ✔️ | ❌ | darknet + mxnet | ❌ | local |
 | yolov5 | ✔️ | ✔️ | ✔️ | pytorch | ✔️ | local+online |
 | yolov7 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
-| mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
+| mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
 | detectron2 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
 | vidt | ? | ✔️ | ✔️ | pytorch | ❌ | online |
-| nanodet | ✔️ | ✔️ | ❌ | pytorch_lightning | ❌ | online |
+| nanodet | ✔️ | ✔️ | ❌ | pytorch_lightning | ❌ | local+online |
 
 - `online` 预训练权重可能在训练时通过网络下载
 
@@ -112,6 +54,8 @@ gpu: single GeForce GTX 1080 Ti
 
 ---
 
+# 手动构建ymir镜像
+
 ## det-yolov4-tmi
 
 - yolov4的训练、挖掘与推理镜像，采用mxnet与darknet框架
@@ -145,7 +89,7 @@ docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
 
 ## live-code-executor
 
-- 可以通过`git_url`, `commit id` 或 `tag` 从网上clone代码到镜像并运行, 不推荐使用`branch`, 因为这样拉取的代码可能随时间变化, 实验结果不具备可重复性.
+- 可以通过`git_url`, `commit id` 或 `tag` 从网上clone代码到镜像并运行, 不推荐使用`branch`, 因为这样拉取的代码可能随时间变化, 过程不具备可重复性.
 
 - 参考 [live-code](https://github.com/IndustryEssentials/ymir-remote-git)
 
@@ -159,9 +103,13 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 
 ## 如何制作自己的ymir-executor
 
+- [示例 ymir-executor](det-demo-tmi/README.md) 从零到一，搭建自己的 ymir-executor
+
 - [ymir-executor 制作指南](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/ymir-dataset-zh-CN.md)
 
 - [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk) ymir镜像开发辅助库
+
+- [ymir-executor-verifer](https://github.com/modelai/ymir-executor-verifier) 调试与检测 ymir-executor
 
 ## 如何导入预训练模型
 
@@ -189,7 +137,7 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 
 ## 关于cuda版本
 
-- 推荐主机安装11.2以上的cuda版本, 使用11.1及以上的镜像
+- 推荐主机安装高版本驱动，支持11.2以上的cuda版本, 使用11.1及以上的镜像
 
 - GTX3080/GTX3090不支持11.1以下的cuda，只能使用cuda11.1及以上的镜像
 

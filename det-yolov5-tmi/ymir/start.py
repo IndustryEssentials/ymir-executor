@@ -6,12 +6,11 @@ import sys
 import cv2
 from easydict import EasyDict as edict
 from models.experimental import attempt_download
-from utils.ymir_yolov5 import YmirYolov5, convert_ymir_to_yolov5, get_weight_file
+from ymir.ymir_yolov5 import YmirYolov5, convert_ymir_to_yolov5, get_weight_file
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, monitor
 from ymir_exc import result_writer as rw
-from ymir_exc.util import (YmirStage, find_free_port, get_bool, get_merged_config, get_ymir_process,
-                           write_ymir_training_result)
+from ymir_exc.util import YmirStage, find_free_port, get_bool, get_merged_config, get_ymir_process
 
 
 def start(cfg: edict) -> int:
@@ -54,15 +53,16 @@ def _run_training(cfg: edict) -> None:
     # 2. training model
     epochs: int = int(cfg.param.epochs)
     batch_size_per_gpu: int = int(cfg.param.batch_size_per_gpu)
-    num_workers_per_gpu: int = int(cfg.param.get('num_workers_per_gpu', 8))
+    num_workers_per_gpu: int = int(cfg.param.get('num_workers_per_gpu', 4))
     model: str = cfg.param.model
     img_size: int = int(cfg.param.img_size)
-    save_period: int = max(1, min(epochs // 10, int(cfg.param.save_period)))
+    save_period: int = int(cfg.param.save_period)
+    save_best_only: bool = get_bool(cfg, key='save_best_only', default_value=True)
     args_options: str = cfg.param.args_options
     gpu_id: str = str(cfg.param.get('gpu_id', '0'))
     gpu_count: int = len(gpu_id.split(',')) if gpu_id else 0
     batch_size: int = batch_size_per_gpu * max(1, gpu_count)
-    port: int = int(cfg.param.get('port', 29500))
+    port: int = find_free_port()
     sync_bn: bool = get_bool(cfg, key='sync_bn', default_value=False)
 
     weights = get_weight_file(cfg)
@@ -90,6 +90,9 @@ def _run_training(cfg: edict) -> None:
         '--workers', str(num_workers_per_gpu)
     ])
 
+    if save_best_only:
+        commands.append("--nosave")
+
     if gpu_count > 1 and sync_bn:
         commands.append("--sync-bn")
 
@@ -101,13 +104,6 @@ def _run_training(cfg: edict) -> None:
     subprocess.run(commands, check=True)
     monitor.write_monitor_logger(percent=get_ymir_process(stage=YmirStage.TASK, p=1.0))
 
-    # 3. convert to onnx and save model weight to design directory
-    opset = cfg.param.opset
-    command = f'python3 export.py --weights {models_dir}/best.pt --opset {opset} --include onnx'
-    logging.info(f'export onnx weight: {command}')
-    subprocess.run(command.split(), check=True)
-
-    write_ymir_training_result(cfg, map50=0, files=[], id='last')
     # if task done, write 100% percent log
     monitor.write_monitor_logger(percent=1.0)
 
@@ -123,15 +119,15 @@ def _run_mining(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
     gpu_count: int = len(gpu_id.split(',')) if gpu_id else 0
 
     mining_algorithm = cfg.param.get('mining_algorithm', 'aldd')
-    support_mining_algorithms = ['aldd', 'cald']
+    support_mining_algorithms = ['aldd', 'cald', 'random', 'entropy']
     if mining_algorithm not in support_mining_algorithms:
         raise Exception(f'unknown mining algorithm {mining_algorithm}, not in {support_mining_algorithms}')
 
-    if gpu_count <= 1 and mining_algorithm in ['cald']:
-        command = 'python3 mining/mining_cald.py'
+    if gpu_count <= 1:
+        command = f'python3 ymir/mining/ymir_mining_{mining_algorithm}.py'
     else:
         port = find_free_port()
-        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} mining/ymir_mining_{mining_algorithm}.py'  # noqa
+        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} ymir/mining/ymir_mining_{mining_algorithm}.py'  # noqa
 
     logging.info(f'mining: {command}')
     subprocess.run(command.split(), check=True)
@@ -151,32 +147,16 @@ def _run_infer(cfg: edict, task_idx: int = 0, task_num: int = 1) -> None:
     gpu_count: int = len(gpu_id.split(',')) if gpu_id else 0
 
     if gpu_count <= 1:
-        N = dr.items_count(env.DatasetType.CANDIDATE)
-        infer_result = dict()
-        model = YmirYolov5(cfg)
-        idx = -1
-
-        monitor_gap = max(1, N // 100)
-        for asset_path, _ in dr.item_paths(dataset_type=env.DatasetType.CANDIDATE):
-            img = cv2.imread(asset_path)
-            result = model.infer(img)
-            infer_result[asset_path] = result
-            idx += 1
-
-            if idx % monitor_gap == 0:
-                percent = get_ymir_process(stage=YmirStage.TASK, p=idx / N, task_idx=task_idx, task_num=task_num)
-                monitor.write_monitor_logger(percent=percent)
-
-        rw.write_infer_result(infer_result=infer_result)
+        command = 'python3 ymir/mining/ymir_infer.py'
     else:
         port = find_free_port()
-        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} mining/ymir_infer.py'  # noqa
+        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} ymir/mining/ymir_infer.py'  # noqa
 
-        logging.info(f'infer: {command}')
-        subprocess.run(command.split(), check=True)
+    logging.info(f'infer: {command}')
+    subprocess.run(command.split(), check=True)
 
     monitor.write_monitor_logger(
-        percent=get_ymir_process(stage=YmirStage.PREPROCESS, p=1.0, task_idx=task_idx, task_num=task_num))
+        percent=get_ymir_process(stage=YmirStage.POSTPROCESS, p=1.0, task_idx=task_idx, task_num=task_num))
 
 
 if __name__ == '__main__':
