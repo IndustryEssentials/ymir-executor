@@ -11,6 +11,7 @@ ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
 ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 ENV LANG=C.UTF-8
 ENV YMIR_VERSION=${YMIR}
+ENV YOLOV5_CONFIG_DIR='/app/data'
 
 # Install linux package
 RUN	apt-get update && apt-get install -y gnupg2 git libglib2.0-0 \
@@ -29,8 +30,7 @@ RUN mkdir /img-man && mv /app/ymir/img-man/*-template.yaml /img-man/ \
 
 # Download pretrained weight and font file
 RUN cd /app && bash data/scripts/download_weights.sh \
-    && mkdir -p /root/.config/Ultralytics \
-    && wget https://ultralytics.com/assets/Arial.ttf -O /root/.config/Ultralytics/Arial.ttf
+    && wget https://ultralytics.com/assets/Arial.ttf -O ${YOLOV5_CONFIG_DIR}/Arial.ttf
 
 # Make PYTHONPATH find local package
 ENV PYTHONPATH=.
