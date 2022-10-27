@@ -16,7 +16,7 @@ from utils.general import check_img_size, non_max_suppression, scale_coords
 from utils.torch_utils import select_device
 from ymir_exc import monitor
 from ymir_exc import result_writer as rw
-from ymir_exc.util import YmirStage, get_bool, get_weight_files, get_ymir_process
+from ymir_exc.util import YmirStage, get_bool, get_weight_files, write_ymir_monitor_process
 
 BBOX = NDArray[Shape['*,4'], Any]
 CV_IMAGE = NDArray[Shape['*,*,3'], UInt8]
@@ -43,22 +43,10 @@ class YmirYolov5(torch.nn.Module):
     """
     used for mining and inference to init detector and predict.
     """
-    def __init__(self, cfg: edict, task='infer'):
+
+    def __init__(self, cfg: edict):
         super().__init__()
         self.cfg = cfg
-        if cfg.ymir.run_mining and cfg.ymir.run_infer:
-            # multiple task, run mining first, infer later
-            if task == 'infer':
-                self.task_idx = 1
-            elif task == 'mining':
-                self.task_idx = 0
-            else:
-                raise Exception(f'unknown task {task}')
-
-            self.task_num = 2
-        else:
-            self.task_idx = 0
-            self.task_num = 1
 
         self.gpu_id: str = str(cfg.param.get('gpu_id', '0'))
         device = select_device(self.gpu_id)  # will set CUDA_VISIBLE_DEVICES=self.gpu_id
@@ -93,12 +81,13 @@ class YmirYolov5(torch.nn.Module):
         if not nms:
             return pred
 
-        pred = non_max_suppression(pred,
-                                   conf_thres=self.conf_thres,
-                                   iou_thres=self.iou_thres,
-                                   classes=None,  # not filter class_idx
-                                   agnostic=False,
-                                   max_det=100)
+        pred = non_max_suppression(
+            pred,
+            conf_thres=self.conf_thres,
+            iou_thres=self.iou_thres,
+            classes=None,  # not filter class_idx
+            agnostic=False,
+            max_det=100)
         return pred
 
     def init_detector(self, device: torch.device) -> DetectMultiBackend:
@@ -162,10 +151,6 @@ class YmirYolov5(torch.nn.Module):
             anns.append(ann)
 
         return anns
-
-    def write_monitor_logger(self, stage: YmirStage, p: float):
-        monitor.write_monitor_logger(
-            percent=get_ymir_process(stage=stage, p=p, task_idx=self.task_idx, task_num=self.task_num))
 
 
 def convert_ymir_to_yolov5(cfg: edict, out_dir: str = None):

@@ -21,7 +21,7 @@ from tqdm import tqdm
 from ymir.mining.util import YmirDataset, load_image_file
 from ymir.ymir_yolov5 import YmirYolov5
 from ymir_exc import result_writer as rw
-from ymir_exc.util import YmirStage, get_merged_config
+from ymir_exc.util import YmirStage, get_merged_config, write_ymir_monitor_process
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -161,7 +161,7 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     miner = ALDD(ymir_cfg)
     for idx, batch in enumerate(pbar):
         # batch-level sync, avoid 30min time-out error
-        if LOCAL_RANK != -1 and idx < max_barrier_times:
+        if WORLD_SIZE > 1 and idx < max_barrier_times:
             dist.barrier()
 
         with torch.no_grad():
@@ -172,7 +172,10 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
             mining_results[each_imgname] = each_score
 
         if RANK in [-1, 0]:
-            ymir_yolov5.write_monitor_logger(stage=YmirStage.TASK, p=idx * batch_size_per_gpu / dataset_size)
+            write_ymir_monitor_process(ymir_cfg,
+                                       task='mining',
+                                       naive_stage_percent=idx * batch_size_per_gpu / dataset_size,
+                                       stage=YmirStage.TASK)
 
     torch.save(mining_results, f'/out/mining_results_{max(0,RANK)}.pt')
 
@@ -180,7 +183,7 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
 def main() -> int:
     ymir_cfg = get_merged_config()
     # note select_device(gpu_id) will set os.environ['CUDA_VISIBLE_DEVICES'] to gpu_id
-    ymir_yolov5 = YmirYolov5(ymir_cfg, task='mining')
+    ymir_yolov5 = YmirYolov5(ymir_cfg)
 
     if LOCAL_RANK != -1:
         assert torch.cuda.device_count() > LOCAL_RANK, 'insufficient CUDA devices for DDP command'
@@ -190,7 +193,7 @@ def main() -> int:
     run(ymir_cfg, ymir_yolov5)
 
     # wait all process to save the mining result
-    if LOCAL_RANK != -1:
+    if WORLD_SIZE > 1:
         dist.barrier()
 
     if RANK in [0, -1]:

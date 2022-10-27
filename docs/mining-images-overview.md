@@ -12,6 +12,8 @@
 
 view [ALBench: Active Learning Benchmark](https://github.com/modelai/ALBench) for detail
 
+![](./docs/mining_score.png)
+
 ## reference
 
 - entropy: `Multi-class active learning for image classification. CVPR 2009`

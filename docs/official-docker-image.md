@@ -1,5 +1,51 @@
 # official docker image
 
+update: 2022/10/27
+
+## the hyper-parameters for ymir-executor
+
+| docker images | epochs/iters | model structure | image size | batch_size |
+| - | - | - |
+| yolov5 | epochs | model | img_size | batch_size_per_gpu |
+| mmdetection | max_epochs | config_file | - | samples_per_gpu |
+| yolov4 | max_batches | - | image_height, image_width | batch |
+| yolov7 | epochs | cfg_file | img_size | batch_size_per_gpu |
+| nanodet | epochs | config_file | input_size | batch_size_per_gpu |
+| vidt | epochs | backbone_name | eval_size | batch_size_per_gpu |
+| detectron2 | max_iter | config_file | - | batch_size |
+
+- epochs: such as `epochs` or `max_epochs`, control the time for training.
+- iters: such as `max_batches` or `max_iter`, control the time for training.
+- ymir_saved_file_patterns: save the file match one of the pattern. for example `best.pt, *.yaml` will save `best.pt` and all the `*.yaml` file in `/out/model` directory.
+- export_format: the dataset format for ymir-executor in `/in`, support `ark:raw` and `voc:raw`
+- args_options/cfg_options: for yolov5, use it for other options, such as `--multi-scale --single-cls --optimizer SGD` and so on, view `train.py, parse_opt()` for detail. for mmdetection and detectron2, it provides methods to change other hyper-pameters not defined in `/img-man/training-template.yaml`
+
+## ymir2.0.0
+
+2022/10/26: support ymir1.1.0/1.2.0/1.3.0/2.0.0
+
+```
+youdaoyzbx/ymir-executor:ymir2.0.0-yolov5-cu111-tmi
+youdaoyzbx/ymir-executor:ymir2.0.0-yolov7-cu111-tmi
+youdaoyzbx/ymir-executor:ymir2.0.0-mmdet-cu111-tmi
+youdaoyzbx/ymir-executor:ymir2.0.0-detectron2-cu111-tmi
+youdaoyzbx/ymir-executor:ymir2.0.0-vidt-cu111-tmi
+youdaoyzbx/ymir-executor:ymir2.0.0-yolov4-cu111-tmi  # deprecated
+```
+
+## ymir1.3.0
+
+2022/10/10: support ymir1.1.0/1.2.0/1.3.0/2.0.0
+
+```
+youdaoyzbx/ymir-executor:ymir1.3.0-yolov5-cu111-tmi
+youdaoyzbx/ymir-executor:ymir1.3.0-yolov5-v6.2-cu111-tmi
+youdaoyzbx/ymir-executor:ymir1.3.0-yolov5-cu111-modelstore
+youdaoyzbx/ymir-executor:ymir1.3.0-mmdet-cu111-tmi
+```
+
+## ymir1.1.0
+
 - [yolov4](https://github.com/modelai/ymir-executor-fork#det-yolov4-training)
 
     ```
