@@ -1,11 +1,11 @@
 # official docker image
 
-update: 2022/10/27
+update: 2022/11/01
 
 ## the hyper-parameters for ymir-executor
 
 | docker images | epochs/iters | model structure | image size | batch_size |
-| - | - | - |
+| - | - | - | - | - |
 | yolov5 | epochs | model | img_size | batch_size_per_gpu |
 | mmdetection | max_epochs | config_file | - | samples_per_gpu |
 | yolov4 | max_batches | - | image_height, image_width | batch |
@@ -20,6 +20,39 @@ update: 2022/10/27
 - export_format: the dataset format for ymir-executor in `/in`, support `ark:raw` and `voc:raw`
 - args_options/cfg_options: for yolov5, use it for other options, such as `--multi-scale --single-cls --optimizer SGD` and so on, view `train.py, parse_opt()` for detail. for mmdetection and detectron2, it provides methods to change other hyper-pameters not defined in `/img-man/training-template.yaml`
 
+## docker image format
+
+youdaoyzbx/ymir-executor:[ymir-version]-[repository]-[cuda version]-[ymir-executor function]
+
+- ymir-version
+    - ymir1.1.0
+    - ymir1.2.0
+    - ymir1.3.0
+    - ymir2.0.0
+
+- repository
+    - yolov4
+    - yolov5
+    - yolov7
+    - mmdet
+    - detectron2
+    - vidt
+    - nanodet
+
+- cuda version
+    - cu101: cuda 10.1
+    - cu102: cuda 10.2
+    - cu111: cuda 11.1
+    - cu112: cuda 11.2
+
+- ymir-executor function
+    - t: training
+    - m: mining
+    - i: infer
+    - d: deploy
+
+
+
 ## ymir2.0.0
 
 2022/10/26: support ymir1.1.0/1.2.0/1.3.0/2.0.0
@@ -30,6 +63,8 @@ youdaoyzbx/ymir-executor:ymir2.0.0-yolov7-cu111-tmi
 youdaoyzbx/ymir-executor:ymir2.0.0-mmdet-cu111-tmi
 youdaoyzbx/ymir-executor:ymir2.0.0-detectron2-cu111-tmi
 youdaoyzbx/ymir-executor:ymir2.0.0-vidt-cu111-tmi
+youdaoyzbx/ymir-executor:ymir2.0.0-nanodet-cu111-tmi
+youdaoyzbx/ymir-executor:ymir2.0.0-yolov5-cu111-tmid # support deploy
 youdaoyzbx/ymir-executor:ymir2.0.0-yolov4-cu111-tmi  # deprecated
 ```
 
