@@ -16,7 +16,7 @@ update: 2022/10/27
 
 - epochs: such as `epochs` or `max_epochs`, control the time for training.
 - iters: such as `max_batches` or `max_iter`, control the time for training.
-- ymir_saved_file_patterns: save the file match one of the pattern. for example `best.pt, *.yaml` will save `best.pt` and all the `*.yaml` file in `/out/model` directory.
+- ymir_saved_file_patterns: save the file match one of the pattern. for example `best.pt, *.yaml` will save `best.pt` and all the `*.yaml` file in `/out/models` directory.
 - export_format: the dataset format for ymir-executor in `/in`, support `ark:raw` and `voc:raw`
 - args_options/cfg_options: for yolov5, use it for other options, such as `--multi-scale --single-cls --optimizer SGD` and so on, view `train.py, parse_opt()` for detail. for mmdetection and detectron2, it provides methods to change other hyper-pameters not defined in `/img-man/training-template.yaml`
 
