@@ -73,8 +73,8 @@ def _run_training(cfg: edict) -> None:
         str(batch_size), '--data', f'{out_dir}/data.yaml', '--project', project, '--cfg', f'models/{model}.yaml',
         '--name', name, '--weights', weights, '--img-size',
         str(img_size), '--save-period',
-        str(save_period), '--device', device,
-        '--workers', str(num_workers_per_gpu)
+        str(save_period), '--device', device, '--workers',
+        str(num_workers_per_gpu)
     ])
 
     if save_best_only:

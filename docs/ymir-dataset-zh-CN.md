@@ -119,9 +119,19 @@ task_id: t0000001000002ebb7f11653630774 # 任务id
 
 常见的目标检测标注格式有 `voc` 与 `coco`， ymir 除自身格式， 目前还支持`voc`格式，可在超参数页面通过设置`export_format`对ymir导入镜像的数据格式进行修改。
 
+```
+image format: ['raw', 'lmdb']
+annotation format: ["none", "det-ark", "det-voc", "det-ls-json", "seg-poly", "seg-mask"]
+```
+
 ### 默认数据格式
-- `export_format=ark:raw`， 标注文件为`xxx.txt`
+
+- `export_format=ark:raw`, 标注文件为`xxx.txt`
+
+- `export_format=det-ark:raw`, 标注文件为`xxx.txt`
 
 ### voc 数据格式
 
 - `export_format=voc:raw`， 标注文件为`xxx.xml`
+
+- `export_format=det-voc:raw`, 标注文件为`xxx.xml`

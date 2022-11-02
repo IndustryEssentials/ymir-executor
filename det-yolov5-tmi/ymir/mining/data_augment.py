@@ -8,6 +8,7 @@ from typing import Any, List, Tuple
 import cv2
 import numpy as np
 from nptyping import NDArray
+
 from ymir.ymir_yolov5 import BBOX, CV_IMAGE
 
 
