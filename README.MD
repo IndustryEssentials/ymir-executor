@@ -93,6 +93,8 @@ docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
 
 - [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk) ymir-executor development SDK.
 
+  - [dataset convert](https://github.com/modelai/ymir-executor-sdk/blob/master/docs/dataset_convert.md)
+
 - [ymir-executor-verifer](https://github.com/modelai/ymir-executor-verifier) debug and check your ymir-executor
 
 ## how to import pretrained model weights
