@@ -2,7 +2,7 @@ import warnings
 from typing import List
 
 import torch
-import torch.nn.functional as F
+import torch.nn.functional as F  # noqa
 from easydict import EasyDict as edict
 
 

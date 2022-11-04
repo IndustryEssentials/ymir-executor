@@ -39,8 +39,8 @@ def _run_mining(cfg: edict) -> None:
     gpu_count = len(gpu_id.split(','))
     mining_algorithm: str = cfg.param.get('mining_algorithm', 'aldd')
 
-    supported_mining_algorithm = ['cald', 'aldd', 'random']
-    assert mining_algorithm in supported_mining_algorithm, f'unknown mining_algorithm {mining_algorithm}, not in {supported_mining_algorithm}'
+    supported_miner = ['cald', 'aldd', 'random', 'entropy']
+    assert mining_algorithm in supported_miner, f'unknown mining_algorithm {mining_algorithm}, not in {supported_miner}'
     if gpu_count <= 1:
         command = f'python3 ymir_mining_{mining_algorithm}.py'
     else:
@@ -67,7 +67,6 @@ if __name__ == '__main__':
 
     cfg = get_merged_config()
     os.environ.setdefault('YMIR_MODELS_DIR', cfg.ymir.output.models_dir)
-    os.environ.setdefault('COCO_EVAL_TMP_FILE', os.path.join(
-        cfg.ymir.output.root_dir, 'eval_tmp.json'))
+    os.environ.setdefault('COCO_EVAL_TMP_FILE', os.path.join(cfg.ymir.output.root_dir, 'eval_tmp.json'))
     os.environ.setdefault('PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION', 'python')
     sys.exit(start(cfg))

@@ -11,14 +11,12 @@ import cv2
 import numpy as np
 import torch
 import torch.distributed as dist
-from easydict import EasyDict as edict
 from mmcv.runner import init_dist
 from mmdet.apis.test import collect_results_gpu
 from mmdet.utils.util_ymir import BBOX, CV_IMAGE
 from nptyping import NDArray
 from scipy.stats import entropy
 from tqdm import tqdm
-from ymir_exc import monitor
 from ymir_exc import result_writer as rw
 from ymir_exc.util import YmirStage, get_merged_config, write_ymir_monitor_process
 from ymir_infer import YmirModel
@@ -250,11 +248,7 @@ def split_result(result: NDArray) -> Tuple[BBOX, NDArray, NDArray]:
     return bboxes, conf, class_id
 
 
-class YmirMining(YmirModel):
-
-    def __init__(self, cfg: edict):
-        super().__init__(cfg)
-
+class CALDMiner(YmirModel):
     def mining(self):
         with open(self.cfg.ymir.input.candidate_index_file, 'r') as f:
             images = [line.strip() for line in f.readlines()]
@@ -276,7 +270,7 @@ class YmirMining(YmirModel):
         beta = 1.3
         mining_result = []
         for idx, asset_path in enumerate(tbar):
-            if idx % monitor_gap == 0:
+            if idx % monitor_gap == 0 and RANK in [0, -1]:
                 write_ymir_monitor_process(self.cfg, task='mining', naive_stage_percent=idx / N, stage=YmirStage.TASK)
 
             # batch-level sync, avoid 30min time-out error
@@ -380,7 +374,7 @@ def main():
         init_dist(launcher='pytorch', backend="nccl" if dist.is_nccl_available() else "gloo")
 
     cfg = get_merged_config()
-    miner = YmirMining(cfg)
+    miner = CALDMiner(cfg)
     gpu = max(0, LOCAL_RANK)
     device = torch.device('cuda', gpu)
     miner.model.to(device)
