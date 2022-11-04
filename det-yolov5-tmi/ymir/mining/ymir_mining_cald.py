@@ -74,7 +74,10 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
             pred = ymir_yolov5.forward(batch['image'].float().to(device), nms=True)
 
         if RANK in [-1, 0]:
-            write_ymir_monitor_process(ymir_cfg, task='mining', naive_stage_percent=0.3 * idx * batch_size_per_gpu / dataset_size, stage=YmirStage.TASK)
+            write_ymir_monitor_process(ymir_cfg,
+                                       task='mining',
+                                       naive_stage_percent=0.3 * idx * batch_size_per_gpu / dataset_size,
+                                       stage=YmirStage.TASK)
         preprocess_image_shape = batch['image'].shape[2:]
         for inner_idx, det in enumerate(pred):  # per image
             result_per_image = []
@@ -102,13 +105,15 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
                                        pin_memory=ymir_yolov5.pin_memory,
                                        drop_last=False)
 
-    # cannot sync here!!!
     dataset_size = len(results)
     monitor_gap = max(1, dataset_size // 1000 // batch_size_per_gpu)
     pbar = tqdm(aug_dataset_loader) if RANK == 0 else aug_dataset_loader
     for idx, batch in enumerate(pbar):
         if idx % monitor_gap == 0 and RANK in [-1, 0]:
-            write_ymir_monitor_process(ymir_cfg, task='mining', naive_stage_percent=0.3 + 0.7 * idx * batch_size_per_gpu / dataset_size, stage=YmirStage.TASK)
+            write_ymir_monitor_process(ymir_cfg,
+                                       task='mining',
+                                       naive_stage_percent=0.3 + 0.7 * idx * batch_size_per_gpu / dataset_size,
+                                       stage=YmirStage.TASK)
 
         batch_consistency = [0.0 for _ in range(len(batch['image_file']))]
         aug_keys = ['flip', 'cutout', 'rotate', 'resize']

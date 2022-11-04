@@ -12,7 +12,7 @@ from mmdet.apis import inference_detector, init_detector
 from mmdet.utils.util_ymir import get_best_weight_file
 from tqdm import tqdm
 from ymir_exc import dataset_reader as dr
-from ymir_exc import env, monitor
+from ymir_exc import env
 from ymir_exc import result_writer as rw
 from ymir_exc.util import YmirStage, get_merged_config, write_ymir_monitor_process
 

@@ -24,7 +24,7 @@ RUN	apt-get update && apt-get install -y gnupg2 git libglib2.0-0 \
 
 COPY ./requirements.txt /workspace/
 # install ymir-exc sdk and requirements
-RUN pip install "git+https://github.com/modelai/ymir-executor-sdk.git@ymir1.0.0" \
+RUN pip install "git+https://github.com/modelai/ymir-executor-sdk.git@ymir1.3.0" \
     && pip install -r /workspace/requirements.txt
 
 # Copy file from host to docker and install requirements

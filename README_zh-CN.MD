@@ -109,6 +109,8 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 
 - [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk) ymir镜像开发辅助库
 
+  - [数据集转换](https://github.com/modelai/ymir-executor-sdk/blob/master/docs/dataset_convert.md)
+
 - [ymir-executor-verifer](https://github.com/modelai/ymir-executor-verifier) 调试与检测 ymir-executor
 
 ## 如何导入预训练模型
