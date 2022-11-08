@@ -16,11 +16,9 @@ def _calc_dynamic_intervals(start_interval, dynamic_interval_list):
     assert mmcv.is_list_of(dynamic_interval_list, tuple)
 
     dynamic_milestones = [0]
-    dynamic_milestones.extend(
-        [dynamic_interval[0] for dynamic_interval in dynamic_interval_list])
+    dynamic_milestones.extend([dynamic_interval[0] for dynamic_interval in dynamic_interval_list])
     dynamic_intervals = [start_interval]
-    dynamic_intervals.extend(
-        [dynamic_interval[1] for dynamic_interval in dynamic_interval_list])
+    dynamic_intervals.extend([dynamic_interval[1] for dynamic_interval in dynamic_interval_list])
     return dynamic_milestones, dynamic_intervals
 
 
@@ -52,7 +50,10 @@ class EvalHook(BaseEvalHook):
         if self.by_epoch:
             monitor_interval = max(1, runner.max_epochs // 1000)
             if runner.epoch % monitor_interval == 0:
-                write_ymir_monitor_process(self.ymir_cfg, task='training', naive_stage_percent=runner.epoch / runner.max_epochs, stage=YmirStage.TASK)
+                write_ymir_monitor_process(self.ymir_cfg,
+                                           task='training',
+                                           naive_stage_percent=runner.epoch / runner.max_epochs,
+                                           stage=YmirStage.TASK)
         super().after_train_epoch(runner)
 
     def before_train_iter(self, runner):
@@ -63,7 +64,10 @@ class EvalHook(BaseEvalHook):
         if not self.by_epoch:
             monitor_interval = max(1, runner.max_iters // 1000)
             if runner.iter % monitor_interval == 0:
-                write_ymir_monitor_process(self.ymir_cfg, task='training', naive_stage_percent=runner.ite / runner.max_iters, stage=YmirStage.TASK)
+                write_ymir_monitor_process(self.ymir_cfg,
+                                           task='training',
+                                           naive_stage_percent=runner.iter / runner.max_iters,
+                                           stage=YmirStage.TASK)
         super().after_train_iter(runner)
 
     def _do_evaluate(self, runner):
@@ -119,7 +123,10 @@ class DistEvalHook(BaseDistEvalHook):
         if self.by_epoch and runner.rank == 0:
             monitor_interval = max(1, runner.max_epochs // 1000)
             if runner.epoch % monitor_interval == 0:
-                write_ymir_monitor_process(self.ymir_cfg, task='training', naive_stage_percent=runner.epoch / runner.max_epochs, stage=YmirStage.TASK)
+                write_ymir_monitor_process(self.ymir_cfg,
+                                           task='training',
+                                           naive_stage_percent=runner.epoch / runner.max_epochs,
+                                           stage=YmirStage.TASK)
         super().after_train_epoch(runner)
 
     def before_train_iter(self, runner):
@@ -130,7 +137,10 @@ class DistEvalHook(BaseDistEvalHook):
         if not self.by_epoch and runner.rank == 0:
             monitor_interval = max(1, runner.max_iters // 1000)
             if runner.iter % monitor_interval == 0:
-                write_ymir_monitor_process(self.ymir_cfg, task='training', naive_stage_percent=runner.iter / runner.max_iters, stage=YmirStage.TASK)
+                write_ymir_monitor_process(self.ymir_cfg,
+                                           task='training',
+                                           naive_stage_percent=runner.iter / runner.max_iters,
+                                           stage=YmirStage.TASK)
         super().after_train_iter(runner)
 
     def _do_evaluate(self, runner):
@@ -143,8 +153,7 @@ class DistEvalHook(BaseDistEvalHook):
         if self.broadcast_bn_buffer:
             model = runner.model
             for name, module in model.named_modules():
-                if isinstance(module,
-                              _BatchNorm) and module.track_running_stats:
+                if isinstance(module, _BatchNorm) and module.track_running_stats:
                     dist.broadcast(module.running_var, 0)
                     dist.broadcast(module.running_mean, 0)
 
@@ -156,11 +165,7 @@ class DistEvalHook(BaseDistEvalHook):
             tmpdir = osp.join(runner.work_dir, '.eval_hook')
 
         from mmdet.apis import multi_gpu_test
-        results = multi_gpu_test(
-            runner.model,
-            self.dataloader,
-            tmpdir=tmpdir,
-            gpu_collect=self.gpu_collect)
+        results = multi_gpu_test(runner.model, self.dataloader, tmpdir=tmpdir, gpu_collect=self.gpu_collect)
         if runner.rank == 0:
             print('\n')
             runner.log_buffer.output['eval_iter_num'] = len(self.dataloader)

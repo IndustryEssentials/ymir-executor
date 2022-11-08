@@ -1,11 +1,34 @@
 # yolov5-ymir readme
-- [yolov5 readme](./README_yolov5.md)
+update 2022/11/08
+
+## build your ymir-executor
 
 ```
-docker build -t ymir/ymir-executor:ymir1.1.0-cuda102-yolov5-tmi --build-arg SERVER_MODE=dev --build-arg YMIR=1.1.0 -f cuda102.dockerfile .
+docker build -t your/ymir-executor:ymir2.0.0-cuda102-yolov5-tmi -f cuda102.dockerfile .
 
-docker build -t ymir/ymir-executor:ymir1.1.0-cuda111-yolov5-tmi --build-arg SERVER_MODE=dev --build-arg YMIR=1.1.0 -f cuda111.dockerfile .
+docker build -t your/ymir-executor:ymir2.0.0-cuda111-yolov5-tmi -f cuda111.dockerfile .
+
+docker build -t your/ymir-executor:ymir2.0.0-yolov5-cpu-tmi -f cpu.dockerfile .
 ```
+
+## training
+
+| 超参数 | 默认值 | 类型 | 说明 | 建议 |
+| - | - | - | - | - |
+| hyper-parameter | default value | type | note | advice |
+| shm_size | 128G | 字符串：str | docker image 可用共享内存 | 建议大小：镜像占用GPU数 * 32G |
+| export_format | ark:raw | 字符串：str | ymir数据集导出格式 | - |
+| model | yolov5s | 字符串：str | yolov5模型，可选yolov5n, yolov5s, yolov5m, yolov5l等 | 建议：速度快选yolov5n, 精度高选yolov5l, yolov5x, 平衡选yolov5s或yolov5m |
+| batch_size_per_gpu | 16 | 整数：int | 每张GPU一次处理的图片数量 | 建议大小：显存占用<50% 可增加2倍加快训练速度 |
+| num_workers_per_gpu | 4 | 整数：int | 每张GPU对应的数据读取进程数 | - |
+| epochs | 100 | 整数：int | 整个数据集的训练遍历次数 | 建议：必要时分析tensorboard确定是否有必要改变，一般采用默认值即可 |
+| img_size | 640 | 整数: int | 输入模型的图像分辨率 | - |
+| opset | 11 | 整数: int | onnx 导出参数 opset | 建议：一般不需要用到onnx，不必改 |
+| args_options | '--exist-ok' | 字符串：str | yolov5命令行参数 | 建议：专业用户可用yolov5所有命令行参数 |
+| save_best_only | True | 布尔: bool | 是否只保存最优模型 | 建议：为节省空间设为True即可 |
+| save_period | 10 | 整数: int | 保存模型的间隔 | 建议：当save_best_only为False时，可保存 `epoch/save_period` 个中间结果
+| sync_bn | False | 布尔: bool | 是否同步各gpu上的归一化层 | 建议：开启以提高训练稳定性及精度 |
+| ymir_saved_file_patterns | '' | 字符串: str | 用 `,` 分隔的保存文件模式 | 建议：专业用户当希望过滤保存的文件以节省空间时，可设置配置的正则表达式 |
 
 ## main change log
 
