@@ -32,10 +32,12 @@
 
     - [数据集格式转换](https://github.com/modelai/ymir-executor-sdk/blob/master/docs/dataset_convert.md)
 
-- [ymir镜像调试工具](https://github.com/modelai/ymir-executor-verifier)
+- [ymir镜像调试校验工具](https://github.com/modelai/ymir-executor-verifier)
 
     - 样例数据下载
 
     - 交互式调试
+
+    - 批量校验镜像
 
 - [ymir版本与接口兼容](./ymir-executor-version.md)
