@@ -2,9 +2,15 @@
 
 - [ymir](https://github.com/IndustryEssentials/ymir)
 
+  - [bilibili 视频教程](https://b23.tv/KS5b5oF)
+
 - [说明文档](https://github.com/modelai/ymir-executor-fork/wiki)
 
 - [ymir镜像](./docs/official-docker-image.md)
+
+  - [制作教程](./docs/README.MD) 从零到一，搭建自己的 ymir-executor
+
+  - [用户调查](https://www.wjx.cn/vm/eKFm2aq.aspx#)
 
 - [ymir 挖掘算法](./docs/mining-images-overview.md)
 
@@ -100,18 +106,6 @@ docker build -t ymir-executor/live-code:torch-tmi -f torch.dockerfile
 
 docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 ```
-
-## 如何制作自己的ymir-executor
-
-- [示例 ymir-executor](det-demo-tmi/README.md) 从零到一，搭建自己的 ymir-executor
-
-- [ymir-executor 制作指南](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/ymir-dataset-zh-CN.md)
-
-- [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk) ymir镜像开发辅助库
-
-  - [数据集转换](https://github.com/modelai/ymir-executor-sdk/blob/master/docs/dataset_convert.md)
-
-- [ymir-executor-verifer](https://github.com/modelai/ymir-executor-verifier) 调试与检测 ymir-executor
 
 ## 如何导入预训练模型
 
