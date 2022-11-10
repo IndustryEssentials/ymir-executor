@@ -2,9 +2,13 @@
 
 - [ymir](https://github.com/IndustryEssentials/ymir)
 
+  - [bilibili 视频教程](https://b23.tv/KS5b5oF)
+
 - [说明文档](https://github.com/modelai/ymir-executor-fork/wiki)
 
 - [ymir镜像](./docs/official-docker-image.md)
+
+  - [用户调查](https://www.wjx.cn/vm/eKFm2aq.aspx#)
 
 - [ymir 挖掘算法](./docs/mining-images-overview.md)
 

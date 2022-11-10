@@ -11,13 +11,27 @@ docker build -t your/ymir-executor:ymir2.0.0-cuda111-yolov5-tmi -f cuda111.docke
 docker build -t your/ymir-executor:ymir2.0.0-yolov5-cpu-tmi -f cpu.dockerfile .
 ```
 
-## training
+## 训练: training
+
+### 性能表现
+
+### 训练参数说明
+
+- 一些参数由ymir后台生成，如 `gpu_id`, `class_names` 等参数
+  - `gpu_id`:
+  - `task_id`:
+  - `model_params_path`:
+  - `class_names`:
+
+- 一些参数由ymir后台进行处理，如 `shm_size`, `export_format`， 其中 `shm_size` 影响到docker镜像所能使用的共享内存，若过小会导致 `out of memory` 等错误。 `export_format` 会决定docker镜像中所看到数据的格式
+
+
 
 | 超参数 | 默认值 | 类型 | 说明 | 建议 |
 | - | - | - | - | - |
 | hyper-parameter | default value | type | note | advice |
-| shm_size | 128G | 字符串：str | docker image 可用共享内存 | 建议大小：镜像占用GPU数 * 32G |
-| export_format | ark:raw | 字符串：str | ymir数据集导出格式 | - |
+| shm_size | 128G | 字符串：str | 受ymir后台处理，docker image 可用共享内存 | 建议大小：镜像占用GPU数 * 32G |
+| export_format | ark:raw | 字符串：str | 受ymir后台处理，ymir数据集导出格式 | - |
 | model | yolov5s | 字符串：str | yolov5模型，可选yolov5n, yolov5s, yolov5m, yolov5l等 | 建议：速度快选yolov5n, 精度高选yolov5l, yolov5x, 平衡选yolov5s或yolov5m |
 | batch_size_per_gpu | 16 | 整数：int | 每张GPU一次处理的图片数量 | 建议大小：显存占用<50% 可增加2倍加快训练速度 |
 | num_workers_per_gpu | 4 | 整数：int | 每张GPU对应的数据读取进程数 | - |
@@ -29,6 +43,22 @@ docker build -t your/ymir-executor:ymir2.0.0-yolov5-cpu-tmi -f cpu.dockerfile .
 | save_period | 10 | 整数: int | 保存模型的间隔 | 建议：当save_best_only为False时，可保存 `epoch/save_period` 个中间结果
 | sync_bn | False | 布尔: bool | 是否同步各gpu上的归一化层 | 建议：开启以提高训练稳定性及精度 |
 | ymir_saved_file_patterns | '' | 字符串: str | 用 `,` 分隔的保存文件模式 | 建议：专业用户当希望过滤保存的文件以节省空间时，可设置配置的正则表达式 |
+
+### 训练结果文件示例
+```
+
+```
+
+## 推理: infer
+
+### 推理参数说明
+
+| 超参数 | 默认值 | 类型 | 说明 | 建议 |
+| - | - | - | - | - |
+| hyper-parameter | default value | type | note | advice |
+
+
+### 推理结果文件示例
 
 ## main change log
 
