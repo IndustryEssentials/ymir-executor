@@ -8,7 +8,7 @@
 
 - [ymir executor](./docs/official-docker-image.md)
 
-  - [tutorial](./docs/README.MD) from zero to one, build you ymir-executor
+  - [develop tutorial](./docs/README.MD) from zero to one, build you ymir-executor
 
   - [user survey](https://www.wjx.cn/vm/eKFm2aq.aspx#)
 

@@ -8,7 +8,7 @@
 
 - [ymir镜像](./docs/official-docker-image.md)
 
-  - [制作教程](./docs/README.MD) 从零到一，搭建自己的 ymir-executor
+  - [镜像开发者：制作教程](./docs/README.MD) 从零到一，搭建自己的 ymir-executor
 
   - [用户调查](https://www.wjx.cn/vm/eKFm2aq.aspx#)
 

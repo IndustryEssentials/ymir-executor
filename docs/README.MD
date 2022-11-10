@@ -4,19 +4,23 @@
 
 - [已有的镜像](./official-docker-image.md)
 
-- [挖掘算法评测](./mining-images-overview.md)
+- [挖掘算法评测](./mining-images-overview.md) 完善中。。。
 
-## 从零定制流程
+## 从零定制
 
 1. [制作一个简单的镜像](../det-demo-tmi/README.md)
 
 2. [了解ymir接口与数据结构](./ymir-dataset-zh-CN.md)
 
-## 基于已有镜像进行定制流程
+## 基于已有镜像进行定制
 
 - [增/删/改: 默认超参数](./hyper-parameter.md)
 
-## 镜像调试流程
+## 基于开源仓库进行定制
+
+- [yolov5示例](https://github.com/yzbx/ymir-yolov5/pull/2/files)
+
+## 镜像调试
 
 - [交互式调试](./docker-image-debug.md)
 
