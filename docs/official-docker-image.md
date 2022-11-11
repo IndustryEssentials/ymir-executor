@@ -140,3 +140,36 @@ youdaoyzbx/ymir-executor:ymir1.3.0-mmdet-cu111-tmi
     ```
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-nanodet-cu111-tmi
     ```
+
+# build ymir executor
+
+## det-yolov4-tmi
+
+- yolov4 training, mining and infer docker image, use `mxnet` and `darknet` framework
+
+  ```
+  cd det-yolov4-tmi
+  docker build -t ymir-executor/yolov4:cuda101-tmi -f cuda101.dockerfile .
+
+  docker build -t ymir-executor/yolov4:cuda112-tmi -f cuda112.dockerfile .
+  ```
+
+## det-yolov5-tmi
+
+- yolov5 training, mining and infer docker image, use `pytorch` framework
+
+```
+cd det-yolov5-tmi
+docker build -t ymir-executor/yolov5:cuda102-tmi -f cuda102.dockerfile .
+
+docker build -t ymir-executor/yolov5:cuda111-tmi -f cuda111.dockerfile .
+```
+
+## det-mmdetection-tmi
+
+```
+cd det-mmdetection-tmi
+docker build -t ymir-executor/mmdet:cu102-tmi -f docker/Dockerfile.cuda102 .
+
+docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
+```
