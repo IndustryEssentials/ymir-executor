@@ -44,4 +44,6 @@
 
     - 批量校验镜像
 
+- [FAQ](./FAQ.md)
+
 - [ymir版本与接口兼容](./ymir-executor-version.md)
