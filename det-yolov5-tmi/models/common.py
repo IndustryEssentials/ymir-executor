@@ -50,8 +50,8 @@ class Conv(nn.Module):
             if activation.lower() == 'relu':
                 custom_act = nn.ReLU()
             else:
-                warnings.warn(f'unknown activation {activation}, use Hardswish instead')
-                custom_act = nn.Hardswish()
+                # view https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+                custom_act = getattr(nn, activation)()
             self.act = custom_act if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
 
     def forward(self, x):
