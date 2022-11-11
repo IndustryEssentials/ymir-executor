@@ -10,7 +10,7 @@
 
   - [镜像开发者：制作教程](./docs/README.MD) 从零到一，搭建自己的 ymir-executor
 
-  - [用户调查](https://www.wjx.cn/vm/eKFm2aq.aspx#)
+  - [用户调查](https://www.wjx.cn/vm/eKFm2aq.aspx#) 帮助ymir团队开发文档与新功能，此调查长期有效， 定期收集
 
 - [ymir 挖掘算法](./docs/mining-images-overview.md)
 
@@ -117,8 +117,6 @@ docker build -t ymir-executor/live-code:mxnet-tmi -f mxnet.dockerfile
 
 ## 参考
 
-- [挖掘算法CALD](https://github.com/we1pingyu/CALD/)
-- [挖掘算法ALDD](https://gitlab.com/haghdam/deep_active_learning)
 - [yolov4](https://github.com/AlexeyAB/darknet)
 - [yolov5](https://github.com/ultralytics/yolov5)
 - [mmdetection](https://github.com/open-mmlab/mmdetection)

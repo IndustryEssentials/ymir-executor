@@ -10,7 +10,7 @@
 
   - [develop tutorial](./docs/README.MD) from zero to one, build you ymir-executor
 
-  - [user survey](https://www.wjx.cn/vm/eKFm2aq.aspx#)
+  - [user survey](https://www.wjx.cn/vm/eKFm2aq.aspx#) help ymir team to write document and develop, user feedback are collected on a continuous and long-term basis.
 
 - [ymir mining algorithm](./docs/mining-images-overview.md)
 
@@ -99,8 +99,6 @@ docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
 
 ## reference
 
-- [mining algorithm: CALD](https://github.com/we1pingyu/CALD/)
-- [mining algorithm: ALDD](https://gitlab.com/haghdam/deep_active_learning)
 - [yolov4](https://github.com/AlexeyAB/darknet)
 - [yolov5](https://github.com/ultralytics/yolov5)
 - [mmdetection](https://github.com/open-mmlab/mmdetection)
