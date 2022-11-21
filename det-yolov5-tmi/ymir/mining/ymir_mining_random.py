@@ -37,7 +37,7 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
         images_rank = images
     mining_results = dict()
     dataset_size = len(images_rank)
-    pbar = tqdm(images_rank) if RANK == 0 else images_rank
+    pbar = tqdm(images_rank) if RANK in [-1, 0] else images_rank
     for idx, image in enumerate(pbar):
         if RANK in [-1, 0]:
             write_ymir_monitor_process(ymir_cfg, task='mining', naive_stage_percent=idx / dataset_size, stage=YmirStage.TASK)

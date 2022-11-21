@@ -65,7 +65,7 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     mining_results = dict()
     beta = 1.3
     dataset_size = len(images_rank)
-    pbar = tqdm(origin_dataset_loader) if RANK == 0 else origin_dataset_loader
+    pbar = tqdm(origin_dataset_loader) if RANK in [-1, 0] else origin_dataset_loader
     for idx, batch in enumerate(pbar):
         # batch-level sync, avoid 30min time-out error
         if WORLD_SIZE > 1 and idx < max_barrier_times:
@@ -108,7 +108,7 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
 
     dataset_size = len(results)
     monitor_gap = max(1, dataset_size // 1000 // batch_size_per_gpu)
-    pbar = tqdm(aug_dataset_loader) if RANK == 0 else aug_dataset_loader
+    pbar = tqdm(aug_dataset_loader) if RANK in [0, -1] else aug_dataset_loader
     for idx, batch in enumerate(pbar):
         if idx % monitor_gap == 0 and RANK in [-1, 0]:
             write_ymir_monitor_process(ymir_cfg,
