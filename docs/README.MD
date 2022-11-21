@@ -18,7 +18,7 @@
 
 ## 基于开源仓库进行定制
 
-- [yolov5示例](https://github.com/yzbx/ymir-yolov5/pull/2/files)
+- [yolov5示例](https://github.com/modelai/ymir-yolov5/pull/2/files)
 
 ## 镜像调试
 

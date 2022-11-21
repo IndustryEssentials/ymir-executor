@@ -117,7 +117,7 @@ task_id: t0000001000002ebb7f11653630774 # 任务id
 
 ## ymir输入镜像的标注格式
 
-常见的目标检测标注格式有 `voc` 与 `coco`， ymir 除自身格式， 目前还支持`voc`格式，可在超参数页面通过设置`export_format`对ymir导入镜像的数据格式进行修改。
+常见的目标检测标注格式有 `voc` 与 `coco`， ymir 除自身格式， 目前还支持`voc`格式，可在超参数页面通过设置`export_format`对ymir导入镜像的数据格式进行修改，其中检测格式 ["det-ark", "det-voc", "det-ls-json"]也可简写为 ["ark", "voc", "ls-json"]， 从而兼容ymir1.1.0 。
 
 ```
 image format: ['raw', 'lmdb']
@@ -126,12 +126,18 @@ annotation format: ["none", "det-ark", "det-voc", "det-ls-json", "seg-poly", "se
 
 ### 默认数据格式
 
-- `export_format=ark:raw`, 标注文件为`xxx.txt`
+- ymir1.1.0 默认数据导出格式 `export_format=ark:raw`, 标注文件为`xxx.txt`
 
-- `export_format=det-ark:raw`, 标注文件为`xxx.txt`
+- ymir2.0.0+ 默认检测数据导出格式 `export_format=det-voc:raw`, 标注文件为`xxx.xml`
+
+- ymir2.0.0+ 默认分割数据导出格式 `export_format=seg-mask:raw`, 标注文件为`xxx.png`
 
 ### voc 数据格式
 
-- `export_format=voc:raw`， 标注文件为`xxx.xml`
+- `export_format=voc:raw` 或 `export_format=det-voc:raw` 标注文件为`xxx.xml`， 可以包含更多自定义的图像信息
 
-- `export_format=det-voc:raw`, 标注文件为`xxx.xml`
+- `export_format=ark:raw` 或 `export_format=det-ark:raw`, 标注文件为`xxx.txt`
+
+- `export_format=seg-mask:raw`, 标注文件为`xxx.png`, 包含`labelmap.txt`, 需要通过`labelmap.txt`将标注图像`xxx.png`从(R, G, B) 映射到`label_id`进行训练。
+
+- `export_format=seg-poly:raw`, 多边形标注文件，待定中

@@ -19,5 +19,5 @@ args_options: '--exist-ok'
 save_best_only: True  # save the best weight file only
 save_period: 10
 sync_bn: False  # work for multi-gpu only
-activation: 'Hardswish'  # view https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+activation: 'SiLU'  # view https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
 ymir_saved_file_patterns: ''  # custom saved files, support python regular expression, use , to split multiple pattern
