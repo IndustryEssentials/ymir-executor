@@ -47,3 +47,5 @@
 - [FAQ](./FAQ.md)
 
 - [ymir版本与接口兼容](./ymir-executor-version.md)
+
+- [加速apt/pip/docker](./speedup_apt_pip_docker.md)

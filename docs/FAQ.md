@@ -21,9 +21,9 @@
 - 回到项目根目录或docker file对应根目录，确保docker file 中`COPY/ADD`的文件与文件夹能够访问，以yolov5为例.
 
     ```
-    cd ymir-executor/det-yolov5-tmi
+    cd ymir-executor-fork/det-yolov5-tmi
 
-    docker build -t ymir-executor/yolov5:cuda111 . -f cuda111.dockerfile
+    docker build -t ymir-executor/yolov5:cuda111 . -f ymir/docker/cuda111.dockerfile
     ```
 
 ## 模型精度/速度如何权衡与提升
