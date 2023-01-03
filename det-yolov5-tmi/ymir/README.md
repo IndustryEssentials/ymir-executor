@@ -4,11 +4,11 @@ update 2022/11/23
 ## build your ymir-executor
 
 ```
-docker build -t your/ymir-executor:ymir2.0.0-cuda102-yolov5-tmi -f cuda102.dockerfile .
+cd det-yolov5-tmi
 
-docker build -t your/ymir-executor:ymir2.0.0-cuda111-yolov5-tmi -f cuda111.dockerfile .
+docker build -t your/ymir-executor:ymir2.0.0-cuda102-yolov5-tmi -f ymir/docker/cuda102.dockerfile .
 
-docker build -t your/ymir-executor:ymir2.0.0-yolov5-cpu-tmi -f cpu.dockerfile .
+docker build -t your/ymir-executor:ymir2.0.0-cuda111-yolov5-tmi -f ymir/docker/cuda111.dockerfile .
 ```
 
 ## 训练: training
@@ -56,7 +56,6 @@ docker build -t your/ymir-executor:ymir2.0.0-yolov5-cpu-tmi -f cpu.dockerfile .
 | save_period | 10 | 整数 | 保存模型的间隔 | 建议：当save_best_only为False时，可保存 `epoch/save_period` 个中间结果
 | sync_bn | False | 布尔型 | 是否同步各gpu上的归一化层 | 建议：开启以提高训练稳定性及精度 |
 | activate | '' | 字符串 | 激活函数，默认为nn.Hardswish(), 参考 [pytorch激活函数](https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity) | 可选值: ELU, Hardswish, LeakyReLU, PReLU, ReLU, ReLU6, SiLU, ... |
-| ymir_saved_file_patterns | '' | 字符串 | 用 `,` 分隔的保存文件模式 | 建议：专业用户当希望过滤保存的文件以节省空间时，可设置配置的正则表达式 |
 
 ### 训练结果文件示例
 ```
