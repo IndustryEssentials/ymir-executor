@@ -43,20 +43,20 @@ docker build -t your/ymir-executor:ymir2.0.0-yolov5-cpu-tmi -f cpu.dockerfile .
 | 超参数 | 默认值 | 类型 | 说明 | 建议 |
 | - | - | - | - | - |
 | hyper-parameter | default value | type | note | advice |
-| shm_size | 128G | 字符串：str | 受ymir后台处理，docker image 可用共享内存 | 建议大小：镜像占用GPU数 * 32G |
-| export_format | ark:raw | 字符串：str | 受ymir后台处理，ymir数据集导出格式 | - |
-| model | yolov5s | 字符串：str | yolov5模型，可选yolov5n, yolov5s, yolov5m, yolov5l等 | 建议：速度快选yolov5n, 精度高选yolov5l, yolov5x, 平衡选yolov5s或yolov5m |
-| batch_size_per_gpu | 16 | 整数：int | 每张GPU一次处理的图片数量 | 建议大小：显存占用<50% 可增加2倍加快训练速度 |
-| num_workers_per_gpu | 4 | 整数：int | 每张GPU对应的数据读取进程数 | - |
-| epochs | 100 | 整数：int | 整个数据集的训练遍历次数 | 建议：必要时分析tensorboard确定是否有必要改变，一般采用默认值即可 |
-| img_size | 640 | 整数: int | 输入模型的图像分辨率 | - |
-| opset | 11 | 整数: int | onnx 导出参数 opset | 建议：一般不需要用到onnx，不必改 |
-| args_options | '--exist-ok' | 字符串：str | yolov5命令行参数 | 建议：专业用户可用yolov5所有命令行参数 |
-| save_best_only | True | 布尔: bool | 是否只保存最优模型 | 建议：为节省空间设为True即可 |
-| save_period | 10 | 整数: int | 保存模型的间隔 | 建议：当save_best_only为False时，可保存 `epoch/save_period` 个中间结果
-| sync_bn | False | 布尔: bool | 是否同步各gpu上的归一化层 | 建议：开启以提高训练稳定性及精度 |
-| activate | '' | 字符串：str | 激活函数，默认为nn.Hardswish(), 参考 [pytorch激活函数](https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity) | 可选值: ELU, Hardswish, LeakyReLU, PReLU, ReLU, ReLU6, SiLU, ... |
-| ymir_saved_file_patterns | '' | 字符串: str | 用 `,` 分隔的保存文件模式 | 建议：专业用户当希望过滤保存的文件以节省空间时，可设置配置的正则表达式 |
+| shm_size | 128G | 字符串| 受ymir后台处理，docker image 可用共享内存 | 建议大小：镜像占用GPU数 * 32G |
+| export_format | ark:raw | 字符串| 受ymir后台处理，ymir数据集导出格式 | - |
+| model | yolov5s | 字符串 | yolov5模型，可选yolov5n, yolov5s, yolov5m, yolov5l等 | 建议：速度快选yolov5n, 精度高选yolov5l, yolov5x, 平衡选yolov5s或yolov5m |
+| batch_size_per_gpu | 16 | 整数 | 每张GPU一次处理的图片数量 | 建议大小：显存占用<50% 可增加2倍加快训练速度 |
+| num_workers_per_gpu | 4 | 整数 | 每张GPU对应的数据读取进程数 | - |
+| epochs | 100 | 整数 | 整个数据集的训练遍历次数 | 建议：必要时分析tensorboard确定是否有必要改变，一般采用默认值即可 |
+| img_size | 640 | 整数 | 输入模型的图像分辨率 | - |
+| opset | 11 | 整数 | onnx 导出参数 opset | 建议：一般不需要用到onnx，不必改 |
+| args_options | '--exist-ok' | 字符串 | yolov5命令行参数 | 建议：专业用户可用yolov5所有命令行参数 |
+| save_best_only | True | 布尔型 | 是否只保存最优模型 | 建议：为节省空间设为True即可 |
+| save_period | 10 | 整数 | 保存模型的间隔 | 建议：当save_best_only为False时，可保存 `epoch/save_period` 个中间结果
+| sync_bn | False | 布尔型 | 是否同步各gpu上的归一化层 | 建议：开启以提高训练稳定性及精度 |
+| activate | '' | 字符串 | 激活函数，默认为nn.Hardswish(), 参考 [pytorch激活函数](https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity) | 可选值: ELU, Hardswish, LeakyReLU, PReLU, ReLU, ReLU6, SiLU, ... |
+| ymir_saved_file_patterns | '' | 字符串 | 用 `,` 分隔的保存文件模式 | 建议：专业用户当希望过滤保存的文件以节省空间时，可设置配置的正则表达式 |
 
 ### 训练结果文件示例
 ```
@@ -89,13 +89,13 @@ docker build -t your/ymir-executor:ymir2.0.0-yolov5-cpu-tmi -f cpu.dockerfile .
 | 超参数 | 默认值 | 类型 | 说明 | 建议 |
 | - | - | - | - | - |
 | hyper-parameter | default value | type | note | advice |
-| img_size | 640 | int | 模型的输入图像大小 | 采用32的整数倍，224 = 32*7 以上大小 |
-| conf_thres | 0.25 | float | 置信度阈值 | 采用默认值 |
-| iou_thres | 0.45 | float | nms时的iou阈值 | 采用默认值 |
-| batch_size_per_gpu | 16 | 整数：int | 每张GPU一次处理的图片数量 | 建议大小：显存占用<50% 可增加1倍加快训练速度 |
-| num_workers_per_gpu | 4 | 整数：int | 每张GPU对应的数据读取进程数 | - |
-| shm_size | 128G | 字符串：str | 受ymir后台处理，docker image 可用共享内存 | 建议大小：镜像占用GPU数 * 32G |
-| pin_memory | False | bool | 是否为数据集单独固定内存? | 内存充足时改为True可加快数据集加载 |
+| img_size | 640 | 整数 | 模型的输入图像大小 | 采用32的整数倍，224 = 32*7 以上大小 |
+| conf_thres | 0.25 | 浮点数 | 置信度阈值 | 采用默认值 |
+| iou_thres | 0.45 | 浮点数 | nms时的iou阈值 | 采用默认值 |
+| batch_size_per_gpu | 16 | 整数| 每张GPU一次处理的图片数量 | 建议大小：显存占用<50% 可增加1倍加快训练速度 |
+| num_workers_per_gpu | 4 | 整数| 每张GPU对应的数据读取进程数 | - |
+| shm_size | 128G | 字符串| 受ymir后台处理，docker image 可用共享内存 | 建议大小：镜像占用GPU数 * 32G |
+| pin_memory | False | 布尔型 | 是否为数据集单独固定内存? | 内存充足时改为True可加快数据集加载 |
 
 
 ---
@@ -109,15 +109,15 @@ docker build -t your/ymir-executor:ymir2.0.0-yolov5-cpu-tmi -f cpu.dockerfile .
 | 超参数 | 默认值 | 类型 | 说明 | 建议 |
 | - | - | - | - | - |
 | hyper-parameter | default value | type | note | advice |
-| img_size | 640 | int | 模型的输入图像大小 | 采用32的整数倍，224 = 32*7 以上大小 |
-| mining_algorithm | aldd | str | 挖掘算法名称，可选 random, aldd, cald, entropy | 建议单类检测采用aldd，多类检测采用entropy |
+| img_size | 640 | 整数 | 模型的输入图像大小 | 采用32的整数倍，224 = 32*7 以上大小 |
+| mining_algorithm | aldd | 字符串 | 挖掘算法名称，可选 random, aldd, cald, entropy | 建议单类检测采用aldd，多类检测采用entropy |
 | class_distribution_scores | '' | List[float]的字符表示 | aldd算法的类别平衡参数 | 不用更改， 专业用户可根据各类比较调整，如对于4类检测，用 `1.0,1.0,0.1,0.2` 降低后两类的挖掘比重 |
-| conf_thres | 0.25 | float | 置信度阈值 | 采用默认值 |
-| iou_thres | 0.45 | float | nms时的iou阈值 | 采用默认值 |
-| batch_size_per_gpu | 16 | 整数：int | 每张GPU一次处理的图片数量 | 建议大小：显存占用<50% 可增加1倍加快训练速度 |
-| num_workers_per_gpu | 4 | 整数：int | 每张GPU对应的数据读取进程数 | - |
-| shm_size | 128G | 字符串：str | 受ymir后台处理，docker image 可用共享内存 | 建议大小：镜像占用GPU数 * 32G |
-| pin_memory | False | bool | 是否为数据集单独固定内存? | 内存充足时改为True可加快数据集加载 |
+| conf_thres | 0.25 | 浮点数 | 置信度阈值 | 采用默认值 |
+| iou_thres | 0.45 | 浮点数 | nms时的iou阈值 | 采用默认值 |
+| batch_size_per_gpu | 16 | 整数 | 每张GPU一次处理的图片数量 | 建议大小：显存占用<50% 可增加1倍加快训练速度 |
+| num_workers_per_gpu | 4 | 整数 | 每张GPU对应的数据读取进程数 | - |
+| shm_size | 128G | 字符串 | 受ymir后台处理，docker image 可用共享内存 | 建议大小：镜像占用GPU数 * 32G |
+| pin_memory | False | 布尔型 | 是否为数据集单独固定内存? | 内存充足时改为True可加快数据集加载 |
 
 ## 主要改动：main change log
 
