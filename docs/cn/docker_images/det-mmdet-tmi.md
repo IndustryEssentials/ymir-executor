@@ -9,6 +9,7 @@
 ## 镜像地址
 ```
 youdaoyzbx/ymir-executor:ymir2.0.0-mmdet-cu111-tmi
+youdaoyzbx/ymir-executor:ymir2.0.2-mmdet-cu111-tmi
 ```
 
 ## 性能表现

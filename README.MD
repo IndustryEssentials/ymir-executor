@@ -4,7 +4,7 @@
 
   - [bilibili: video tutorial](https://b23.tv/KS5b5oF)
 
-- [wiki](https://github.com/modelai/ymir-executor-fork/wiki)
+- [Image Community](http://pubimg.vesionbook.com:8110/img) search and share open source.
 
 - [ymir executor](./docs/official-docker-image.md)
 

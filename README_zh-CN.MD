@@ -4,7 +4,7 @@
 
   - [bilibili 视频教程](https://b23.tv/KS5b5oF)
 
-- [说明文档](https://github.com/modelai/ymir-executor-fork/wiki)
+- [镜像社区](http://pubimg.vesionbook.com:8110/img) 可搜索到所有公开的ymir算法镜像， 同时可共享其他人发布的镜像。
 
 - [ymir镜像](./docs/official-docker-image.md)
 
