@@ -10,6 +10,7 @@
 ## 镜像地址
 ```
 youdaoyzbx/ymir-executor:ymir2.0.0-nanodet-cu111-tmi
+youdaoyzbx/ymir-executor:ymir2.0.2-nanodet-cu111-tmi
 ```
 
 ## 性能说明

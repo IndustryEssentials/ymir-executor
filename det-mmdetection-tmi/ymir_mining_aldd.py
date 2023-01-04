@@ -2,12 +2,13 @@ import sys
 
 import torch
 from easydict import EasyDict as edict
-from mining_base import ALDDMining
 from mmcv.parallel import collate, scatter
+from ymir_exc.util import get_merged_config
+
+from mining_base import ALDDMining
 from mmdet.datasets import replace_ImageToTensor
 from mmdet.datasets.pipelines import Compose
 from mmdet.models.detectors import YOLOX
-from ymir_exc.util import get_merged_config
 from ymir_infer import YmirModel
 from ymir_mining_random import RandomMiner
 

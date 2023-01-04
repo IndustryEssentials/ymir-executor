@@ -53,7 +53,15 @@ def _run_mining(cfg: edict) -> None:
 
 
 def _run_infer() -> None:
-    command = 'python3 ymir_infer.py'
+    gpu_id: str = str(cfg.param.get('gpu_id', '0'))
+    gpu_count = len(gpu_id.split(','))
+
+    if gpu_count <= 1:
+        command = 'python3 ymir_infer.py'
+    else:
+        port = find_free_port()
+        command = f'python3 -m torch.distributed.launch --nproc_per_node {gpu_count} --master_port {port} ymir_infer.py'  # noqa
+
     logging.info(f'start infer: {command}')
     subprocess.run(command.split(), check=True)
     logging.info("infer finished")
