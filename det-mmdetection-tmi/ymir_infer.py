@@ -117,7 +117,7 @@ def main():
             tbar = tqdm(images_rank)
         else:
             tbar = images_rank
-    infer_result = dict()
+    infer_result_list = []
     model = YmirModel(cfg)
 
     # write infer result
@@ -132,16 +132,19 @@ def main():
         if WORLD_SIZE > 1 and idx < max_barrier_times:
             dist.barrier()
 
-        infer_result[asset_path] = [ann for ann in raw_anns if ann.score >= conf_threshold]
+        infer_result_list.append((asset_path, [ann for ann in raw_anns if ann.score >= conf_threshold]))
 
         if idx % monitor_gap == 0:
             write_ymir_monitor_process(cfg, task='infer', naive_stage_percent=idx / N, stage=YmirStage.TASK)
 
     if WORLD_SIZE > 1:
-        infer_result = collect_results_gpu(infer_result, len(images))
+        dist.barrier()
+        infer_result_list = collect_results_gpu(infer_result_list, len(images))
 
-    rw.write_infer_result(infer_result=infer_result)
-    write_ymir_monitor_process(cfg, task='infer', naive_stage_percent=1.0, stage=YmirStage.POSTPROCESS)
+    if RANK in [0, -1]:
+        infer_result_dict = {k: v for k, v in infer_result_list}
+        rw.write_infer_result(infer_result=infer_result_dict)
+        write_ymir_monitor_process(cfg, task='infer', naive_stage_percent=1.0, stage=YmirStage.POSTPROCESS)
     return 0
 
 
