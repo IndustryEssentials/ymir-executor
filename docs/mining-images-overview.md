@@ -10,7 +10,7 @@
 | vidt |❌ | ✔️ | ❌ | ❌ |
 | detectron2 | ❌ | ✔️ | ❌ | ❌ |
 
-![](./docs/mining_score.png)
+![](./mining_score.png)
 
 # 带负样本的单类挖掘实验
 

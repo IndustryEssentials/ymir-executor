@@ -113,6 +113,8 @@ out
 docker run -it --gpus all --shm-size 128G -v $PWD/in:/in -v $PWD/out:/out -v $YMIR_WORKDIR:$YMIR_WORKDIR -v $HOME/code:/code youdaoyzbx/ymir-executor:ymir2.0.0-yolov5-cu111-tmi bash
 ```
 
+7. 推理与挖掘镜像调试同理，注意对应目录均为 `ymir-workplace/sandbox/work_dir/TaskTypeMining`
+
 ## 调试完成后构建新镜像
 
 - 准备 `zzz.dockerfile`
@@ -136,4 +138,12 @@ CMD bash /usr/bin/start.sh
 
 ```
 docker build -t youdaoyzbx/ymir-executor:ymir2.0.1-yolov5-cu111-tmi . -f zzz.dockerfile
+```
+
+## ymir后台错误查看
+
+- 在`ymir-workplace/ymir-data/logs`下查看
+
+```
+tail -f -n 200 ymir_controller.log
 ```

@@ -5,9 +5,11 @@ import subprocess
 import sys
 
 from easydict import EasyDict as edict
-from mmdet.utils.util_ymir import get_best_weight_file, write_ymir_training_result
-from ymir_exc import monitor
-from ymir_exc.util import YmirStage, find_free_port, get_merged_config, write_ymir_monitor_process
+from ymir_exc.util import (YmirStage, find_free_port, get_merged_config,
+                           write_ymir_monitor_process)
+
+from mmdet.utils.util_ymir import (get_best_weight_file,
+                                   write_ymir_training_result)
 
 
 def main(cfg: edict) -> int:

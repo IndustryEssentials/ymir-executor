@@ -4,7 +4,7 @@
 
   - [bilibili: video tutorial](https://b23.tv/KS5b5oF)
 
-- [wiki](https://github.com/modelai/ymir-executor-fork/wiki)
+- [Image Community](http://pubimg.vesionbook.com:8110/img) search and share open source.
 
 - [ymir executor](./docs/official-docker-image.md)
 
@@ -58,45 +58,11 @@ gpu: single GeForce GTX 1080 Ti
 
 ---
 
-# build ymir executor
-
-## det-yolov4-tmi
-
-- yolov4 training, mining and infer docker image, use `mxnet` and `darknet` framework
-
-  ```
-  cd det-yolov4-tmi
-  docker build -t ymir-executor/yolov4:cuda101-tmi -f cuda101.dockerfile .
-
-  docker build -t ymir-executor/yolov4:cuda112-tmi -f cuda112.dockerfile .
-  ```
-
-## det-yolov5-tmi
-
-- yolov5 training, mining and infer docker image, use `pytorch` framework
-
-```
-cd det-yolov5-tmi
-docker build -t ymir-executor/yolov5:cuda102-tmi -f cuda102.dockerfile .
-
-docker build -t ymir-executor/yolov5:cuda111-tmi -f cuda111.dockerfile .
-```
-
-## det-mmdetection-tmi
-
-```
-cd det-mmdetection-tmi
-docker build -t ymir-executor/mmdet:cu102-tmi -f docker/Dockerfile.cuda102 .
-
-docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
-```
-
 ## how to import pretrained model weights
 
 - [import and finetune model](https://github.com/modelai/ymir-executor-fork/wiki/import-and-finetune-model)
 
-- ~~[import pretainted model weights](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/import-extra-models.md)~~
-
+- [import pretainted model weights](https://github.com/IndustryEssentials/ymir/blob/master/dev_docs/import-extra-models.md)
 ## reference
 
 - [yolov4](https://github.com/AlexeyAB/darknet)

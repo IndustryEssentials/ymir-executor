@@ -18,7 +18,7 @@
 
 ## 基于开源仓库进行定制
 
-- [yolov5示例](https://github.com/yzbx/ymir-yolov5/pull/2/files)
+- [yolov5示例](https://github.com/modelai/ymir-yolov5/pull/2/files)
 
 ## 镜像调试
 
@@ -44,4 +44,10 @@
 
     - 批量校验镜像
 
+- [FAQ](./FAQ.md)
+
 - [ymir版本与接口兼容](./ymir-executor-version.md)
+
+- [加速apt/pip/docker](./speedup_apt_pip_docker.md)
+
+- [导入外部模型权值](./import_outer_weight.md)

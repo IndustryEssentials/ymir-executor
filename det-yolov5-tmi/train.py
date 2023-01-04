@@ -32,7 +32,6 @@ from torch.cuda import amp
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import SGD, Adam, AdamW, lr_scheduler
 from tqdm import tqdm
-from ymir_exc import monitor
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -317,7 +316,7 @@ def train(
         model.train()
 
         # ymir monitor
-        if epoch % monitor_gap == 0:
+        if epoch % monitor_gap == 0 and RANK in [0, -1]:
             write_ymir_monitor_process(ymir_cfg, task='training', naive_stage_percent=(epoch - start_epoch + 1) / (epochs - start_epoch + 1), stage=YmirStage.TASK)
 
         # Update image weights (optional, single-GPU only)

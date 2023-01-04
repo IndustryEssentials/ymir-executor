@@ -38,7 +38,7 @@ def _run_training(cfg: edict) -> None:
     # use `env.get_executor_config` to get config file for training
     gpu_id: str = cfg.param.get(key='gpu_id')
     class_names: List[str] = cfg.param.get(key='class_names')
-    expected_mAP: float = cfg.param.get(key='expected_map', default=0.6)
+    expected_miou: float = cfg.param.get(key='expected_miou', default=0.6)
     idle_seconds: float = cfg.param.get(key='idle_seconds', default=60)
     trigger_crash: bool = cfg.param.get(key='trigger_crash', default=False)
     # use `logging` or `print` to write log to console
@@ -84,7 +84,9 @@ def _run_training(cfg: edict) -> None:
     with open(os.path.join(stage_dir, 'config.py'), 'w') as f:
         f.write('fake model config file')
     # use `rw.write_model_stage` to save training result
-    rw.write_model_stage(stage_name='epoch10', files=['epoch10.pt', 'config.py'], mAP=random.random() / 2)
+    rw.write_model_stage(stage_name='epoch10',
+                         files=['epoch10.pt', 'config.py'],
+                         evaluation_result=dict(mIoU=random.random() / 2))
 
     _dummy_work(idle_seconds=idle_seconds, trigger_crash=trigger_crash)
 
@@ -96,7 +98,9 @@ def _run_training(cfg: edict) -> None:
         f.write('fake model weight')
     with open(os.path.join(stage_dir, 'config.py'), 'w') as f:
         f.write('fake model config file')
-    rw.write_model_stage(stage_name='epoch20', files=['epoch20.pt', 'config.py'], mAP=expected_mAP)
+    rw.write_model_stage(stage_name='epoch20',
+                         files=['epoch20.pt', 'config.py'],
+                         evaluation_result=dict(mIoU=expected_miou))
 
     # if task done, write 100% percent log
     logging.info('training done')

@@ -60,7 +60,7 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
 
     mining_results = dict()
     dataset_size = len(images_rank)
-    pbar = tqdm(origin_dataset_loader) if RANK == 0 else origin_dataset_loader
+    pbar = tqdm(origin_dataset_loader) if RANK in [0, -1] else origin_dataset_loader
     for idx, batch in enumerate(pbar):
         # batch-level sync, avoid 30min time-out error
         if WORLD_SIZE > 1 and idx < max_barrier_times:

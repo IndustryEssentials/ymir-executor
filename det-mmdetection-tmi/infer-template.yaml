@@ -1,4 +1,3 @@
 shm_size: '128G'
-export_format: 'ark:raw'
 cfg_options: ''
 conf_threshold: 0.2

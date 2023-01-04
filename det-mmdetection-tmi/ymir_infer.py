@@ -1,4 +1,5 @@
 import argparse
+import os
 import os.path as osp
 import sys
 import warnings
@@ -6,15 +7,21 @@ from typing import Any, List
 
 import cv2
 import numpy as np
+import torch.distributed as dist
 from easydict import EasyDict as edict
 from mmcv import DictAction
-from mmdet.apis import inference_detector, init_detector
-from mmdet.utils.util_ymir import get_best_weight_file
+from mmcv.runner import init_dist
 from tqdm import tqdm
-from ymir_exc import dataset_reader as dr
-from ymir_exc import env
 from ymir_exc import result_writer as rw
-from ymir_exc.util import YmirStage, get_merged_config, write_ymir_monitor_process
+from ymir_exc.util import (YmirStage, get_merged_config, write_ymir_monitor_process)
+
+from mmdet.apis import inference_detector, init_detector
+from mmdet.apis.test import collect_results_gpu
+from mmdet.utils.util_ymir import get_best_weight_file
+
+LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
+RANK = int(os.getenv('RANK', -1))
+WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 
 
 def parse_option(cfg_options: str) -> dict:
@@ -80,8 +87,9 @@ class YmirModel:
         cfg_options = parse_option(options) if options else None
 
         # current infer can only use one gpu!!!
-        gpu_ids = cfg.param.get('gpu_id', '0')
-        gpu_id = gpu_ids.split(',')[0]
+        # gpu_ids = cfg.param.get('gpu_id', '0')
+        # gpu_id = gpu_ids.split(',')[0]
+        gpu_id = max(0, RANK)
         # build the model from a config file and a checkpoint file
         self.model = init_detector(config_file, checkpoint_file, device=f'cuda:{gpu_id}', cfg_options=cfg_options)
 
@@ -90,29 +98,53 @@ class YmirModel:
 
 
 def main():
+    if LOCAL_RANK != -1:
+        init_dist(launcher='pytorch', backend="nccl" if dist.is_nccl_available() else "gloo")
+
     cfg = get_merged_config()
 
-    N = dr.items_count(env.DatasetType.CANDIDATE)
-    infer_result = dict()
+    with open(cfg.ymir.input.candidate_index_file, 'r') as f:
+        images = [line.strip() for line in f.readlines()]
+
+    max_barrier_times = len(images) // WORLD_SIZE
+    if RANK == -1:
+        N = len(images)
+        tbar = tqdm(images)
+    else:
+        images_rank = images[RANK::WORLD_SIZE]
+        N = len(images_rank)
+        if RANK == 0:
+            tbar = tqdm(images_rank)
+        else:
+            tbar = images_rank
+    infer_result_list = []
     model = YmirModel(cfg)
-    idx = -1
 
     # write infer result
     monitor_gap = max(1, N // 100)
     conf_threshold = float(cfg.param.conf_threshold)
-    for asset_path, _ in tqdm(dr.item_paths(dataset_type=env.DatasetType.CANDIDATE)):
+    for idx, asset_path in enumerate(tbar):
         img = cv2.imread(asset_path)
         result = model.infer(img)
         raw_anns = mmdet_result_to_ymir(result, cfg.param.class_names)
 
-        infer_result[asset_path] = [ann for ann in raw_anns if ann.score >= conf_threshold]
-        idx += 1
+        # batch-level sync, avoid 30min time-out error
+        if WORLD_SIZE > 1 and idx < max_barrier_times:
+            dist.barrier()
+
+        infer_result_list.append((asset_path, [ann for ann in raw_anns if ann.score >= conf_threshold]))
 
         if idx % monitor_gap == 0:
-            write_ymir_monitor_process(cfg, task='infer', naive_stage_percent=idx / N, stage = YmirStage.TASK)
+            write_ymir_monitor_process(cfg, task='infer', naive_stage_percent=idx / N, stage=YmirStage.TASK)
 
-    rw.write_infer_result(infer_result=infer_result)
-    write_ymir_monitor_process(cfg, task='infer', naive_stage_percent=1.0, stage=YmirStage.POSTPROCESS)
+    if WORLD_SIZE > 1:
+        dist.barrier()
+        infer_result_list = collect_results_gpu(infer_result_list, len(images))
+
+    if RANK in [0, -1]:
+        infer_result_dict = {k: v for k, v in infer_result_list}
+        rw.write_infer_result(infer_result=infer_result_dict)
+        write_ymir_monitor_process(cfg, task='infer', naive_stage_percent=1.0, stage=YmirStage.POSTPROCESS)
     return 0
 
 

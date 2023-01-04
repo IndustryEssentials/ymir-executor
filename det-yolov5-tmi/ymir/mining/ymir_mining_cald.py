@@ -15,12 +15,13 @@ import torch.distributed as dist
 import torch.utils.data as td
 from easydict import EasyDict as edict
 from tqdm import tqdm
+from ymir_exc import result_writer as rw
+from ymir_exc.util import YmirStage, get_merged_config, write_ymir_monitor_process
+
 from utils.general import scale_coords
 from ymir.mining.util import (YmirDataset, collate_fn_with_fake_ann, load_image_file, load_image_file_with_ann,
                               update_consistency)
 from ymir.ymir_yolov5 import YmirYolov5
-from ymir_exc import result_writer as rw
-from ymir_exc.util import YmirStage, get_merged_config, write_ymir_monitor_process
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -64,7 +65,7 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
     mining_results = dict()
     beta = 1.3
     dataset_size = len(images_rank)
-    pbar = tqdm(origin_dataset_loader) if RANK == 0 else origin_dataset_loader
+    pbar = tqdm(origin_dataset_loader) if RANK in [-1, 0] else origin_dataset_loader
     for idx, batch in enumerate(pbar):
         # batch-level sync, avoid 30min time-out error
         if WORLD_SIZE > 1 and idx < max_barrier_times:
@@ -107,7 +108,7 @@ def run(ymir_cfg: edict, ymir_yolov5: YmirYolov5):
 
     dataset_size = len(results)
     monitor_gap = max(1, dataset_size // 1000 // batch_size_per_gpu)
-    pbar = tqdm(aug_dataset_loader) if RANK == 0 else aug_dataset_loader
+    pbar = tqdm(aug_dataset_loader) if RANK in [0, -1] else aug_dataset_loader
     for idx, batch in enumerate(pbar):
         if idx % monitor_gap == 0 and RANK in [-1, 0]:
             write_ymir_monitor_process(ymir_cfg,

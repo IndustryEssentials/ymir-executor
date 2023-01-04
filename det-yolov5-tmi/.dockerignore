@@ -11,6 +11,9 @@ data/samples/*
 **/results*.csv
 *.jpg
 
+ymir/tensorrt/build
+ymir/tensorrt/pt_result
+ymir/tensorrt/trt_result
 # Neural Network weights -----------------------------------------------------------------------------------------------
 #**/*.pt
 **/*.pth
