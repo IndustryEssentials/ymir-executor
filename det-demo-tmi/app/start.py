@@ -5,8 +5,6 @@ import sys
 import time
 from typing import List
 
-# view https://github.com/protocolbuffers/protobuf/issues/10051 for detail
-os.environ.setdefault('PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION', 'python')
 from easydict import EasyDict as edict
 from tensorboardX import SummaryWriter
 from ymir_exc import monitor
@@ -36,11 +34,11 @@ def _run_training(cfg: edict) -> None:
     4. how to write training result
     """
     # use `env.get_executor_config` to get config file for training
-    gpu_id: str = cfg.param.get(key='gpu_id')
-    class_names: List[str] = cfg.param.get(key='class_names')
-    expected_mAP: float = cfg.param.get(key='expected_map', default=0.6)
-    idle_seconds: float = cfg.param.get(key='idle_seconds', default=60)
-    trigger_crash: bool = cfg.param.get(key='trigger_crash', default=False)
+    gpu_id: str = cfg.param.get('gpu_id')
+    class_names: List[str] = cfg.param.get('class_names')
+    expected_mAP: float = cfg.param.get('expected_map')
+    idle_seconds: float = cfg.param.get('idle_seconds')
+    trigger_crash: bool = cfg.param.get('trigger_crash')
     # use `logging` or `print` to write log to console
     #   notice that logging.basicConfig is invoked at executor.env
     logging.info(f'gpu device: {gpu_id}')
@@ -76,12 +74,11 @@ def _run_training(cfg: edict) -> None:
     monitor.write_monitor_logger(percent=0.2)
 
     # suppose we have a long time training, and have saved the final model
-    # model output dir: os.path.join(cfg.ymir.output.models_dir, your_stage_name)
-    stage_dir = os.path.join(cfg.ymir.output.models_dir, 'epoch10')
-    os.makedirs(stage_dir, exist_ok=True)
-    with open(os.path.join(stage_dir, 'epoch10.pt'), 'w') as f:
+    models_dir = cfg.ymir.output.models_dir
+    os.makedirs(models_dir, exist_ok=True)
+    with open(os.path.join(models_dir, 'epoch10.pt'), 'w') as f:
         f.write('fake model weight')
-    with open(os.path.join(stage_dir, 'config.py'), 'w') as f:
+    with open(os.path.join(models_dir, 'config.py'), 'w') as f:
         f.write('fake model config file')
     # use `rw.write_model_stage` to save training result
     rw.write_model_stage(stage_name='epoch10', files=['epoch10.pt', 'config.py'], mAP=random.random() / 2)
@@ -90,11 +87,9 @@ def _run_training(cfg: edict) -> None:
 
     write_tensorboard_log(cfg.ymir.output.tensorboard_dir)
 
-    stage_dir = os.path.join(cfg.ymir.output.models_dir, 'epoch20')
-    os.makedirs(stage_dir, exist_ok=True)
-    with open(os.path.join(stage_dir, 'epoch20.pt'), 'w') as f:
+    with open(os.path.join(models_dir, 'epoch20.pt'), 'w') as f:
         f.write('fake model weight')
-    with open(os.path.join(stage_dir, 'config.py'), 'w') as f:
+    with open(os.path.join(models_dir, 'config.py'), 'w') as f:
         f.write('fake model config file')
     rw.write_model_stage(stage_name='epoch20', files=['epoch20.pt', 'config.py'], mAP=expected_mAP)
 
@@ -106,8 +101,8 @@ def _run_training(cfg: edict) -> None:
 def _run_mining(cfg: edict) -> None:
     # use `cfg.param` to get config file for training
     #  pretrained models in `cfg.ymir.input.models_dir`
-    gpu_id: str = cfg.param.get(key='gpu_id')
-    class_names: List[str] = cfg.param.get(key='class_names')
+    gpu_id: str = cfg.param.get('gpu_id')
+    class_names: List[str] = cfg.param.get('class_names')
     idle_seconds: float = cfg.param.get('idle_seconds', 60)
     trigger_crash: bool = cfg.param.get('trigger_crash', False)
     # use `logging` or `print` to write log to console

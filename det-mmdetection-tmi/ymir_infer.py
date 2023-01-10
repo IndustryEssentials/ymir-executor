@@ -13,7 +13,8 @@ from mmcv import DictAction
 from mmcv.runner import init_dist
 from tqdm import tqdm
 from ymir_exc import result_writer as rw
-from ymir_exc.util import (YmirStage, get_merged_config, write_ymir_monitor_process)
+from ymir_exc.util import (YmirStage, get_merged_config,
+                           write_ymir_monitor_process)
 
 from mmdet.apis import inference_detector, init_detector
 from mmdet.apis.test import collect_results_gpu
@@ -59,9 +60,9 @@ def mmdet_result_to_ymir(results: List[Any], class_names: List[str]) -> List[rw.
 
 def get_config_file(cfg):
     if cfg.ymir.run_training:
-        model_params_path: List = cfg.param.get('pretrained_model_params', [])
+        model_params_path: List = cfg.param.get('pretrained_model_params', [])  # type: ignore
     else:
-        model_params_path: List = cfg.param.get('model_params_path', [])
+        model_params_path: List = cfg.param.get('model_params_path', [])  # type: ignore
 
     model_dir = cfg.ymir.input.models_dir
     config_files = [
@@ -134,7 +135,7 @@ def main():
 
         infer_result_list.append((asset_path, [ann for ann in raw_anns if ann.score >= conf_threshold]))
 
-        if idx % monitor_gap == 0:
+        if idx % monitor_gap == 0 and RANK in [0, -1]:
             write_ymir_monitor_process(cfg, task='infer', naive_stage_percent=idx / N, stage=YmirStage.TASK)
 
     if WORLD_SIZE > 1:
