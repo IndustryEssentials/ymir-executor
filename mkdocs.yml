@@ -14,5 +14,5 @@ markdown_extensions:
   - markdown_include.include:
       base_path: .
   - admonition
-nav:
-  - Home: index.md
+# nav:
+#   - Home: index.md
