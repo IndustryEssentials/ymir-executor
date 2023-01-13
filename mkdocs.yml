@@ -9,10 +9,15 @@ plugins:
         # See: https://mkdocstrings.github.io/python/usage/
         python:
           options:
-            docstring_style: sphinx
+            docstring_style: numpy
+      watch:
+        - seg-semantic-demo-tmi.app.start
 markdown_extensions:
   - markdown_include.include:
       base_path: .
   - admonition
+  - toc:
+      permalink: "#"
+#  - sane_lists
 # nav:
 #   - Home: index.md

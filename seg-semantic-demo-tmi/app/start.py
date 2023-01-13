@@ -5,13 +5,15 @@ import sys
 import time
 from typing import List
 
-# view https://github.com/protocolbuffers/protobuf/issues/10051 for detail
-os.environ.setdefault('PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION', 'python')
+import cv2
+import numpy as np
 from easydict import EasyDict as edict
 from tensorboardX import SummaryWriter
 from ymir_exc import monitor
 from ymir_exc import result_writer as rw
 from ymir_exc.util import get_merged_config
+
+from result_to_coco import convert
 
 
 def start() -> int:
@@ -28,19 +30,20 @@ def start() -> int:
 
 
 def _run_training(cfg: edict) -> None:
-    """
-    sample function of training, which shows:
-    1. how to get config file
-    2. how to read training and validation datasets
-    3. how to write logs
-    4. how to write training result
+    """sample function of training
+
+    which shows:
+    - how to get config file
+    - how to read training and validation datasets
+    - how to write logs
+    - how to write training result
     """
     # use `env.get_executor_config` to get config file for training
-    gpu_id: str = cfg.param.get(key='gpu_id')
-    class_names: List[str] = cfg.param.get(key='class_names')
-    expected_miou: float = cfg.param.get(key='expected_miou', default=0.6)
-    idle_seconds: float = cfg.param.get(key='idle_seconds', default=60)
-    trigger_crash: bool = cfg.param.get(key='trigger_crash', default=False)
+    gpu_id: str = cfg.param.get('gpu_id')
+    class_names: List[str] = cfg.param.get('class_names')
+    expected_miou: float = cfg.param.get('expected_miou', 0.6)
+    idle_seconds: float = cfg.param.get('idle_seconds', 60)
+    trigger_crash: bool = cfg.param.get('trigger_crash', False)
     # use `logging` or `print` to write log to console
     #   notice that logging.basicConfig is invoked at executor.env
     logging.info(f'gpu device: {gpu_id}')
@@ -110,8 +113,8 @@ def _run_training(cfg: edict) -> None:
 def _run_mining(cfg: edict) -> None:
     # use `cfg.param` to get config file for training
     #  pretrained models in `cfg.ymir.input.models_dir`
-    gpu_id: str = cfg.param.get(key='gpu_id')
-    class_names: List[str] = cfg.param.get(key='class_names')
+    gpu_id: str = cfg.param.get('gpu_id')
+    class_names: List[str] = cfg.param.get('class_names')
     idle_seconds: float = cfg.param.get('idle_seconds', 60)
     trigger_crash: bool = cfg.param.get('trigger_crash', False)
     # use `logging` or `print` to write log to console
@@ -141,7 +144,12 @@ def _run_mining(cfg: edict) -> None:
     # write mining result
     #   here we give a fake score to each assets
     total_length = len(valid_images)
-    mining_result = [(asset_path, index / total_length) for index, asset_path in enumerate(valid_images)]
+    mining_result = []
+    for index, asset_path in enumerate(valid_images):
+        mining_result.append((asset_path, index / total_length))
+        time.sleep(0.1)
+        monitor.write_monitor_logger(percent=0.2 + 0.8 * index / valid_image_count)
+
     rw.write_mining_result(mining_result=mining_result)
 
     # if task done, write 100% percent log
@@ -181,21 +189,25 @@ def _run_infer(cfg: edict) -> None:
     _dummy_work(idle_seconds=idle_seconds, trigger_crash=trigger_crash)
 
     # write infer result
-    fake_anns = []
     random.seed(seed)
-    for class_name in class_names:
-        x = random.randint(0, 100)
-        y = random.randint(0, 100)
-        w = random.randint(50, 100)
-        h = random.randint(50, 100)
-        ann = rw.Annotation(class_name=class_name, score=random.random(), box=rw.Box(x=x, y=y, w=w, h=h))
+    results = []
 
-        fake_anns.append(ann)
+    fake_mask_num = min(len(class_names), 10)
+    for iter, img_file in enumerate(valid_images):
+        img = cv2.imread(img_file, cv2.IMREAD_GRAYSCALE)
+        mask = np.zeros(shape=img.shape[0:2], dtype=np.uint8)
+        for idx in range(fake_mask_num):
+            percent = 100 * idx / fake_mask_num
+            value = np.percentile(img, percent)
+            mask[img > value] = idx + 1
 
-    infer_result = {asset_path: fake_anns for asset_path in valid_images}
-    for asset_path in invalid_images:
-        infer_result[asset_path] = []
-    rw.write_infer_result(infer_result=infer_result)
+        results.append(dict(image=img_file, result=mask))
+
+        # real-time monitor
+        monitor.write_monitor_logger(percent=0.2 + 0.8 * iter / valid_image_count)
+
+    coco_results = convert(cfg, results, True)
+    rw.write_infer_result(infer_result=coco_results, algorithm='segmentation')
 
     # if task done, write 100% percent log
     logging.info('infer done')

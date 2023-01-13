@@ -1,16 +1,60 @@
-# ymir-executor 文档
+# ymir镜像文档
 
-## 下载使用
+## 简介
 
-- [已有的镜像](./official-docker-image.md)
+- [ymir简介](https://github.com/IndustryEssentials/ymir/wiki/%E6%93%8D%E4%BD%9C%E8%AF%B4%E6%98%8E)
 
-- [挖掘算法评测](./mining-images-overview.md) 完善中。。。
+- ymir镜像: 为ymir提供模型训练，推理，挖掘服务的镜像
+
+## 快速使用
+
+- [安装ymir](https://github.com/IndustryEssentials/ymir/blob/master/README_zh-CN.md#2-%E5%AE%89%E8%A3%85)
+
+- [ymir操作说明](https://github.com/IndustryEssentials/ymir/wiki/%E6%93%8D%E4%BD%9C%E8%AF%B4%E6%98%8E)
+
+- [镜像社区](http://pubimg.vesionbook.com:8110/img) 下载、发布ymir镜像
+
+- [历史镜像](./official-docker-image.md)
+
+- [挖掘算法评测](./mining-images-overview.md)
+
+## Ymir镜像说明
+
+- [Ymir镜像整体流程](./overview/framework.md)
+
+- [Ymir镜像数据集格式](./overview/dataset-format.md)
+
+- [Ymir镜像超参数](./overview/hyper-parameter.md)
+
+## 目标检测
+
+- [制作一个简单的检测训练镜像]()
+
+- [制作一个简单的检测推理镜像]()
+
+- [制作一个简单的检测挖掘镜像]()
+
+## 语义分割
+
+- [制作一个简单的语义分割训练镜像]()
+
+- [制作一个简单的语义分割推理镜像]()
+
+- [制作一个简单的语义分割挖掘镜像]()
+
+## 实例分割
+
+- [制作一个简单的实例分割训练镜像]()
+
+- [制作一个简单的实例分割推理镜像]()
+
+- [制作一个简单的实例分割挖掘镜像]()
 
 ## 从零定制
 
-1. [制作一个简单的镜像](../det-demo-tmi/README.md)
+- [制作一个简单的多功能检测镜像](../det-demo-tmi/README.md)
 
-2. [了解ymir接口与数据结构](./ymir-dataset-zh-CN.md)
+- [了解ymir接口与数据结构](./ymir-dataset-zh-CN.md)
 
 ## 基于已有镜像进行定制
 
@@ -26,7 +70,7 @@
 
 - [通过ymir-executor-verifier进行镜像校验](https://github.com/modelai/ymir-executor-verifier)
 
-## 其它
+## 生态环境
 
 - [ymir镜像开发SDK](https://github.com/modelai/ymir-executor-sdk)
 
@@ -44,7 +88,11 @@
 
     - 批量校验镜像
 
+## FAQ
+
 - [FAQ](./FAQ.md)
+
+## 其它
 
 - [ymir版本与接口兼容](./ymir-executor-version.md)
 
