@@ -6,13 +6,7 @@
 
 - [Image Community](http://pubimg.vesionbook.com:8110/img) search and share open source.
 
-- [ymir executor](./docs/official-docker-image.md)
-
-  - [develop tutorial](./docs/README.MD) from zero to one, build you ymir-executor
-
-  - [user survey](https://www.wjx.cn/vm/eKFm2aq.aspx#) help ymir team to write document and develop, user feedback are collected on a continuous and long-term basis.
-
-- [ymir mining algorithm](./docs/mining-images-overview.md)
+- [ymir executor Documence](https://ymir-executor-fork.readthedocs.io/zh/latest/#)
 
 ## overview
 

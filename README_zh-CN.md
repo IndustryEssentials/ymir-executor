@@ -6,13 +6,7 @@
 
 - [镜像社区](http://pubimg.vesionbook.com:8110/img) 可搜索到所有公开的ymir算法镜像， 同时可共享其他人发布的镜像。
 
-- [ymir镜像](./docs/official-docker-image.md)
-
-  - [镜像开发者：制作教程](./docs/README.MD) 从零到一，搭建自己的 ymir-executor
-
-  - [用户调查](https://www.wjx.cn/vm/eKFm2aq.aspx#) 帮助ymir团队开发文档与新功能，此调查长期有效， 定期收集
-
-- [ymir 挖掘算法](./docs/mining-images-overview.md)
+- [ymir镜像文档](https://ymir-executor-fork.readthedocs.io/zh/latest/#)
 
 ## 比较
 
