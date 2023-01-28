@@ -10,8 +10,9 @@ plugins:
         python:
           options:
             docstring_style: numpy
-      watch:
-        - seg-semantic-demo-tmi.app.start
+      # watch:
+      #   - seg-semantic-demo-tmi.app.start
+  - include_dir_to_nav
 markdown_extensions:
   - markdown_include.include:
       base_path: .
@@ -19,5 +20,9 @@ markdown_extensions:
   - toc:
       permalink: "#"
 #  - sane_lists
-# nav:
-#   - Home: index.md
+nav:
+  - Home: index.md
+  - 基本概念: overview
+  - 目标检测: object_detection
+  - 语义分割: semantic_segmentation
+  - Ymir镜像说明文档: ymir_executor

@@ -91,7 +91,7 @@ youdaoyzbx/ymir-executor:ymir1.3.0-mmdet-cu111-tmi
 
 - [yolov5](https://github.com/modelai/ymir-executor-fork#det-yolov5-tmi)
 
-    - [change log](./det-yolov5-tmi/README.md)
+    - [change log](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/det-yolov5-tmi/ymir/README.md)
 
     ```
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-yolov5-cu111-tmi
@@ -101,7 +101,7 @@ youdaoyzbx/ymir-executor:ymir1.3.0-mmdet-cu111-tmi
 
 - [mmdetection](https://github.com/modelai/ymir-executor-fork#det-mmdetection-tmi)
 
-    - [change log](./det-mmdetection-tmi/README.md)
+    - [change log](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/det-mmdetection-tmi/README.md)
 
     ```
     docker pull youdaoyzbx/ymir-executor:ymir1.1.0-mmdet-cu111-tmi

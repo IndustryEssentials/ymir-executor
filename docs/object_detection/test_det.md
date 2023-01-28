@@ -1,25 +1,25 @@
-# 测试Ymir语义分割镜像
+# 测试Ymir目标检测镜像
 
 ## 通过YMIR平台进行测试
 
-用户可以直接通过Ymir平台发起语义分割的训练，推理及挖掘任务，对镜像进行测试。
+用户可以直接通过Ymir平台发起目标检测的训练，推理及挖掘任务，对镜像进行测试。、
 
 !!! 注意
     YMIR平台发起的任务在顺利结束时，会清理相应的目录，因此在测试时，请确保相应目录存在。
 
 ### 导入待测镜像
 
-- 假设用户已经制作好镜像 **demo/semantic_seg:tmi**, 它支持训练、推理及挖掘
+- 假设用户已经制作好镜像 **demo/det:tmi**, 它支持训练、推理及挖掘
 
-- 假设用户具有管理员权限，按照[新增镜像](https://github.com/IndustryEssentials/ymir/wiki/%E6%93%8D%E4%BD%9C%E8%AF%B4%E6%98%8E#%E6%96%B0%E5%A2%9E%E9%95%9C%E5%83%8F) 将**demo/semantic_seg:tmi** 添加到 **我的镜像** 中。
+- 假设用户具有管理员权限，按照[新增镜像](https://github.com/IndustryEssentials/ymir/wiki/%E6%93%8D%E4%BD%9C%E8%AF%B4%E6%98%8E#%E6%96%B0%E5%A2%9E%E9%95%9C%E5%83%8F) 将**demo/det:tmi** 添加到 **我的镜像** 中。
 
 ### 导入待测数据集
 
-- 下载示例语义分割数据集 [train-semantic-seg.zip](https://github.com/modelai/ymir-executor-fork/releases/download/dataset-ymir2.0.0/eg100_fgonly_train.zip)  [val-semantic-seg.zip](https://github.com/modelai/ymir-executor-fork/releases/download/dataset-ymir2.0.0/eg100_fgonly_val.zip)
+- 下载示例目标检测数据集 [ymir2.0.0_dog_train.zip](https://github.com/modelai/ymir-executor-fork/releases/download/dataset-ymir2.0.0/ymir2.0.0_dog_train.zip)  [ymir2.0.0_dog_val.zip](https://github.com/modelai/ymir-executor-fork/releases/download/dataset-ymir2.0.0/ymir2.0.0_dog_val.zip)
 
-- 建立包含对应标签的项目， `训练类别` 中添加对应标签 `foreground`
+- 建立包含对应标签的项目， `训练类别` 中添加对应标签 `dog`
 
-- 按照[添加数据集](https://github.com/IndustryEssentials/ymir/wiki/%E6%93%8D%E4%BD%9C%E8%AF%B4%E6%98%8E#%E6%B7%BB%E5%8A%A0%E6%95%B0%E6%8D%AE%E9%9B%86)导入示例语义分割数据集
+- 按照[添加数据集](https://github.com/IndustryEssentials/ymir/wiki/%E6%93%8D%E4%BD%9C%E8%AF%B4%E6%98%8E#%E6%B7%BB%E5%8A%A0%E6%95%B0%E6%8D%AE%E9%9B%86)导入示例目标检测数据集
 
 ### 发起待测任务
 
@@ -64,7 +64,7 @@ drwxr-xr-x 4 root root 45 Jan  9 18:07 t00000020000029e02f61673258829
     - 假设启动程序为 **/usr/bin/start.sh**
 
 ```
-docker run -it --rm --gpus all --ipc host -v $PWD/in:/in -v $PWD/out:/out -v /data:/data demo/semantic_seg:tmi bash
+docker run -it --rm --gpus all --ipc host -v $PWD/in:/in -v $PWD/out:/out -v /data:/data demo/det:tmi bash
 
 bash /usr/bin/start.sh
 ```
@@ -74,7 +74,7 @@ bash /usr/bin/start.sh
     - 假设实际启动程序为 **start.py**
 
 ```
-docker run -it --rm --gpus all --ipc host -v $PWD/in:/in -v $PWD/out:/out -v /data:/data -v /home/modelai/code:/home/modelai/code demo/semantic_seg:tmi bash
+docker run -it --rm --gpus all --ipc host -v $PWD/in:/in -v $PWD/out:/out -v /data:/data -v /home/modelai/code:/home/modelai/code demo/det:tmi bash
 
 cd /home/modelai/code
 python start.py
@@ -83,6 +83,7 @@ python start.py
 ### 测试通过后
 
 - 通过 `docker build` 重新构建镜像， 如果修改了超参数，需要在Ymir平台删除旧镜像并重新添加，使更新的超参数生效。如果仅仅修改了代码，不需要重新添加即可使用本地的最新镜像。
+
 
 ## 💫 YMIR后台错误查看
 
