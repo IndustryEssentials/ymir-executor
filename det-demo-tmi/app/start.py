@@ -81,7 +81,9 @@ def _run_training(cfg: edict) -> None:
     with open(os.path.join(models_dir, 'config.py'), 'w') as f:
         f.write('fake model config file')
     # use `rw.write_model_stage` to save training result
-    rw.write_model_stage(stage_name='epoch10', files=['epoch10.pt', 'config.py'], mAP=random.random() / 2)
+    rw.write_model_stage(stage_name='epoch10',
+                         files=['epoch10.pt', 'config.py'],
+                         evaluation_result=dict(mAP=random.random() / 2))
 
     _dummy_work(idle_seconds=idle_seconds, trigger_crash=trigger_crash)
 
@@ -91,7 +93,9 @@ def _run_training(cfg: edict) -> None:
         f.write('fake model weight')
     with open(os.path.join(models_dir, 'config.py'), 'w') as f:
         f.write('fake model config file')
-    rw.write_model_stage(stage_name='epoch20', files=['epoch20.pt', 'config.py'], mAP=expected_mAP)
+    rw.write_model_stage(stage_name='epoch20',
+                         files=['epoch20.pt', 'config.py'],
+                         evaluation_result=dict(mAP=expected_mAP))
 
     # if task done, write 100% percent log
     logging.info('training done')

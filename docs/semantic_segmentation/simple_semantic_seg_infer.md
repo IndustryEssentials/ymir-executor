@@ -10,17 +10,15 @@ cd seg-semantic-demo-tmi
 
 ## 提供超参数模型文件
 
-包含**/img-man/infer-template.yaml** 表示镜像支持推理
+镜像中包含**/img-man/infer-template.yaml** 表示镜像支持推理
 
-- [img-man/infer-template.yaml](seg-semantic-demo-tmi/img-man/infer-template.yaml)
-
-指明数据格式 **export_format** 为 **seg-coco:raw**
+- [img-man/infer-template.yaml](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/seg-semantic-demo-tmi/img-man/infer-template.yaml)
 
 ```yaml
 {!seg-semantic-demo-tmi/img-man/infer-template.yaml!}
 ```
 
-- Dockerfile
+- [Dockerfile](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/seg-semantic-demo-tmi/Dockerfile)
 
 ```
 RUN mkdir -p /img-man  # 在镜像中生成/img-man目录
@@ -31,7 +29,7 @@ COPY img-man/*.yaml /img-man/  # 将主机中img-man目录下的所有yaml文件
 
 **object_type** 为 3 表示镜像支持语义分割
 
-- [img-man/manifest.yaml](../../seg-semantic-demo-tmi/img-man/manifest.yaml)
+- [img-man/manifest.yaml](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/seg-semantic-demo-tmi/img-man/manifest.yaml)
 ```
 # 3 for semantic segmentation
 "object_type": 3
@@ -50,7 +48,7 @@ CMD bash /usr/bin/start.sh  # 将镜像的默认启动脚本设置为 /usr/bin/s
 
 ## 实现基本功能
 
-- [app/start.py](../../seg-semantic-demo-tmi/app/start.py)
+- [app/start.py](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/seg-semantic-demo-tmi/app/start.py)
 
 ::: seg-semantic-demo-tmi.app.start._run_infer
     handler: python
@@ -80,6 +78,10 @@ rw.write_infer_result(infer_result=coco_results, algorithm='segmentation')
 ```
 
 ## 制作镜像 demo/semantic_seg:infer
+
+```dockerfile
+{!seg-semantic-demo-tmi/Dockerfile!}
+```
 
 ```
 docker build -t demo/semantic_seg:infer -f Dockerfile .

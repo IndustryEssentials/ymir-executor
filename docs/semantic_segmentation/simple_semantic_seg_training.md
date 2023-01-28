@@ -9,21 +9,17 @@ cd seg-semantic-demo-tmi
 
 ## 提供超参数模型文件
 
-包含**/img-man/training-template.yaml** 表示镜像支持训练
+镜像中包含**/img-man/training-template.yaml** 表示镜像支持训练
 
-- [img-man/training-template.yaml](seg-semantic-demo-tmi/img-man/training-template.yaml)
+- [img-man/training-template.yaml](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/seg-semantic-demo-tmi/img-man/training-template.yaml)
 
-指明数据格式 **export_format** 为 **seg-coco:raw**, 即语义/实例分割标注格式。
+指明数据格式 **export_format** 为 **seg-coco:raw**, 即语义/实例分割标注格式，详情参考[Ymir镜像数据集格式](../overview/dataset-format.md)
 
-```
-export_format: 'seg-coco:raw'
-
-# just for test, remove this key in your own docker image
-expected_miou: 0.983  # expected mIoU for training task
-idle_seconds: 3  # idle seconds for each task
+```yaml
+{!seg-semantic-demo-tmi/img-man/training-template.yaml!}
 ```
 
-- Dockerfile
+- [Dockerfile](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/seg-semantic-demo-tmi/Dockerfile)
 
 ```
 RUN mkdir -p /img-man  # 在镜像中生成/img-man目录
@@ -34,7 +30,7 @@ COPY img-man/*.yaml /img-man/  # 将主机中img-man目录下的所有yaml文件
 
 **object_type** 为 3 表示镜像支持语义分割
 
-- [img-man/manifest.yaml](../../seg-semantic-demo-tmi/img-man/manifest.yaml)
+- [img-man/manifest.yaml](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/seg-semantic-demo-tmi/img-man/manifest.yaml)
 ```
 # 3 for semantic segmentation
 "object_type": 3
@@ -53,7 +49,7 @@ CMD bash /usr/bin/start.sh  # 将镜像的默认启动脚本设置为 /usr/bin/s
 
 ## 实现基本功能
 
-- [app/start.py](../../seg-semantic-demo-tmi/app/start.py)
+- [app/start.py](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/seg-semantic-demo-tmi/app/start.py)
 
 ::: seg-semantic-demo-tmi.app.start._run_training
     handler: python
@@ -87,6 +83,10 @@ write_tensorboard_log(cfg.ymir.output.tensorboard_dir)
 ```
 
 ## 制作镜像 demo/semantic_seg:training
+
+```dockerfile
+{!seg-semantic-demo-tmi/Dockerfile!}
+```
 
 ```
 docker build -t demo/semantic_seg:training -f Dockerfile .
