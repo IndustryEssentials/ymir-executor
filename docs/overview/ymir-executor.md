@@ -42,7 +42,7 @@ docker run hello-world
 - [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#installation-guide)
 
 !!! 注意
-    先按照上述链接中的前提条件安装好 **NVIDIA Driver**
+    先按照上述链接中的前提条件安装好 **NVIDIA Driver >=510.47.03 **, 以支持 `cuda11.6+`
 
 ```
 # 添加软件源

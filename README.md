@@ -1,4 +1,4 @@
-# ymir-executor documentation [English](./README.MD) | [简体中文](./README_zh-CN.MD)
+# ymir-executor documentation [English](./README.md) | [简体中文](./README_zh-CN.md)
 
 - [ymir](https://github.com/IndustryEssentials/ymir)
 

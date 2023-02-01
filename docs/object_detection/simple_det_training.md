@@ -32,7 +32,7 @@ COPY img-man/*.yaml /img-man/  # 将主机中img-man目录下的所有yaml文件
 
 - [img-man/manifest.yaml](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/det-demo-tmi/img-man/manifest.yaml)
 ```
-# 3 for object detection
+# 2 for object detection
 "object_type": 2
 ```
 
