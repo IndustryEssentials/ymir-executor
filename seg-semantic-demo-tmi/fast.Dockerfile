@@ -1,18 +1,8 @@
-# a docker file for an sample training / mining / infer executor
-
-FROM python:3.8.13-alpine
-
-# Add bash
-RUN apk add bash
-# Required to build numpy wheel
-RUN apk add g++ git
-
-COPY requirements.txt ./
-RUN pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+FROM youdaoyzbx/ymir-executor:ymir2.0.2-seg-semantic-demo-base
 
 WORKDIR /app
 # copy user code to WORKDIR
-COPY ./app/start.py /app/
+COPY ./app/*.py /app/
 
 # copy user config template and manifest.yaml to /img-man
 RUN mkdir -p /img-man

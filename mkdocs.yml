@@ -1,0 +1,28 @@
+site_name: Ymir-Executor Documence
+theme:
+  name: readthedocs
+  highlightjs: true
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        # See: https://mkdocstrings.github.io/python/usage/
+        python:
+          options:
+            docstring_style: numpy
+      # watch:
+      #   - seg-semantic-demo-tmi.app.start
+  - include_dir_to_nav
+markdown_extensions:
+  - markdown_include.include:
+      base_path: .
+  - admonition
+  - toc:
+      permalink: "#"
+#  - sane_lists
+nav:
+  - Home: index.md
+  - 基本概念: overview
+  - 目标检测: object_detection
+  - 语义分割: semantic_segmentation
+  - Ymir镜像说明文档: ymir_executor

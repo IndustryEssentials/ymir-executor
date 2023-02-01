@@ -1,2 +1,2 @@
 # object_type: 2 for object detection, 3 for semantic segmentation, default: 2
-"object_type": 3
+"object_type": 2

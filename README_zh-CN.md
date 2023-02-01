@@ -1,22 +1,16 @@
-# ymir-executor documentation [English](./README.MD) | [简体中文](./README_zh-CN.MD)
+# ymir-executor 使用文档 [English](./README.MD) | [简体中文](./README_zh-CN.MD)
 
 - [ymir](https://github.com/IndustryEssentials/ymir)
 
-  - [bilibili: video tutorial](https://b23.tv/KS5b5oF)
+  - [bilibili 视频教程](https://b23.tv/KS5b5oF)
 
-- [Image Community](http://pubimg.vesionbook.com:8110/img) search and share open source.
+- [镜像社区](http://pubimg.vesionbook.com:8110/img) 可搜索到所有公开的ymir算法镜像， 同时可共享其他人发布的镜像。
 
-- [ymir executor](./docs/official-docker-image.md)
+- [ymir镜像文档](https://ymir-executor-fork.readthedocs.io/zh/latest/#)
 
-  - [develop tutorial](./docs/README.MD) from zero to one, build you ymir-executor
+## 比较
 
-  - [user survey](https://www.wjx.cn/vm/eKFm2aq.aspx#) help ymir team to write document and develop, user feedback are collected on a continuous and long-term basis.
-
-- [ymir mining algorithm](./docs/mining-images-overview.md)
-
-## overview
-
-| docker image | [finetune](https://github.com/modelai/ymir-executor-fork/wiki/use-yolov5-to-finetune-or-training-model) | tensorboard | args/cfg options | framework | onnx | pretrained weights |
+| docker image | [finetune](https://github.com/modelai/ymir-executor-fork/wiki/use-yolov5-to-finetune-or-training-model) | tensorboard | args/cfg options | framework | onnx | pretrained weight |
 | - | - | - | - | - | - | - |
 | yolov4 | ? | ✔️ | ❌ | darknet + mxnet | ❌ | local |
 | yolov5 | ✔️ | ✔️ | ✔️ | pytorch | ✔️ | local+online |
@@ -26,15 +20,17 @@
 | vidt | ? | ✔️ | ✔️ | pytorch | ❌ | online |
 | nanodet | ✔️ | ✔️ | ❌ | pytorch_lightning | ❌ | local+online |
 
-- `online` pretrained weights may download through network
+- `online` 预训练权重可能在训练时通过网络下载
 
-- `local` pretrained weights have copied to docker images when building image
+- `local` 预训练权重在构建镜像时复制到了镜像
 
 ### benchmark
 
-- training dataset: voc2012-train 5717 images
-- validation dataset: voc2012-val 5823 images
-- image size: 640
+- 训练集: voc2012-train 5717 images
+- 测试集: voc2012-val 5823 images
+- 图像大小: 640 (nanodet为416, yolov4为608)
+
+**由于 coco 数据集包含 voc 数据集中的类, 因此这个对比并不公平, 仅供参考**
 
 gpu: single Tesla P4
 
@@ -58,12 +54,15 @@ gpu: single GeForce GTX 1080 Ti
 
 ---
 
-## how to import pretrained model weights
+## 如何导入预训练模型
 
-- [import and finetune model](https://github.com/modelai/ymir-executor-fork/wiki/import-and-finetune-model)
+- [如何导入并精调外部模型](https://github.com/modelai/ymir-executor-fork/wiki/import-and-finetune-model)
 
-- [import pretainted model weights](https://github.com/IndustryEssentials/ymir/blob/master/dev_docs/import-extra-models.md)
-## reference
+- [如何导入外部模型](https://github.com/IndustryEssentials/ymir/blob/master/dev_docs/import-extra-models.md)
+
+    - 通过ymir网页端的 `模型管理/模型列表/导入模型` 同样可以导入模型
+
+## 参考
 
 - [yolov4](https://github.com/AlexeyAB/darknet)
 - [yolov5](https://github.com/ultralytics/yolov5)
