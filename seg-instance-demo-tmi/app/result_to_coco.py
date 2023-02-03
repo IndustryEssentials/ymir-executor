@@ -2,6 +2,7 @@
 
 import datetime
 import os.path as osp
+import random
 from typing import Dict, List
 
 import imagesize
@@ -96,6 +97,8 @@ def convert(ymir_cfg: edict, results: List[Dict], with_blank_area: bool):
                                                                         binary_mask,
                                                                         tolerance=2)
 
+            # for instance segmentation
+            annotation_info['confidence'] = max(1.0, 0.1 + random.random())
             if annotation_info is not None:
                 coco_output["annotations"].append(annotation_info)  # type: ignore
                 annotation_id = annotation_id + 1
