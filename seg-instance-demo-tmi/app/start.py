@@ -41,7 +41,7 @@ def _run_training(cfg: edict) -> None:
     # use `env.get_executor_config` to get config file for training
     gpu_id: str = cfg.param.get('gpu_id')
     class_names: List[str] = cfg.param.get('class_names')
-    expected_miou: float = cfg.param.get('expected_miou', 0.6)
+    expected_maskap: float = cfg.param.get('expected_maskap', 0.6)
     idle_seconds: float = cfg.param.get('idle_seconds', 60)
     trigger_crash: bool = cfg.param.get('trigger_crash', False)
     # use `logging` or `print` to write log to console
@@ -89,7 +89,7 @@ def _run_training(cfg: edict) -> None:
     # use `rw.write_model_stage` to save training result
     rw.write_model_stage(stage_name='epoch10',
                          files=['epoch10.pt', 'config.py'],
-                         evaluation_result=dict(mIoU=random.random() / 2))
+                         evaluation_result=dict(maskAP=random.random() / 2))
 
     _dummy_work(idle_seconds=idle_seconds, trigger_crash=trigger_crash)
 
@@ -103,7 +103,7 @@ def _run_training(cfg: edict) -> None:
         f.write('fake model config file')
     rw.write_model_stage(stage_name='epoch20',
                          files=['epoch20.pt', 'config.py'],
-                         evaluation_result=dict(mIoU=expected_miou))
+                         evaluation_result=dict(maskAP=expected_maskap))
 
     # if task done, write 100% percent log
     logging.info('training done')

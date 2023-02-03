@@ -1,8 +1,10 @@
-# mmyolo
+# ymir-mmyolo
 
-阅读此文档前，建议先了解[mmdet](./mmdet.md)
+阅读此文档前，建议先阅读[mmdet](./mmdet.md)，了解mmyolo代码仓库数据加载，超参数加载与模型训练流程。
 
 - [mmyolo](https://github.com/open-mmlab/mmyolo)
+
+- [mmyolo算法解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html)
 
 - [ymir-mmyolo](https://github.com/modelai/ymir-mmyolo)
 

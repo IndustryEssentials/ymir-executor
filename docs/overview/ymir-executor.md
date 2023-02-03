@@ -134,12 +134,34 @@ hello ymir executor
 
 - 基本功能：加载数据集与超参数进行训练，将模型权重，模型精度等结果保存到 **/out** 目录的指定文件。
 
+```
+# pip install "git+https://github.com/modelai/ymir-executor-sdk.git@ymir2.1.0"
+from ymir_exc import env
+
+env_config = env.get_current_env()
+with open(env_config.output.training_result_file, "w") as f:
+    yaml.safe_dump(data=training_result, stream=f)
+```
+
 - 写tensorboard日志：可选, ymir平台支持查看训练任务的tensorboard训练日志
 
 ### 推理镜像需要实现的额外功能
 
 - 基本功能：加载数据集与模型权重进行推理，将推理结果保存到 **/out** 目录的指定文件。
 
+```
+env_config = env.get_current_env()
+with open(env_config.output.infer_result_file, "w") as f:
+    f.write(json.dumps(result))
+```
+
 ### 挖掘镜像需要实现的额外功能
 
 - 基本功能：加载数据集与模型权重进行挖掘，基于主动学习算法获得每张图片的重要程度分数，将分数保存到 **/out** 目录的指定文件。
+
+```
+env_config = env.get_current_env()
+with open(env_config.output.mining_result_file, "w") as f:
+    for asset_id, score in sorted_mining_result:
+        f.write(f"{asset_id}\t{score}\n")
+```
