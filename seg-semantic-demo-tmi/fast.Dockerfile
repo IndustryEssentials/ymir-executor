@@ -4,6 +4,9 @@ WORKDIR /app
 # copy user code to WORKDIR
 COPY ./app/*.py /app/
 
+COPY ./requirements.txt /app/
+RUN pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
 # copy user config template and manifest.yaml to /img-man
 RUN mkdir -p /img-man
 COPY img-man/*.yaml /img-man/
