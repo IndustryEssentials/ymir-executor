@@ -28,34 +28,6 @@
 
 - [Ymir镜像制作简介](./overview/ymir-executor.md)
 
-## 目标检测
-
-- [制作一个简单的检测训练镜像](./object_detection/simple_det_training.md)
-
-- [制作一个简单的检测推理镜像](./object_detection/simple_det_infer.md)
-
-- [制作一个简单的检测挖掘镜像](./object_detection/simple_det_mining.md)
-
-- [测试Ymir目标检测镜像](./object_detection/test_det.md)
-
-## 语义分割
-
-- [制作一个简单的语义分割训练镜像](./semantic_segmentation/simple_semantic_seg_training.md)
-
-- [制作一个简单的语义分割推理镜像](./semantic_segmentation/simple_semantic_seg_infer.md)
-
-- [制作一个简单的语义分割挖掘镜像](./semantic_segmentation/simple_semantic_seg_mining.md)
-
-- [测试Ymir语义分割镜像](./semantic_segmentation/test_semantic_seg.md)
-
-## 实例分割
-
-- [制作一个简单的实例分割训练镜像]()
-
-- [制作一个简单的实例分割推理镜像]()
-
-- [制作一个简单的实例分割挖掘镜像]()
-
 ## 基于已有镜像进行定制
 
 - [增/删/改: 默认超参数](./hyper-parameter.md)

@@ -1,4 +1,4 @@
-# nanodet 镜像说明文档
+# ymir-nanodet 镜像说明文档
 
 > Super fast and high accuracy lightweight anchor-free object detection model. Real-time on mobile devices.
 

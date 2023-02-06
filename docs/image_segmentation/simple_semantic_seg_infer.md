@@ -74,6 +74,7 @@ monitor.write_monitor_logger(percent=1.0)
 ## 写结果文件
 
 ```
+coco_results = convert(cfg, results, True)
 rw.write_infer_result(infer_result=coco_results, algorithm='segmentation')
 ```
 

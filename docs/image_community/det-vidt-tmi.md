@@ -1,4 +1,4 @@
-# vidt 镜像说明文档
+# ymir-vidt 镜像说明文档
 
 ICLR 2022的 transformer 架构检测器
 
