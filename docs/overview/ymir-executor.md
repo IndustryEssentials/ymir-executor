@@ -44,6 +44,13 @@ docker run hello-world
 !!! 注意
     先按照上述链接中的前提条件安装好 **NVIDIA Driver >=510.47.03 **, 以支持 `cuda11.6+`
 
+!!! gpu驱动与cuda版本
+    引用自openmmlab：
+
+    对于基于 Ampere 的 NVIDIA GPU，例如 GeForce 30 系列和 NVIDIA A100，CUDA 版本需要 >= 11。
+    对于较旧的 NVIDIA GPU，CUDA 11 向后兼容，但 CUDA 10.2 提供更好的兼容性并且更轻量级。
+    请确保 GPU 驱动程序满足最低版本要求。有关详细信息，请参阅[此表](https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html#cuda-major-component-versions__table-cuda-toolkit-driver-versions)
+
 ```
 # 添加软件源
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
@@ -110,11 +117,11 @@ hello ymir executor
 
 ### 基础镜像
 
-需要选择一个合适的基础镜像，上面的例子中我们采用ubuntu18.04作用基础镜像构建新镜像，基于实践，我们推荐制作ymir镜像的基础镜像包含以下配置：
+需要选择一个合适的基础镜像来避免从0开始制作ymir镜像，上面的例子中我们采用ubuntu18.04作用基础镜像构建新镜像，基于实践，我们推荐制作ymir镜像的基础镜像包含以下配置：
 
 - python 版本 >= 3.8
 
-- 支持的cuda版本 >= 11.2
+- ymir镜像的cuda版本<=主机支持的cuda版本
 
 - 推荐基于[nvidia/cuda](https://hub.docker.com/r/nvidia/cuda/tags) 与 [pytorch/pytorch](https://hub.docker.com/r/pytorch/pytorch/tags) 进行ymir镜像制作
 

@@ -22,7 +22,12 @@ markdown_extensions:
 #  - sane_lists
 nav:
   - Home: index.md
-  - 基本概念: overview
+  - 基本概念:
+    - overview/framework.md
+    - overview/dataset-format.md
+    - overview/hyper-parameter.md
+    - overview/ymir-executor.md
   - 目标检测: object_detection
   - 语义分割: semantic_segmentation
   - Ymir镜像说明文档: ymir_executor
+  - 算法仓库介绍: algorithms

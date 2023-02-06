@@ -72,3 +72,26 @@ CMD bash /usr/bin/start.sh  # 将镜像的默认启动脚本设置为 /usr/bin/s
 ```
 docker build -t det/mmdet:tmi -f ymir/Dockerfile .
 ```
+
+## 💫复杂用法
+
+!!! 注意
+    这部分内容初学者可以跳过
+
+### cfg_options
+
+当用户使用脚本 “tools/train.py” 或 “tools/test.py” 提交任务，或者其他工具时，可以通过指定 --cfg-options 参数来直接修改配置文件中内容。
+
+- 更新字典链中的配置的键
+
+    配置项可以通过遵循原始配置中键的层次顺序指定。例如，--cfg-options model.backbone.norm_eval=False 改变模型 backbones 中的所有 BN 模块为 train 模式。
+
+- 更新列表中配置的键
+
+    你的配置中的一些配置字典是由列表组成。例如，训练 pipeline data.train.pipeline 通常是一个列表。 例如 [dict(type='LoadImageFromFile'), dict(type='TopDownRandomFlip', flip_prob=0.5), ...]。 如果你想要在 pipeline 中将 'flip_prob=0.5' 修改为 'flip_prob=0.0' ， 您可以指定 --cfg-options data.train.pipeline.1.flip_prob=0.0.
+
+- 更新 list/tuples 中的值
+
+    如果想要更新的值是一个列表或者元组。 例如, 一些配置文件中包含 param_scheduler = "[dict(type='CosineAnnealingLR',T_max=200,by_epoch=True,begin=0,end=200)]"。 如果你想要改变这个键，你可以指定 --cfg-options param_scheduler = "[dict(type='LinearLR',start_factor=1e-4, by_epoch=True,begin=0,end=40,convert_to_iter_based=True)]"。 注意, ” 是必要的, 并且在指定值的时候，在引号中不能存在空白字符。
+
+
