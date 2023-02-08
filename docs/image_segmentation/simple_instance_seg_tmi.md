@@ -1,8 +1,11 @@
 # 制作简单的实例分割镜像
 
 参考语义分割镜像的制作:
+
 - [语义分割-训练](./simple_semantic_seg_training.md)
+
 - [语义分割-推理](./simple_semantic_seg_infer.md)
+
 - [语义分割-挖掘](./simple_semantic_seg_mining.md)
 
 ## 镜像说明文件

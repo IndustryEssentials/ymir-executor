@@ -94,4 +94,23 @@ docker build -t det/mmdet:tmi -f ymir/Dockerfile .
 
     如果想要更新的值是一个列表或者元组。 例如, 一些配置文件中包含 param_scheduler = "[dict(type='CosineAnnealingLR',T_max=200,by_epoch=True,begin=0,end=200)]"。 如果你想要改变这个键，你可以指定 --cfg-options param_scheduler = "[dict(type='LinearLR',start_factor=1e-4, by_epoch=True,begin=0,end=40,convert_to_iter_based=True)]"。 注意, ” 是必要的, 并且在指定值的时候，在引号中不能存在空白字符。
 
+### 自定义Dataset
 
+mmengine提供了基本类BaseDataset，可直接定义YmirDataset, 实现以下三个函数。
+
+```
+from mmengine.dataset import BaseDataset
+
+from mmengine.registry import DATASETS
+
+@DATASETS.registre_module()
+class YmirDataset(BaseDataset):
+    def __init__(self, xxx, xxx, **kwargs):
+        ...
+
+    def load_data_list(self) -> List[dict]:
+        ...
+
+    def get_cat_ids(self, idx: int) -> List[int]:
+        ...
+```
