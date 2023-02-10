@@ -36,6 +36,7 @@ nav:
     - image_segmentation/simple_instance_seg_tmi.md
   - 镜像社区:
     - image_community/image_community.md
+    - image_community/seg-mmseg-tmi.md
     - image_community/det-yolov5-tmi.md
     - image_community/det-mmdet-tmi.md
     - image_community/det-nanodet-tmi.md
