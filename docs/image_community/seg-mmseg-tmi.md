@@ -61,7 +61,6 @@ docker pull youdaoyzbx/ymir-executor:ymir2.1.0-mmseg-cu111-tmi
 | 超参数 | 默认值 | 类型 | 说明 | 建议 |
 | - | - | - | - | - |
 | hyper-parameter | default value | type | note | advice |
-| config_file |
 | export_format | seg-coco:raw | 字符串| 受ymir后台处理，ymir分割数据集导出格式 | 禁止改变 |
 | shm_size | 128G | 字符串| 受ymir后台处理，docker image 可用共享内存 | 建议大小：镜像占用GPU数 * 32G |
 | config_file | configs/fastscnn/fast_scnn_lr0.12_8x4_160k_cityscapes.py | 文件路径 | mmlab配置文件 | 建议采用fastscnn系列, 参考[configs](https://github.com/modelai/ymir-mmsegmentation/tree/master/configs) |

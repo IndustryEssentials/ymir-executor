@@ -23,6 +23,7 @@ markdown_extensions:
 nav:
   - Home: index.md
   - 基本概念:
+    - overview/introduction.md
     - overview/framework.md
     - overview/dataset-format.md
     - overview/hyper-parameter.md
@@ -34,6 +35,7 @@ nav:
     - image_segmentation/simple_semantic_seg_mining.md
     - image_segmentation/test_semantic_seg.md
     - image_segmentation/simple_instance_seg_tmi.md
+  - 快速定制: fast_custom
   - 镜像社区:
     - image_community/image_community.md
     - image_community/seg-mmseg-tmi.md
@@ -46,3 +48,4 @@ nav:
     - image_community/det-yolov5-automl-tmi.md
     - image_community/det-yolov4-tmi.md
   - 算法仓库: algorithms
+  - 设计文档: design_doc

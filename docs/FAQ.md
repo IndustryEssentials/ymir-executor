@@ -26,6 +26,14 @@
     docker build -t ymir-executor/yolov5:cuda111 . -f ymir/docker/cuda111.dockerfile
     ```
 
+## 自制镜像出错
+
+- [检测镜像调试](./object_detection/test_det.md)
+
+- [分割镜像调试](./image_segmentation/test_semantic_seg.md)
+
+- [常见镜像错误](./common_image_error.md)
+
 ## 模型精度/速度如何权衡与提升
 
 - 模型精度与数据集大小、数据集质量、学习率、batch size、 迭代次数、模型结构、数据增强方式、损失函数等相关，在此不做展开，详情参考：

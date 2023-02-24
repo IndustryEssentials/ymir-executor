@@ -2,6 +2,21 @@
 
 参考[ymir镜像制作简介](../overview/ymir-executor.md)
 
+## 镜像输入输出示例
+```
+.
+├── in
+│   ├── annotations
+│   ├── assets
+│   ├── candidate-index.tsv
+│   ├── config.yaml
+│   ├── env.yaml
+│   └── models
+└── out
+    ├── monitor.txt
+    └── infer-result.json
+```
+
 ## 工作目录
 ```
 cd det-demo-tmi
@@ -71,7 +86,7 @@ monitor.write_monitor_logger(percent=1.0)
 ## 写结果文件
 
 ```
-rw.write_infer_result(infer_result=coco_results, algorithm='detection')
+rw.write_infer_result(infer_result=infer_result, algorithm='detection')
 ```
 
 ## 制作镜像 demo/det:infer

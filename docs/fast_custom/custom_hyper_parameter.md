@@ -1,4 +1,4 @@
-# 镜像超参数
+# 修改镜像超参数
 
 ## ymir后台如何获取镜像超参数
 
@@ -81,7 +81,7 @@ docker build -t youdaoyzbx/ymir-executor:ymir2.0.1-yolov5-cu111-tmi . -f zzz.doc
 
 - training-template.yaml
 
-- start.py: 修改该文件中的内容处理增加或删除的超参数
+- start.py: 修改该文件内容，处理增加或删除的超参数
 
 - zzz.dockerfile
 

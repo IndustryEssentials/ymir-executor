@@ -1,6 +1,39 @@
 # 制作一个简单的语义分割训练镜像
 
-参考[ymir镜像制作简介](../overview/ymir-executor.md)
+参考[ymir镜像制作简介](../overview/ymir-executor.md), 通过加载 /in 目录下的数据集，超参数，任务信息，预训练权重， 在 /out 目录下产生模型权重，进度文件，训练日志。
+
+## 镜像输入输出示例
+```
+.
+├── in
+│   ├── annotations
+│   │   └── coco-annotations.json
+│   ├── assets -> /home/ymir/ymir/ymir-workplace/sandbox/0001/asset_cache
+│   ├── config.yaml
+│   ├── env.yaml
+│   ├── models
+│   │   ├── best_mIoU_iter_180.pth
+│   │   └── fast_scnn_lr0.12_8x4_160k_cityscapes.py
+│   ├── train-index.tsv
+│   └── val-index.tsv
+├── out
+│   ├── models
+│   │   ├── 20221103_082913.log
+│   │   ├── 20221103_082913.log.json
+│   │   ├── fast_scnn_lr0.12_8x4_160k_cityscapes.py
+│   │   ├── iter_10000.pth
+│   │   ├── iter_12000.pth
+│   │   ├── iter_14000.pth
+│   │   ├── iter_16000.pth
+│   │   ├── iter_18000.pth
+│   │   ├── iter_20000.pth
+│   │   ├── latest.pth -> iter_20000.pth
+│   │   └── result.yaml
+│   ├── monitor.txt
+│   ├── tensorboard -> /home/ymir/ymir/ymir-workplace/ymir-tensorboard-logs/0001/t00000010000043b47591667304420
+│   └── ymir-executor-out.log
+└── task_config.yaml
+```
 
 ## 工作目录
 ```

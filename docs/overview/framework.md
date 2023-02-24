@@ -1,10 +1,13 @@
-# ymir镜像整体流程
+# ymir镜像简介
 
 - 从数据的角度看，ymir平台实现了数据的导入、划分、合并与标注等功能；镜像则提供代码与环境依赖，利用数据训练模型，对数据进行推理或挖掘出最有标注价值的数据。
 
 - 从镜像的角度看，ymir平台提供数据集、任务与超参数信息，镜像处理后产生结果文件，ymir对结果文件进行解析，并显示在ymir平台上。
 
 - 从接口的角度看，约定好ymir平台提供的数据与超参数格式，镜像产生的结果文件格式。则可以提供多种镜像，实现不同的算法功能并对接到ymir平台。
+
+!!! 注意
+    与其它docker镜像不同，ymir镜像中包含镜像配置文件、代码与运行环境。
 
 ## ymir镜像使用
 
@@ -27,8 +30,6 @@
 
 - 镜像名称：用户自定义的镜像名称，注意名称长度，最多50个字符
 
-- 关联镜像：对于单一功能的镜像，训练镜像产生的模型，其它镜像不一定能使用。如采用基于[yolov4](https://github.com/AlexeyAB/darknet)训练的模型权重，基于[yolov7](https://github.com/WongKinYiu/yolov7) 推理镜像不支持加载相应模型权重。 因此需要对此类镜像进行关联，推荐使用多功能镜像。
-
 - 镜像功能参数：为提高镜像的灵活性，用户可以在ymir平台上修改镜像的默认功能参数。如 `epochs`, `batch_size_per_gpu`，控制训练镜像的训练时长及显存占用。注意ymir平台为所有镜像提供额外的[通用参数](./hyper-parameter.md)
 
     - 训练镜像功能参数：对应训练超参数，常见的有`epochs`, `batch_size_per_gpu`, `num_workers_per_gpu`。默认训练参数配置文件存放在镜像的`/img-man/training-template.yaml`
@@ -41,7 +42,10 @@
 
     - 镜像目标定义在镜像的 `/img-man/manifest.yaml` 文件中，如此文件不存在，ymir则默认镜像为目标检测镜像。
 
-- 添加镜像：添加镜像时需要管理员权限，ymir平台首先会通过 `docker pull` 下载镜像，再解析镜像的`/img-man`目录，确定镜像中算法的类型及镜像支持的功能。
+- 关联镜像：对于单一功能的镜像，训练镜像产生的模型，其它镜像不一定能使用。如采用基于[yolov4](https://github.com/AlexeyAB/darknet)训练的模型权重，基于[yolov7](https://github.com/WongKinYiu/yolov7) 推理镜像不支持加载相应模型权重。 因此需要对此类镜像进行关联，推荐使用多功能镜像。
+
+!!! 添加镜像
+    添加镜像时需要管理员权限，ymir平台首先会通过 `docker pull` 下载镜像，再解析镜像的`/img-man`目录，确定镜像中算法的类型及镜像支持的功能。
 
 
 ## ymir平台与镜像之间的接口
@@ -60,4 +64,4 @@
 
 - [超参数信息](./hyper-parameter.md)
 
-- [ymir平台接口文档](https://github.com/IndustryEssentials/ymir/blob/master/dev_docs/ymir-cmd-container.md)
+- [接口文档](../design_doc/ymir_call_image.md)

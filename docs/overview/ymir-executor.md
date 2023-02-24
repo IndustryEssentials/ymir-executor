@@ -17,7 +17,7 @@
 
 ## 环境依赖
 
-假设拥有一台带nvidia显卡的linux服务器, 以ubuntu16.04 为例
+假设拥有一台带nvidia显卡的linux服务器, 以ubuntu18.04 为例
 
 !!! 注意
     如果apt update 或 apt install 速度缓慢，可以考虑更换软件源
