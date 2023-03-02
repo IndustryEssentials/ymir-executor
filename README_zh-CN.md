@@ -1,12 +1,12 @@
 # ymir-executor 使用文档 [English](./README.md) | [简体中文](./README_zh-CN.md)
 
-- [ymir](https://github.com/IndustryEssentials/ymir)
+- 🏠 [ymir](https://github.com/IndustryEssentials/ymir)
 
-  - [bilibili 视频教程](https://b23.tv/KS5b5oF)
+- 📺 [视频教程](https://b23.tv/KS5b5oF)
 
-- [镜像社区](http://pubimg.vesionbook.com:8110/img) 可搜索到所有公开的ymir算法镜像， 同时可共享其他人发布的镜像。
+- 👨‍👩‍👧‍👧 [镜像社区](http://pubimg.vesionbook.com:8110/img) 可搜索到所有公开的ymir算法镜像， 同时可共享其他人发布的镜像。
 
-- [ymir镜像文档](https://ymir-executor-fork.readthedocs.io/zh/latest/#)
+- 📘 [文档](https://ymir-executor-fork.readthedocs.io/zh/latest/#)
 
 ## 比较
 
@@ -64,10 +64,21 @@ gpu: single GeForce GTX 1080 Ti
 
 ## 参考
 
-- [yolov4](https://github.com/AlexeyAB/darknet)
-- [yolov5](https://github.com/ultralytics/yolov5)
-- [mmdetection](https://github.com/open-mmlab/mmdetection)
-- [yolov7](https://github.com/wongkinyiu/yolov7)
-- [detectron2](https://github.com/facebookresearch/detectron2)
-- [vidt](https://github.com/naver-ai/vidt)
-- [nanodet](https://github.com/RangiLyu/nanodet)
+### 目标检测
+- [ymir-yolov5](https://github.com/modelai/ymir-yolov5)
+- [ymir-yolov7](https://github.com/modelai/ymir-yolov7)
+- [ymir-nanodet](https://github.com/modelai/ymir-nanodet)
+- [ymir-mmyolo](https://github.com/modelai/ymir-mmyolo)
+- [ymir-vidt](https://github.com/modelai/ymir-vidt)
+- [ymir-detectron2](https://github.com/modelai/ymir-detectron2)
+
+### 语义分割
+- [ymir-mmsegmentation](https://github.com/modelai/ymir-mmsegmentation)
+
+### 实例分割
+- [ymir-yolov5-seg](https://github.com/modelai/ymir-yolov5-seg)
+
+### 资源
+- [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk) ymir_exc 包，辅助开发镜像
+- [ymir-executor-verifier](https://github.com/modelai/ymir-executor-verifier) 测试镜像工具
+- [ymir-flask](https://github.com/modelai/ymir-flask) 云端部署示例

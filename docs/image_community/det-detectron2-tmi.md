@@ -1,4 +1,4 @@
-# detectron2 镜像说明文档
+# ymir-detectron2 镜像说明文档
 
 ## 代码仓库
 

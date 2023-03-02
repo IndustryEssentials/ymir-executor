@@ -1,4 +1,4 @@
-# yolov7 镜像说明文档
+# ymir-yolov7 镜像说明文档
 
 ## 代码仓库
 
@@ -8,7 +8,7 @@
 ## 镜像地址
 
 ```
-youdaoyzbx/ymir-executor:ymir2.0.0-yolov7-cu111-tmi
+youdaoyzbx/ymir-executor:ymir2.1.0-yolov7-cu111-tmi
 ```
 
 ## 性能表现

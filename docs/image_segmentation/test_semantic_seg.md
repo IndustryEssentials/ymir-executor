@@ -64,7 +64,11 @@ drwxr-xr-x 4 root root 45 Jan  9 18:07 t00000020000029e02f61673258829
     - 假设启动程序为 **/usr/bin/start.sh**
 
 ```
+# --ipc host 表示容器共享主机的所有内存
 docker run -it --rm --gpus all --ipc host -v $PWD/in:/in -v $PWD/out:/out -v /data:/data demo/semantic_seg:tmi bash
+
+# --shm-size 128g 表示容器最多共享主机128G内存
+# docker run -it --rm --gpus all --shm-size 128g -v $PWD/in:/in -v $PWD/out:/out -v /data:/data demo/semantic_seg:tmi bash
 
 bash /usr/bin/start.sh
 ```

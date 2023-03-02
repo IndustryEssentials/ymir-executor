@@ -1,4 +1,4 @@
-# mmdetection 镜像说明文档
+# ymir-mmdetection 镜像说明文档
 
 ## 仓库地址
 

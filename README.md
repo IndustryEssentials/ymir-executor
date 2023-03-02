@@ -1,12 +1,12 @@
 # ymir-executor documentation [English](./README.md) | [简体中文](./README_zh-CN.md)
 
-- [ymir](https://github.com/IndustryEssentials/ymir)
+-  🏠 [ymir](https://github.com/IndustryEssentials/ymir)
 
-  - [bilibili: video tutorial](https://b23.tv/KS5b5oF)
+-  📺 [video tutorial](https://b23.tv/KS5b5oF)
 
-- [Image Community](http://pubimg.vesionbook.com:8110/img) search and share open source.
+-  👨‍👩‍👧‍👧 [Image Community](http://pubimg.vesionbook.com:8110/img) search and share open source.
 
-- [ymir executor Documence](https://ymir-executor-fork.readthedocs.io/zh/latest/#)
+-  📘 [Documence](https://ymir-executor-fork.readthedocs.io/zh/latest/#)
 
 ## overview
 
@@ -57,12 +57,24 @@ gpu: single GeForce GTX 1080 Ti
 - [import and finetune model](https://github.com/modelai/ymir-executor-fork/wiki/import-and-finetune-model)
 
 - [import pretainted model weights](https://github.com/IndustryEssentials/ymir/blob/master/dev_docs/import-extra-models.md)
+
 ## reference
 
-- [yolov4](https://github.com/AlexeyAB/darknet)
-- [yolov5](https://github.com/ultralytics/yolov5)
-- [mmdetection](https://github.com/open-mmlab/mmdetection)
-- [yolov7](https://github.com/wongkinyiu/yolov7)
-- [detectron2](https://github.com/facebookresearch/detectron2)
-- [vidt](https://github.com/naver-ai/vidt)
-- [nanodet](https://github.com/RangiLyu/nanodet)
+### object detection
+- [ymir-yolov5](https://github.com/modelai/ymir-yolov5)
+- [ymir-yolov7](https://github.com/modelai/ymir-yolov7)
+- [ymir-nanodet](https://github.com/modelai/ymir-nanodet)
+- [ymir-mmyolo](https://github.com/modelai/ymir-mmyolo)
+- [ymir-vidt](https://github.com/modelai/ymir-vidt)
+- [ymir-detectron2](https://github.com/modelai/ymir-detectron2)
+
+### semantic segmenation
+- [ymir-mmsegmentation](https://github.com/modelai/ymir-mmsegmentation)
+
+### instance segmentation
+- [ymir-yolov5-seg](https://github.com/modelai/ymir-yolov5-seg)
+
+### resource
+- [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk) ymir_exc package, help to develop your image
+- [ymir-executor-verifier](https://github.com/modelai/ymir-executor-verifier) test your ymir image
+- [ymir-flask](https://github.com/modelai/ymir-flask) deploy your model on website

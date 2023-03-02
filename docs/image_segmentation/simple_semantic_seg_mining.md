@@ -1,6 +1,21 @@
-# 制作一个简单的语义分割推理镜像
+# 制作一个简单的语义分割挖掘镜像
 
 参考[ymir镜像制作简介](../overview/ymir-executor.md)
+
+## 镜像输入输出示例
+```
+.
+├── in
+│   ├── annotations
+│   ├── assets
+│   ├── candidate-index.tsv
+│   ├── config.yaml
+│   ├── env.yaml
+│   └── models
+└── out
+    ├── monitor.txt
+    └── result.tsv
+```
 
 ## 工作目录
 
@@ -10,12 +25,12 @@ cd seg-semantic-demo-tmi
 
 ## 提供超参数模型文件
 
-镜像中包含**/img-man/infer-template.yaml** 表示镜像支持推理
+镜像中包含**/img-man/mining-template.yaml** 表示镜像支持挖掘
 
-- [img-man/infer-template.yaml](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/seg-semantic-demo-tmi/img-man/infer-template.yaml)
+- [img-man/mining-template.yaml](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/seg-semantic-demo-tmi/img-man/mining-template.yaml)
 
 ```yaml
-{!seg-semantic-demo-tmi/img-man/infer-template.yaml!}
+{!seg-semantic-demo-tmi/img-man/mining-template.yaml!}
 ```
 
 - [Dockerfile](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/seg-semantic-demo-tmi/Dockerfile)
@@ -36,7 +51,7 @@ COPY img-man/*.yaml /img-man/  # 将主机中img-man目录下的所有yaml文件
 ```
 
 - Dockerfile
-`COPY img-man/*.yaml /img-man/` 在复制infer-template.yaml的同时，会将manifest.yaml复制到镜像中的**/img-man**目录
+`COPY img-man/*.yaml /img-man/` 在复制mining-template.yaml的同时，会将manifest.yaml复制到镜像中的**/img-man**目录
 
 ## 提供默认启动脚本
 
@@ -50,7 +65,7 @@ CMD bash /usr/bin/start.sh  # 将镜像的默认启动脚本设置为 /usr/bin/s
 
 - [app/start.py](https://github.com/modelai/ymir-executor-fork/tree/ymir-dev/seg-semantic-demo-tmi/app/start.py)
 
-::: seg-semantic-demo-tmi.app.start._run_infer
+::: seg-semantic-demo-tmi.app.start._run_mining
     handler: python
     options:
       show_root_heading: false
@@ -63,26 +78,26 @@ CMD bash /usr/bin/start.sh  # 将镜像的默认启动脚本设置为 /usr/bin/s
 logging.info(f"assets count: {len(lines)}, valid: {valid_image_count}")
 monitor.write_monitor_logger(percent=0.2)
 
-# real-time monitor
-monitor.write_monitor_logger(percent=0.2 + 0.8 * iter / valid_image_count)
+time.sleep(0.1)
+monitor.write_monitor_logger(percent=0.2 + 0.8 * index / valid_image_count)
 
 # if task done, write 100% percent log
-logging.info('infer done')
+logging.info('mining done')
 monitor.write_monitor_logger(percent=1.0)
 ```
 
 ## 写结果文件
 
 ```
-rw.write_infer_result(infer_result=coco_results, algorithm='segmentation')
+rw.write_mining_result(mining_result=mining_result)
 ```
 
-## 制作镜像 demo/semantic_seg:infer
+## 制作镜像 demo/semantic_seg:mining
 
 ```dockerfile
 {!seg-semantic-demo-tmi/Dockerfile!}
 ```
 
 ```
-docker build -t demo/semantic_seg:infer -f Dockerfile .
+docker build -t demo/semantic_seg:mining -f Dockerfile .
 ```

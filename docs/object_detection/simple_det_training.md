@@ -1,6 +1,25 @@
 # 制作一个简单的目标检测训练镜像
 
-参考[ymir镜像制作简介](../overview/ymir-executor.md)
+参考[ymir镜像制作简介](../overview/ymir-executor.md), 通过加载 /in 目录下的数据集，超参数，任务信息，预训练权重， 在 /out 目录下产生模型权重，进度文件，训练日志。
+
+## 镜像输入输出示例
+```
+.
+├── in
+│   ├── annotations [257 entries exceeds filelimit, not opening dir]
+│   ├── assets -> /home/ymir/ymir/ymir-workplace/sandbox/0001/training_asset_cache
+│   ├── config.yaml
+│   ├── env.yaml
+│   ├── models
+│   ├── train-index.tsv
+│   └── val-index.tsv
+├── out
+│   ├── models [29 entries exceeds filelimit, not opening dir]
+│   ├── monitor.txt
+│   ├── tensorboard -> /home/ymir/ymir/ymir-workplace/ymir-tensorboard-logs/0001/t00000010000028774b61663839849
+│   └── ymir-executor-out.log
+└── task_config.yaml
+```
 
 ## 工作目录
 ```

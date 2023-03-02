@@ -1,5 +1,13 @@
 # ymir 用户自定义镜像制作指南
 
+！！！最新文档参考 https://ymir-executor-fork.readthedocs.io/zh/latest/object_detection/simple_det_training/
+
+此处文档为ymir1.3.0时编写，现ymir最新版为ymir2.1.0, 相应代码中的接口也更新到ymir2.1.0，需要安装相应版本的sdk。
+
+```
+pip install "git+https://github.com/modelai/ymir-executor-sdk.git@ymir2.1.0"
+```
+
 ## 目的
 
 此文档面向以下人员：
@@ -137,7 +145,7 @@ ymir 通过 mir train / mir mining / mir infer 命令启动镜像，遵循以下
 
 2. 镜像框架相关的所有内容都在 `ymir_exc` 包中，包括以下部分：
 
-  安装方式 `pip install "git+https://github.com/modelai/ymir-executor-sdk.git@ymir1.3.0"`, 注意通过 ~~`pip install ymir_exc`~~ 的方式安装的版本不具有 `ymir_exc.util` 包。前者在后者的代码基础上进行了扩展，提供了更多的功能(如 `ymir_exc.util`)。
+  安装方式 `pip install "git+https://github.com/modelai/ymir-executor-sdk.git@ymir2.1.0"`, 注意通过 ~~`pip install ymir_exc`~~ 的方式安装的版本不具有 `ymir_exc.util` 包。前者在后者的代码基础上进行了扩展，提供了更多的功能(如 `ymir_exc.util`)。
 
   * `env`：环境，提供任务类型，任务 id 等信息
 

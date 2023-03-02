@@ -20,7 +20,7 @@ RUN	apt-get update && apt-get install -y gnupg2 git libglib2.0-0 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt /app/
+COPY requirements.txt ./
 RUN pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 WORKDIR /app

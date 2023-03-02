@@ -45,15 +45,23 @@ ymir平台导出的数据集格式，其中图片格式固定为 'raw', 而标�
 /in/assets/56/56f3af57d381154d377ad92a99b53e4d12de6456.jpg      /in/annotations/56/56f3af57d381154d377ad92a99b53e4d12de6456.txt
 ```
 
-- txt文件每行的格式为 `class_id, xmin, ymin, xmax, ymax, ann_quality, bbox_angle`
+这个索引文件采用文本文件格式，每行包含一个图像的`绝对路径`及对应标注的`绝对路径`，以制表符 `\t`进行分隔。
 
-其中 `class_id, xmin, ymin, xmax, ymax` 均为整数，而标注质量`ann_quality`为浮点数，默认为-1.0, 标注框旋转角度`bbox_angle`为浮点数，单位为[RAD](https://baike.baidu.com/item/RAD/2262445)
+- 标注txt文件每行的格式为 `class_id, xmin, ymin, xmax, ymax, ann_quality, bbox_angle`, 以英文逗号 `,` 进行分隔。
+
+    - `class_id`: 表示标注框所属类别的整数，从0开始计数
+
+    - `xmin, ymin, xmax, ymax`: 表示标注框左上角和右下角的整数坐标值，以像素为单位。
+
+    - `ann_quality`：表示标注质量的浮点数，默认为-1.0
+
+    - `bbox_angle`: 表示标注框旋转角度的浮点数，以[弧度RAD](https://baike.baidu.com/item/RAD/2262445)为单位，默认为0.0
+
 ```
 0, 242, 61, 424, 249, -1.0, 0.0
 1, 211, 147, 325, 255, -1.0, 0.0
 1, 122, 7, 372, 375, -1.0, 0.0
 ```
-
 
 ## det-voc:raw
 
@@ -114,14 +122,19 @@ ymir平台导出的数据集格式，其中图片格式固定为 'raw', 而标�
 
 ## seg-coco:raw
 
-语义与实例分割的标注格式
+语义与实例分割的标注格式， 参考coco数据集给出的格式
 
 - `export_format = seg-coco:raw` 时的训练/验证集索引文件
 
 !!! 注意
-    此时所有图像文件共享一个标注文件
-    此时训练集与验证集共享一个标注文件
-    语义与实例分割标注中不包含背景类，即只提供项目标签的标注mask
+    训练集与验证集共享一个标注文件，需要根据索引文件进行数据集划分
+
+!!! 注意
+    语义与实例分割标注中不包含背景类，即只提供项目标签的标注mask。
+    如下图所示，annotations中可能只编码人和马的区域。
+    用户可以通过超参数控制训练镜像是否忽略背景区域。
+
+![](../imgs/2007_000783.png)
 
 ```
 /in/assets/02/1c5c432085dc136f6920f901792d357d4266df02.jpg      /in/annotations/coco-annotations.json
