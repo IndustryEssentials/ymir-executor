@@ -1,0 +1,3 @@
+# object_type: 2 for object detection, 3 for semantic segmentation
+# 4 for instance segmentation
+"object_type": 4

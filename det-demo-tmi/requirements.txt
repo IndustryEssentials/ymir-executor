@@ -1,0 +1,5 @@
+pydantic>=1.8.2
+pyyaml>=5.4.1
+tensorboardX>=2.4
+packaging>=23.0
+ymir_exc@git+https://github.com/modelai/ymir-executor-sdk.git@ymir2.1.0

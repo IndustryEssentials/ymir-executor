@@ -1,0 +1,3 @@
+shm_size: '128G'
+cfg_options: ''
+conf_threshold: 0.2

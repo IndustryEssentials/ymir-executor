@@ -5,6 +5,7 @@ Common modules
 
 import json
 import math
+import os
 import platform
 import warnings
 from collections import OrderedDict, namedtuple
@@ -41,7 +42,18 @@ class Conv(nn.Module):
         super().__init__()
         self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p), groups=g, bias=False)
         self.bn = nn.BatchNorm2d(c2)
-        self.act = nn.Hardswish() if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
+
+        activation = os.environ.get('ACTIVATION', None)
+        if activation is None:
+            self.act = nn.SiLU() if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
+        else:
+            act_dict = dict(relu=nn.ReLU, relu6=nn.ReLU6, leakyrelu=nn.LeakyReLU, hardswish=nn.Hardswish, silu=nn.SiLU)
+            if activation.lower() in act_dict:
+                custom_act = act_dict[activation.lower()]()
+            else:
+                # view https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+                custom_act = getattr(nn, activation)()
+            self.act = custom_act if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
 
     def forward(self, x):
         return self.act(self.bn(self.conv(x)))
@@ -115,7 +127,15 @@ class BottleneckCSP(nn.Module):
         self.cv3 = nn.Conv2d(c_, c_, 1, 1, bias=False)
         self.cv4 = Conv(2 * c_, c2, 1, 1)
         self.bn = nn.BatchNorm2d(2 * c_)  # applied to cat(cv2, cv3)
-        self.act = nn.SiLU()
+        activation = os.environ.get('ACTIVATION', None)
+        if activation is None:
+            self.act = nn.SiLU()
+        else:
+            if activation.lower() == 'relu':
+                self.act = nn.ReLU()
+            else:
+                warnings.warn(f'unknown activation {activation}, use SiLU instead')
+                self.act = nn.SiLU()
         self.m = nn.Sequential(*(Bottleneck(c_, c_, shortcut, g, e=1.0) for _ in range(n)))
 
     def forward(self, x):
@@ -227,11 +247,12 @@ class GhostBottleneck(nn.Module):
     def __init__(self, c1, c2, k=3, s=1):  # ch_in, ch_out, kernel, stride
         super().__init__()
         c_ = c2 // 2
-        self.conv = nn.Sequential(GhostConv(c1, c_, 1, 1),  # pw
-                                  DWConv(c_, c_, k, s, act=False) if s == 2 else nn.Identity(),  # dw
-                                  GhostConv(c_, c2, 1, 1, act=False))  # pw-linear
-        self.shortcut = nn.Sequential(DWConv(c1, c1, k, s, act=False),
-                                      Conv(c1, c2, 1, 1, act=False)) if s == 2 else nn.Identity()
+        self.conv = nn.Sequential(
+            GhostConv(c1, c_, 1, 1),  # pw
+            DWConv(c_, c_, k, s, act=False) if s == 2 else nn.Identity(),  # dw
+            GhostConv(c_, c2, 1, 1, act=False))  # pw-linear
+        self.shortcut = nn.Sequential(DWConv(c1, c1, k, s, act=False), Conv(c1, c2, 1, 1,
+                                                                            act=False)) if s == 2 else nn.Identity()
 
     def forward(self, x):
         return self.conv(x) + self.shortcut(x)
@@ -260,9 +281,9 @@ class Expand(nn.Module):
     def forward(self, x):
         b, c, h, w = x.size()  # assert C / s ** 2 == 0, 'Indivisible gain'
         s = self.gain
-        x = x.view(b, s, s, c // s ** 2, h, w)  # x(1,2,2,16,80,80)
+        x = x.view(b, s, s, c // s**2, h, w)  # x(1,2,2,16,80,80)
         x = x.permute(0, 3, 4, 1, 5, 2).contiguous()  # x(1,16,80,2,80,2)
-        return x.view(b, c // s ** 2, h * s, w * s)  # x(1,16,160,160)
+        return x.view(b, c // s**2, h * s, w * s)  # x(1,16,160,160)
 
 
 class Concat(nn.Module):
@@ -315,7 +336,7 @@ class DetectMultiBackend(nn.Module):
                 stride, names = int(d['stride']), d['names']
         elif dnn:  # ONNX OpenCV DNN
             LOGGER.info(f'Loading {w} for ONNX OpenCV DNN inference...')
-            check_requirements(('opencv-python>=4.5.4',))
+            check_requirements(('opencv-python>=4.5.4', ))
             net = cv2.dnn.readNetFromONNX(w)
         elif onnx:  # ONNX Runtime
             LOGGER.info(f'Loading {w} for ONNX Runtime inference...')
@@ -326,7 +347,7 @@ class DetectMultiBackend(nn.Module):
             session = onnxruntime.InferenceSession(w, providers=providers)
         elif xml:  # OpenVINO
             LOGGER.info(f'Loading {w} for OpenVINO inference...')
-            check_requirements(('openvino-dev',))  # requires openvino-dev: https://pypi.org/project/openvino-dev/
+            check_requirements(('openvino-dev', ))  # requires openvino-dev: https://pypi.org/project/openvino-dev/
             import openvino.inference_engine as ie
             core = ie.IECore()
             if not Path(w).is_file():  # if not *.xml
@@ -381,9 +402,11 @@ class DetectMultiBackend(nn.Module):
                     Interpreter, load_delegate = tf.lite.Interpreter, tf.lite.experimental.load_delegate,
                 if edgetpu:  # Edge TPU https://coral.ai/software/#edgetpu-runtime
                     LOGGER.info(f'Loading {w} for TensorFlow Lite Edge TPU inference...')
-                    delegate = {'Linux': 'libedgetpu.so.1',
-                                'Darwin': 'libedgetpu.1.dylib',
-                                'Windows': 'edgetpu.dll'}[platform.system()]
+                    delegate = {
+                        'Linux': 'libedgetpu.so.1',
+                        'Darwin': 'libedgetpu.1.dylib',
+                        'Windows': 'edgetpu.dll'
+                    }[platform.system()]
                     interpreter = Interpreter(model_path=w, experimental_delegates=[load_delegate(delegate)])
                 else:  # Lite
                     LOGGER.info(f'Loading {w} for TensorFlow Lite inference...')
@@ -554,8 +577,13 @@ class AutoShape(nn.Module):
             t.append(time_sync())
 
             # Post-process
-            y = non_max_suppression(y if self.dmb else y[0], self.conf, iou_thres=self.iou, classes=self.classes,
-                                    agnostic=self.agnostic, multi_label=self.multi_label, max_det=self.max_det)  # NMS
+            y = non_max_suppression(y if self.dmb else y[0],
+                                    self.conf,
+                                    iou_thres=self.iou,
+                                    classes=self.classes,
+                                    agnostic=self.agnostic,
+                                    multi_label=self.multi_label,
+                                    max_det=self.max_det)  # NMS
             for i in range(n):
                 scale_coords(shape1, y[i][:, :4], shape0[i])
 
@@ -596,8 +624,13 @@ class Detections:
                         label = f'{self.names[int(cls)]} {conf:.2f}'
                         if crop:
                             file = save_dir / 'crops' / self.names[int(cls)] / self.files[i] if save else None
-                            crops.append({'box': box, 'conf': conf, 'cls': cls, 'label': label,
-                                          'im': save_one_box(box, im, file=file, save=save)})
+                            crops.append({
+                                'box': box,
+                                'conf': conf,
+                                'cls': cls,
+                                'label': label,
+                                'im': save_one_box(box, im, file=file, save=save)
+                            })
                         else:  # all others
                             annotator.box_label(box, label, color=colors(cls))
                     im = annotator.im

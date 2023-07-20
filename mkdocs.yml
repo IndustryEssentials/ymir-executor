@@ -1,0 +1,51 @@
+site_name: Ymir-Executor Documence
+theme:
+  name: readthedocs
+  highlightjs: true
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        # See: https://mkdocstrings.github.io/python/usage/
+        python:
+          options:
+            docstring_style: numpy
+      # watch:
+      #   - seg-semantic-demo-tmi.app.start
+  - include_dir_to_nav
+markdown_extensions:
+  - markdown_include.include:
+      base_path: .
+  - admonition
+  - toc:
+      permalink: "#"
+#  - sane_lists
+nav:
+  - Home: index.md
+  - 基本概念:
+    - overview/introduction.md
+    - overview/framework.md
+    - overview/dataset-format.md
+    - overview/hyper-parameter.md
+    - overview/ymir-executor.md
+  - 目标检测: object_detection
+  - 图像分割:
+    - image_segmentation/simple_semantic_seg_training.md
+    - image_segmentation/simple_semantic_seg_infer.md
+    - image_segmentation/simple_semantic_seg_mining.md
+    - image_segmentation/test_semantic_seg.md
+    - image_segmentation/simple_instance_seg_tmi.md
+  - 快速定制: fast_custom
+  - 镜像社区:
+    - image_community/image_community.md
+    - image_community/seg-mmseg-tmi.md
+    - image_community/det-yolov5-tmi.md
+    - image_community/det-mmdet-tmi.md
+    - image_community/det-nanodet-tmi.md
+    - image_community/det-detectron2-tmi.md
+    - image_community/det-yolov7-tmi.md
+    - image_community/det-vidt-tmi.md
+    - image_community/det-yolov5-automl-tmi.md
+    - image_community/det-yolov4-tmi.md
+  - 算法仓库: algorithms
+  - 设计文档: design_doc

@@ -6,3 +6,5 @@ gpu_id: '0'
 task_id: 'default-training-task'
 pretrained_model_params: []
 class_names: []
+export_format: 'ark:raw'
+shm_size: '128G'

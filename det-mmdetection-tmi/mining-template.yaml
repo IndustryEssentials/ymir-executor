@@ -1,0 +1,3 @@
+shm_size: '128G'
+mining_algorithm: aldd
+class_distribution_scores: '' # 1.0,1.0,0.1,0.2
