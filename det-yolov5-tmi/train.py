@@ -21,6 +21,7 @@ import time
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
+import subprocess
 
 import numpy as np
 import torch
@@ -31,12 +32,15 @@ from torch.cuda import amp
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import SGD, Adam, AdamW, lr_scheduler
 from tqdm import tqdm
+from ymir_exc import monitor
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
+
+from ymir_exc.util import YmirStage, get_merged_config, get_ymir_process, write_ymir_training_result
 
 import val  # for end-of-epoch mAP
 from models.experimental import attempt_load
@@ -47,17 +51,15 @@ from utils.callbacks import Callbacks
 from utils.datasets import create_dataloader
 from utils.downloads import attempt_download
 from utils.general import (LOGGER, check_dataset, check_file, check_git_status, check_img_size, check_requirements,
-                           check_suffix, check_version, check_yaml, colorstr, get_latest_run, increment_path, init_seeds,
-                           intersect_dicts, labels_to_class_weights, labels_to_image_weights, methods, one_cycle,
-                           print_args, print_mutation, strip_optimizer)
+                           check_suffix, check_version, check_yaml, colorstr, get_latest_run, increment_path,
+                           init_seeds, intersect_dicts, labels_to_class_weights, labels_to_image_weights, methods,
+                           one_cycle, print_args, print_mutation, strip_optimizer)
 from utils.loggers import Loggers
 from utils.loggers.wandb.wandb_utils import check_wandb_resume
 from utils.loss import ComputeLoss
 from utils.metrics import fitness
 from utils.plots import plot_evolve, plot_labels
 from utils.torch_utils import EarlyStopping, ModelEMA, de_parallel, select_device, torch_distributed_zero_first
-from utils.ymir_yolov5 import write_ymir_training_result, YmirStage, get_ymir_process, get_merged_config
-from ymir_exc import monitor
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -73,7 +75,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         Path(opt.save_dir), opt.epochs, opt.batch_size, opt.weights, opt.single_cls, opt.evolve, opt.data, opt.cfg, \
         opt.resume, opt.noval, opt.nosave, opt.workers, opt.freeze
     ymir_cfg = opt.ymir_cfg
-    opt.ymir_cfg = '' # yaml cannot dump edict, remove it here
+    opt.ymir_cfg = ''  # yaml cannot dump edict, remove it here
     log_dir = Path(ymir_cfg.ymir.output.tensorboard_dir)
 
     # Directories
@@ -184,7 +186,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
     if opt.cos_lr:
         lf = one_cycle(1, hyp['lrf'], epochs)  # cosine 1->hyp['lrf']
     else:
-        lf = lambda x: (1 - x / epochs) * (1.0 - hyp['lrf']) + hyp['lrf']  # linear
+        def lf(x): return (1 - x / epochs) * (1.0 - hyp['lrf']) + hyp['lrf']  # linear
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lf)  # plot_lr_scheduler(optimizer, scheduler, epochs)
 
     # EMA
@@ -206,7 +208,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         # Epochs
         start_epoch = ckpt['epoch'] + 1
         if resume:
-            assert start_epoch > 0, f'{weights} training to {epochs} epochs is finished, nothing to resume.'
+            assert start_epoch > 0, f'{weights} training from {start_epoch} to {epochs} epochs is finished, nothing to resume.'
         if epochs < start_epoch:
             LOGGER.info(f"{weights} has been trained for {ckpt['epoch']} epochs. Fine-tuning for {epochs} more epochs.")
             epochs += ckpt['epoch']  # finetune additional epochs
@@ -296,7 +298,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
 
         # ymir monitor
         if epoch % monitor_gap == 0:
-            percent = get_ymir_process(stage=YmirStage.TASK, p=epoch/(epochs-start_epoch+1))
+            percent = get_ymir_process(stage=YmirStage.TASK, p=(epoch - start_epoch + 1) / (epochs - start_epoch + 1))
             monitor.write_monitor_logger(percent=percent)
 
         # Update image weights (optional, single-GPU only)
@@ -401,7 +403,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
             callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi)
 
             # Save model
-            if (not nosave) or (final_epoch and not evolve):  # if save
+            if (not nosave) or (best_fitness == fi) or (final_epoch and not evolve):  # if save
                 ckpt = {'epoch': epoch,
                         'best_fitness': best_fitness,
                         'model': deepcopy(de_parallel(model)).half(),
@@ -415,10 +417,11 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                 torch.save(ckpt, last)
                 if best_fitness == fi:
                     torch.save(ckpt, best)
-                if (epoch > 0) and (opt.save_period > 0) and (epoch % opt.save_period == 0):
+                    write_ymir_training_result(ymir_cfg, map50=best_fitness, id='best', files=[str(best)])
+                if (not nosave) and (epoch > 0) and (opt.save_period > 0) and (epoch % opt.save_period == 0):
                     torch.save(ckpt, w / f'epoch{epoch}.pt')
                     weight_file = str(w / f'epoch{epoch}.pt')
-                    write_ymir_training_result(ymir_cfg, map50=results[2], epoch=epoch, weight_file=weight_file)
+                    write_ymir_training_result(ymir_cfg, map50=results[2], id=f'epoch_{epoch}', files=[weight_file])
                 del ckpt
                 callbacks.run('on_model_save', last, epoch, final_epoch, best_fitness, fi)
 
@@ -426,7 +429,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
             if RANK == -1 and stopper(epoch=epoch, fitness=fi):
                 break
 
-            # Stop DDP TODO: known issues shttps://github.com/ultralytics/yolov5/pull/4576
+            # Stop DDP TODO: known issues https://github.com/ultralytics/yolov5/pull/4576
             # stop = stopper(epoch=epoch, fitness=fi)
             # if RANK == 0:
             #    dist.broadcast_object_list([stop], 0)  # broadcast 'stop' to all ranks
@@ -464,9 +467,20 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         callbacks.run('on_train_end', last, best, plots, epoch, results)
         LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}")
 
+        opset = ymir_cfg.param.opset
+        onnx_file: Path = best.with_suffix('.onnx')
+        command = f'python3 export.py --weights {best} --opset {opset} --include onnx'
+        LOGGER.info(f'export onnx weight: {command}')
+        subprocess.run(command.split(), check=True)
+
+        if nosave:
+            # save best.pt and best.onnx
+            write_ymir_training_result(ymir_cfg, map50=best_fitness, id='best', files=[str(best), str(onnx_file)])
+        else:
+            # set files = [] to save all files in /out/models
+            write_ymir_training_result(ymir_cfg, map50=best_fitness, id='best', files=[])
+
     torch.cuda.empty_cache()
-    # save the best and last weight file with other files in models_dir
-    write_ymir_training_result(ymir_cfg, map50=best_fitness, epoch=epochs, weight_file='')
     return results
 
 
@@ -522,12 +536,17 @@ def main(opt, callbacks=Callbacks()):
         check_git_status()
         check_requirements(exclude=['thop'])
 
+    ymir_cfg = get_merged_config()
     # Resume
     if opt.resume and not check_wandb_resume(opt) and not opt.evolve:  # resume an interrupted run
-        ckpt = opt.resume if isinstance(opt.resume, str) else get_latest_run()  # specified or most recent path
+        ckpt = opt.resume if isinstance(opt.resume, str) else get_latest_run(ymir_cfg.ymir.input.root_dir)  # specified or most recent path
         assert os.path.isfile(ckpt), 'ERROR: --resume checkpoint does not exist'
-        with open(Path(ckpt).parent.parent / 'opt.yaml', errors='ignore') as f:
-            opt = argparse.Namespace(**yaml.safe_load(f))  # replace
+
+        opt_file = Path(ckpt).parent / 'opt.yaml'
+        if opt_file.exists():
+            with open(opt_file, errors='ignore') as f:
+                opt = argparse.Namespace(**yaml.safe_load(f))  # replace
+        os.makedirs(opt.save_dir, exist_ok=True)
         opt.cfg, opt.weights, opt.resume = '', ckpt, True  # reinstate
         LOGGER.info(f'Resuming training from {ckpt}')
     else:
@@ -538,9 +557,8 @@ def main(opt, callbacks=Callbacks()):
             if opt.project == str(ROOT / 'runs/train'):  # if default project name, rename to runs/evolve
                 opt.project = str(ROOT / 'runs/evolve')
         opt.save_dir = str(increment_path(Path(opt.project) / opt.name, exist_ok=opt.exist_ok))
-        ymir_cfg = get_merged_config()
-        opt.ymir_cfg = ymir_cfg
 
+    opt.ymir_cfg = ymir_cfg
 
     # DDP mode
     device = select_device(opt.device, batch_size=opt.batch_size)
@@ -558,9 +576,6 @@ def main(opt, callbacks=Callbacks()):
     # Train
     if not opt.evolve:
         train(opt.hyp, opt, device, callbacks)
-        if WORLD_SIZE > 1 and RANK == 0:
-            LOGGER.info('Destroying process group... ')
-            dist.destroy_process_group()
 
     # Evolve hyperparameters (optional)
     else:

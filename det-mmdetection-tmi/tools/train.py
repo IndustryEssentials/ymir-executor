@@ -11,12 +11,13 @@ import torch
 from mmcv import Config, DictAction
 from mmcv.runner import get_dist_info, init_dist
 from mmcv.utils import get_git_hash
-
 from mmdet import __version__
 from mmdet.apis import init_random_seed, set_random_seed, train_detector
 from mmdet.datasets import build_dataset
 from mmdet.models import build_detector
 from mmdet.utils import collect_env, get_root_logger, setup_multi_processes
+from mmdet.utils.util_ymir import modify_mmcv_config
+from ymir_exc.util import get_merged_config
 
 
 def parse_args():
@@ -96,8 +97,11 @@ def parse_args():
 
 def main():
     args = parse_args()
-
+    ymir_cfg = get_merged_config()
     cfg = Config.fromfile(args.config)
+    # modify mmdet config from file
+    modify_mmcv_config(mmcv_cfg=cfg, ymir_cfg=ymir_cfg)
+
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
 

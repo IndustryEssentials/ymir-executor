@@ -1,105 +1,114 @@
-# ymir-executor 使用文档
+# ymir-executor documentation [English](./README.MD) | [简体中文](./README_zh-CN.MD)
 
-## det-yolov4-training
+- [ymir](https://github.com/IndustryEssentials/ymir)
 
-- yolov4的训练镜像，采用mxnet与darknet框架，默认cuda版本为`10.1`，无法直接在高版本显卡如GTX3080/GTX3090上运行，需要修改dockerfile将cuda版本提升为11.1以上，并修改其它依赖。
+- [wiki](https://github.com/modelai/ymir-executor-fork/wiki)
 
-## det-yolov4-mining
+- [ymir executor](./docs/official-docker-image.md)
 
-- yolov4挖掘与推理镜像，与det-yolov4-training对应
+- [ymir mining algorithm](./docs/mining-images-overview.md)
 
-## det-yolov5-tmi
+## overview
 
-- yolov5训练、挖掘及推理镜像，训练时会从github上下载权重
+| docker image | [finetune](https://github.com/modelai/ymir-executor-fork/wiki/use-yolov5-to-finetune-or-training-model) | tensorboard | args/cfg options | framework | onnx | pretrained weights |
+| - | - | - | - | - | - | - |
+| yolov4 | ? | ✔️ | ❌ | darknet + mxnet | ❌ | local |
+| yolov5 | ✔️ | ✔️ | ✔️ | pytorch | ✔️ | local+online |
+| yolov7 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
+| mmdetection | ✔️ | ✔️ | ✔️ | pytorch | ❌ | local+online |
+| detectron2 | ✔️ | ✔️ | ✔️ | pytorch | ❌ | online |
+| vidt | ? | ✔️ | ✔️ | pytorch | ❌ | online |
+| nanodet | ✔️ | ✔️ | ❌ | pytorch_lightning | ❌ | local+online |
 
-- yolov5-FAQ
+- `online` pretrained weights may download through network
 
-    - 镜像训练时权重下载出错或慢：提前将权重下载好并复制到镜像`/app`目录下或通过ymir导入预训练模型，在训练时进行加载。
+- `local` pretrained weights have copied to docker images when building image
 
-## live-code-executor
+### benchmark
 
-- 可以通过`git_url`, `git_branch`从网上clone代码到镜像并运行
+- training dataset: voc2012-train 5717 images
+- validation dataset: voc2012-val 5823 images
+- image size: 640
 
-- 参考 [live-code](https://github.com/IndustryEssentials/ymir-remote-git)
+gpu: single Tesla P4
 
-## det-mmdetection-tmi
+| docker image | batch size | epoch number | model | voc2012 val map50 | training time | note |
+| - | - | - | - | - | - | - |
+| yolov5 | 16 | 100 | yolov5s | 70.05% | 9h | coco-pretrained |
+| vidt | 2 | 100 | swin-nano | 54.13% | 2d | imagenet-pretrained |
+| yolov4 | 4 | 20000 steps | yolov4 | 66.18% | 2d | imagenet-pretrained |
+| yolov7 | 16 | 100 | yolov7-tiny | 70% | 8h | coco-pretrained |
 
-- mmdetection 训练、挖掘及推理镜像，目前还没开发完
+gpu: single GeForce GTX 1080 Ti
 
-
-## 如何制作自己的ymir-executor
-
-- [ymir-executor 制作指南](https://github.com/IndustryEssentials/ymir/blob/dev/docs/ymir-dataset-zh-CN.md)
-
-## 如何导入预训练模型
-
-- [如何导入外部模型](https://github.com/IndustryEssentials/ymir/blob/dev/docs/import-extra-models.md)
-
-    - 通过ymir网页端的 `模型管理/模型列表/导入模型` 同样可以导入模型
+| docker image | image size | batch size | epoch number | model | voc2012 val map50 | training time | note |
+| - | - | - | - | - | - | - | - |
+| yolov4 | 608 | 64/32 | 20000 steps | yolov4 | 72.73% | 6h | imagenet-pretrained |
+| yolov5 | 640 | 16 | 100 | yolov5s | 70.35% | 2h | coco-pretrained |
+| yolov7 | 640 | 16 | 100 | yolov7-tiny | 70.4% | 5h | coco-pretrained |
+| mmdetection | 640 | 16 | 100 | yolox_tiny | 66.2% | 5h | coco-pretrained |
+| detectron2 | 640 | 2 | 20000 steps | retinanet_R_50_FPN_1x | 53.54% | 2h | imagenet-pretrained |
+| nanodet | 416 | 16 | 100 | nanodet-plus-m_416 | 58.63% | 5h | imagenet-pretrained |
 
 ---
 
-# FAQ
+# build ymir executor
 
-- apt 或 pip 安装慢或出错
+## det-yolov4-tmi
 
-    - 采用国内源，如在docker file 中添加如下命令
+- yolov4 training, mining and infer docker image, use `mxnet` and `darknet` framework
 
-        ```
-        RUN sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
+  ```
+  cd det-yolov4-tmi
+  docker build -t ymir-executor/yolov4:cuda101-tmi -f cuda101.dockerfile .
 
-        RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple
-        ```
+  docker build -t ymir-executor/yolov4:cuda112-tmi -f cuda112.dockerfile .
+  ```
 
-- docker build 的时候出错，找不到相应docker file或`COPY/ADD`时出错
+## det-yolov5-tmi
 
-    - 回到项目根目录或docker file对应根目录，确保docker file 中`COPY/ADD`的文件与文件夹能够访问，以yolov5为例.
+- yolov5 training, mining and infer docker image, use `pytorch` framework
 
-        ```
-        cd ymir-executor
+```
+cd det-yolov5-tmi
+docker build -t ymir-executor/yolov5:cuda102-tmi -f cuda102.dockerfile .
 
-        docker build -t ymir-executor/yolov5 . -f det-yolov5-tmi/cuda111.dockerfile
-        ```
+docker build -t ymir-executor/yolov5:cuda111-tmi -f cuda111.dockerfile .
+```
 
-- 镜像运行完`/in`与`/out`目录中的文件被清理
+## det-mmdetection-tmi
 
-    - ymir系统为节省空间，会在任务`成功结束`后删除其中不必要的文件，如果不想删除，可以在部署ymir时，修改文件`ymir/command/mir/tools/command_run_in_out.py`，注释其中的`_cleanup(work_dir=work_dir)`。注意需要重新构建后端镜像
+```
+cd det-mmdetection-tmi
+docker build -t ymir-executor/mmdet:cu102-tmi -f docker/Dockerfile.cuda102 .
 
-        ```
-        cd ymir
-        docker build -t industryessentials/ymir-backend --build-arg PIP_SOURCE=https://pypi.mirrors.ustc.edu.cn/simple --build-arg SERVER_MODE='dev' -f Dockerfile.backend .
+docker build -t ymir-executor/mmdet:cu111-tmi -f docker/Dockerfile.cuda111 .
+```
 
-        docker-compose down -v && docker-compose up -d
-        ```
+## how to custom ymir-executor
 
-- 训练镜像如何调试
+- [demo ymir-executor](det-demo-tmi/README.md) from zero to one, build you ymir-executor
 
-    - 先通过失败任务的tensorboard链接拿到任务id，如`t000000100000175245d1656933456`
+- [custom ymir-executor](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/ymir-dataset-zh-CN.md)
 
-    - 进入ymir部署目录 `ymir-workplace/sandbox/work_dir/TaskTypeTraining/t000000100000175245d1656933456/sub_task/t000000100000175245d1656933456`, `ls` 可以看到以下结果
+- [ymir-executor-sdk](https://github.com/modelai/ymir-executor-sdk) ymir-executor development SDK.
 
-        ```
-        # ls
-        in  out  task_config.yaml
-        ```
+- [ymir-executor-verifer](https://github.com/modelai/ymir-executor-verifier) debug and check your ymir-executor
 
-    - 挂载目录并运行镜像`<docker-image-name>`，注意需要将ymir部署目录挂载到镜像中
+## how to import pretrained model weights
 
-        ```
-        docker run -it --gpus all -v $PWD/in:/in -v $PWD/out:/out -v <YMIR_WORKPLACE>:<YMIR_WORKPLACE> <docker-image-name> bash
+- [import and finetune model](https://github.com/modelai/ymir-executor-fork/wiki/import-and-finetune-model)
 
-        # 以/home/ymir/ymir-workplace作为ymir部署目录为例
-        docker run -it --gpus all -v $PWD/in:/in -v $PWD/out:/out -v /home/ymir/ymir-workplace:/home/ymir/ymir-workplace <docker-image-name> bash
-        ```
+- ~~[import pretainted model weights](https://github.com/IndustryEssentials/ymir/blob/dev/dev_docs/import-extra-models.md)~~
 
-    - 推理与挖掘镜像调试同理，注意对应目录均为`ymir-workplace/sandbox/work_dir/TaskTypeMining`
+## reference
 
-- 模型精度/速度如何权衡与提升
-
-    - 模型精度与数据集大小、数据集质量、学习率、batch size、 迭代次数、模型结构、数据增强方式、损失函数等相关，在此不做展开，详情参考：
-
-        - [Object Detection in 20 Years: A Survey](https://arxiv.org/abs/1905.05055)
-
-        - [Paper with Code: Object Detection](https://paperswithcode.com/task/object-detection)
-
-        - [awesome object detection](https://github.com/amusi/awesome-object-detection)
+- [mining algorithm: CALD](https://github.com/we1pingyu/CALD/)
+- [mining algorithm: ALDD](https://gitlab.com/haghdam/deep_active_learning)
+- [yolov4](https://github.com/AlexeyAB/darknet)
+- [yolov5](https://github.com/ultralytics/yolov5)
+- [mmdetection](https://github.com/open-mmlab/mmdetection)
+- [yolov7](https://github.com/wongkinyiu/yolov7)
+- [detectron2](https://github.com/facebookresearch/detectron2)
+- [vidt](https://github.com/naver-ai/vidt)
+- [nanodet](https://github.com/RangiLyu/nanodet)
